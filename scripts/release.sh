@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Steadfast — Release Helper Script
-# Usage: ./scripts/release.sh 1.0.1
-#        ./scripts/release.sh v1.0.1
+# Usage: ./scripts/release.sh 0.2.0
+#        ./scripts/release.sh v0.2.0
 
 set -euo pipefail
 
 if [ $# -eq 0 ]; then
-  echo "Usage: $0 <version> (e.g. 1.0.1 or v1.0.1)"
+  echo "Usage: $0 <version> (e.g. 0.2.0 or v0.2.0)"
   exit 1
 fi
 

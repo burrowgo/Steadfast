@@ -16,7 +16,7 @@ android {
 
     val vName = providers.environmentVariable("VERSION_NAME")
         .orElse(providers.gradleProperty("versionName"))
-        .getOrElse("1.1.0")
+        .getOrElse("0.2.0")
 
     defaultConfig {
         applicationId = "com.example.steadfast"

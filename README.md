@@ -72,19 +72,19 @@ Releases are triggered automatically by pushing any semantic version tag:
 
 ```bash
 # Option A: Using the release helper script (verifies, tests, tags, and pushes)
-./scripts/release.sh 1.0.1
+./scripts/release.sh 0.2.0
 
 # Option B: Using standard git commands
-git tag -a v1.0.1 -m "Release v1.0.1"
-git push origin v1.0.1
+git tag -a v0.2.0 -m "Release v0.2.0"
+git push origin v0.2.0
 ```
 
-Or manually triggered in GitHub Actions UI: **Actions → Release → Run workflow** (enter version name, e.g. `1.0.1`).
+Or manually triggered in GitHub Actions UI: **Actions → Release → Run workflow** (enter version name, e.g. `0.2.0`).
 
 **What the pipeline produces on each release:**
-- `steadfast-v1.0.1-release.apk`: Production-ready, R8-minified, and resource-shrunk APK for end-user installation.
-- `steadfast-v1.0.1-debug.apk`: Debug APK with logging and developer inspection enabled.
-- `steadfast-v1.0.1-release.aab`: Android App Bundle for Google Play distribution.
+- `steadfast-v0.2.0-release.apk`: Production-ready, R8-minified, and resource-shrunk APK for end-user installation.
+- `steadfast-v0.2.0-debug.apk`: Debug APK with logging and developer inspection enabled.
+- `steadfast-v0.2.0-release.aab`: Android App Bundle for Google Play distribution.
 - `checksums.txt` and `.sha256`: SHA-256 cryptographic verification checksums.
 - Automatic GitHub Release notes with commit changelog.
 

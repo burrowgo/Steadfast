@@ -480,9 +480,9 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     val versionName = try {
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.1.0"
+                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
                     } catch (e: Exception) {
-                        "1.1.0"
+                        "0.2.0"
                     }
                     Text(
                         text = stringResource(R.string.settings_version, versionName),
