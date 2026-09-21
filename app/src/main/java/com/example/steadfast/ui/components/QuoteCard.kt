@@ -1,0 +1,84 @@
+package com.example.steadfast.ui.components
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.example.steadfast.R
+import com.example.steadfast.ui.theme.CardShape
+
+data class QuoteDisplay(
+    val text: String,
+    val author: String? = null
+)
+
+@Composable
+fun QuoteCard(
+    quote: QuoteDisplay?,
+    onNextQuote: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (quote == null) return
+
+    val cd = stringResource(R.string.cd_quote_card)
+
+    Card(
+        shape = CardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onNextQuote)
+            .semantics { contentDescription = cd }
+    ) {
+        AnimatedContent(
+            targetState = quote,
+            transitionSpec = {
+                fadeIn(animationSpec = tween(400)).togetherWith(fadeOut(animationSpec = tween(400)))
+            },
+            label = "quoteFade"
+        ) { q ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
+            ) {
+                Text(
+                    text = "“${q.text}”",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontStyle = FontStyle.Italic
+                )
+                if (!q.author.isNullOrBlank()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "— ${q.author}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.outline,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+    }
+}

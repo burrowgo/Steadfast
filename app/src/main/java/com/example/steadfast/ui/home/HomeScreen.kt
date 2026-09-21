@@ -1,21 +1,286 @@
 package com.example.steadfast.ui.home
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.steadfast.R
+import com.example.steadfast.SteadfastApp
+import com.example.steadfast.ui.components.DayCounter
+import com.example.steadfast.ui.components.EmptyState
+import com.example.steadfast.ui.components.QuoteCard
+import com.example.steadfast.ui.components.QuoteDisplay
+import com.example.steadfast.ui.components.RankBadge
+import com.example.steadfast.ui.components.RankUpDialog
+import com.example.steadfast.ui.components.ResetSheet
+import com.example.steadfast.ui.theme.LocalRankColors
+import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    val context = LocalContext.current.applicationContext as SteadfastApp
+    val container = context.container
+    val viewModel: HomeViewModel = viewModel(
+        factory = HomeViewModel.provideFactory(
+            streakRepository = container.streakRepository,
+            settingsRepository = container.settingsRepository,
+            clock = container.clock
+        )
+    )
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val resetSnackbarMsg = stringResource(R.string.reset_snackbar_message)
+    val undoMsg = stringResource(R.string.reset_snackbar_undo)
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collectLatest { event ->
+            when (event) {
+                is HomeEvent.ShowResetSuccessSnackbar -> {
+                    val result = snackbarHostState.showSnackbar(
+                        message = resetSnackbarMsg,
+                        actionLabel = undoMsg,
+                        duration = SnackbarDuration.Long
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        viewModel.undoReset()
+                    }
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            if (uiState is HomeUiState.Active) {
+                val active = uiState as HomeUiState.Active
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = active.habitName,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = onNavigateToSettings) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_settings),
+                                contentDescription = stringResource(R.string.action_settings)
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+            }
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (val state = uiState) {
+                is HomeUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                is HomeUiState.FirstRun -> {
+                    EmptyState(
+                        onStartHabit = { name -> viewModel.startHabit(name) }
+                    )
+                }
+
+                is HomeUiState.Active -> {
+                    ActiveHomeContent(
+                        state = state,
+                        onOpenResetSheet = { viewModel.openResetSheet() }
+                    )
+
+                    if (state.isResetSheetOpen) {
+                        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                        ResetSheet(
+                            sheetState = sheetState,
+                            days = state.days,
+                            currentRank = state.rankProgress.currentRank,
+                            onConfirmReset = { reason -> viewModel.confirmReset(reason) },
+                            onDismiss = { viewModel.closeResetSheet() }
+                        )
+                    }
+
+                    if (state.rankUpToCelebrate != null) {
+                        RankUpDialog(
+                            rank = state.rankUpToCelebrate,
+                            onDismiss = { viewModel.dismissCelebration() }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActiveHomeContent(
+    state: HomeUiState.Active,
+    onOpenResetSheet: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp)
+            .verticalScroll(scrollState),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text("Home Screen")
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 1. Day Counter Hero
+            DayCounter(
+                days = state.days,
+                progressToNext = state.rankProgress.progressToNext
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // 2. Rank Row
+            val currentRank = state.rankProgress.currentRank
+            val nextRank = state.rankProgress.nextRank
+            val rankSubtitle = if (nextRank != null) {
+                stringResource(
+                    R.string.days_to_next_rank,
+                    state.rankProgress.daysToNextRank,
+                    stringResource(nextRank.nameRes)
+                )
+            } else {
+                stringResource(R.string.highest_rank_reached)
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                RankBadge(
+                    rank = currentRank,
+                    size = 40.dp,
+                    tint = LocalRankColors.current.accent
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = stringResource(currentRank.nameRes),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = rankSubtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // 3. Reset Button (Tonal, unobtrusive)
+            OutlinedButton(
+                onClick = onOpenResetSheet,
+                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                ),
+                border = androidx.compose.foundation.BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                )
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_nav_history),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.reset_button),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+
+        // 4. Quote Card at bottom
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp, top = 24.dp)
+        ) {
+            QuoteCard(
+                quote = QuoteDisplay(
+                    text = "Small days stack into big streaks.",
+                    author = null
+                ),
+                onNextQuote = {}
+            )
+        }
     }
 }
