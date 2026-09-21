@@ -34,46 +34,61 @@ import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.example.steadfast.MainActivity
 import com.example.steadfast.R
 import com.example.steadfast.data.db.AppDatabase
+import com.example.steadfast.data.db.StreakEntity
+import com.example.steadfast.data.prefs.SettingsRepository
+import com.example.steadfast.data.prefs.WidgetShape
+import com.example.steadfast.data.prefs.dataStore
 import com.example.steadfast.domain.RankLadder
 import com.example.steadfast.domain.StreakCalculator
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
-class SteadfastWidget : GlanceAppWidget() {
+open class SteadfastWidget(
+    private val forceCircle: Boolean = false
+) : GlanceAppWidget() {
 
     companion object {
-        val SMALL_SIZE = DpSize(100.dp, 100.dp)
-        val WIDE_SIZE = DpSize(220.dp, 100.dp)
+        val TINY_SIZE = DpSize(50.dp, 50.dp) // 1x1
+        val SMALL_SIZE = DpSize(100.dp, 90.dp) // 2x2
+        val WIDE_SIZE = DpSize(200.dp, 90.dp) // 4x2
     }
 
-    override val sizeMode: SizeMode = SizeMode.Responsive(setOf(SMALL_SIZE, WIDE_SIZE))
+    override val sizeMode: SizeMode = SizeMode.Responsive(setOf(TINY_SIZE, SMALL_SIZE, WIDE_SIZE))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val database = AppDatabase.getInstance(context)
         val active = database.streakDao().getActiveStreak()
+        val settings = SettingsRepository(context.dataStore).settingsFlow.first()
+        val isCircle = forceCircle || (settings.widgetShape == WidgetShape.CIRCLE)
 
         provideContent {
             GlanceTheme {
-                WidgetRoot(activeStreak = active)
+                WidgetRoot(activeStreak = active, isCircle = isCircle)
             }
         }
     }
 
     @Composable
-    private fun WidgetRoot(activeStreak: com.example.steadfast.data.db.StreakEntity?) {
+    private fun WidgetRoot(activeStreak: StreakEntity?, isCircle: Boolean) {
         val context = LocalContext.current
         val size = LocalSize.current
-        val isWide = size.width >= 200.dp
+        val isTiny = size.width < 100.dp || size.height < 80.dp
+        val isWide = size.width >= 190.dp
+
+        val cornerRadius = if (isCircle) 500.dp else 24.dp
+        val padding = if (isTiny) 6.dp else 12.dp
 
         val backgroundModifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
             .background(GlanceTheme.colors.surface)
-            .cornerRadius(24.dp)
-            .padding(14.dp)
+            .cornerRadius(cornerRadius)
+            .padding(padding)
             .clickable(actionStartActivity<MainActivity>())
 
         if (activeStreak == null) {
@@ -88,23 +103,37 @@ class SteadfastWidget : GlanceAppWidget() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = context.getString(R.string.app_name),
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onSurface,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                    if (isTiny) {
+                        Text(
+                            text = context.getString(R.string.start_habit_button),
+                            style = TextStyle(
+                                color = GlanceTheme.colors.primary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
                         )
-                    )
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Text(
-                        text = context.getString(R.string.widget_tap_to_start),
-                        style = TextStyle(
-                            color = GlanceTheme.colors.primary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
+                    } else {
+                        Text(
+                            text = context.getString(R.string.app_name),
+                            style = TextStyle(
+                                color = GlanceTheme.colors.onSurface,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
                         )
-                    )
+                        Spacer(modifier = GlanceModifier.height(4.dp))
+                        Text(
+                            text = context.getString(R.string.widget_tap_to_start),
+                            style = TextStyle(
+                                color = GlanceTheme.colors.primary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = TextAlign.Center
+                            )
+                        )
+                    }
                 }
             }
         } else {
@@ -118,22 +147,62 @@ class SteadfastWidget : GlanceAppWidget() {
             Box(
                 modifier = backgroundModifier.semantics { contentDescription = talkBackDesc }
             ) {
-                if (isWide) {
-                    WideWidgetContent(
-                        habitName = activeStreak.habitName,
-                        days = days,
-                        rankName = rankName,
-                        nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
-                        daysToNext = rankProgress.daysToNextRank,
-                        progressToNext = rankProgress.progressToNext
-                    )
-                } else {
-                    SmallWidgetContent(
-                        habitName = activeStreak.habitName,
-                        days = days
-                    )
+                when {
+                    isTiny -> {
+                        TinyWidgetContent(days = days)
+                    }
+                    isWide -> {
+                        WideWidgetContent(
+                            habitName = activeStreak.habitName,
+                            days = days,
+                            rankName = rankName,
+                            nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
+                            daysToNext = rankProgress.daysToNextRank,
+                            progressToNext = rankProgress.progressToNext
+                        )
+                    }
+                    else -> {
+                        SmallWidgetContent(
+                            habitName = activeStreak.habitName,
+                            days = days
+                        )
+                    }
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun TinyWidgetContent(days: Int) {
+        val context = LocalContext.current
+        Column(
+            modifier = GlanceModifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val fontSize = when {
+                days >= 1000 -> 20.sp
+                days >= 100 -> 24.sp
+                else -> 28.sp
+            }
+            Text(
+                text = days.toString(),
+                style = TextStyle(
+                    color = GlanceTheme.colors.onSurface,
+                    fontSize = fontSize,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            )
+            Text(
+                text = context.getString(R.string.days_label).uppercase(),
+                style = TextStyle(
+                    color = GlanceTheme.colors.primary,
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            )
         }
     }
 
@@ -154,15 +223,17 @@ class SteadfastWidget : GlanceAppWidget() {
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurfaceVariant,
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center
                 )
             )
             Text(
                 text = days.toString(),
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurface,
-                    fontSize = if (days >= 1000) 36.sp else 46.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = if (days >= 1000) 36.sp else 44.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
             )
             Text(
@@ -170,7 +241,8 @@ class SteadfastWidget : GlanceAppWidget() {
                 style = TextStyle(
                     color = GlanceTheme.colors.primary,
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
                 )
             )
         }
@@ -202,15 +274,17 @@ class SteadfastWidget : GlanceAppWidget() {
                     style = TextStyle(
                         color = GlanceTheme.colors.onSurfaceVariant,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
                     )
                 )
                 Text(
                     text = days.toString(),
                     style = TextStyle(
                         color = GlanceTheme.colors.onSurface,
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = if (days >= 1000) 32.sp else 38.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
                     )
                 )
                 Text(
@@ -218,7 +292,8 @@ class SteadfastWidget : GlanceAppWidget() {
                     style = TextStyle(
                         color = GlanceTheme.colors.primary,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
                     )
                 )
             }
@@ -233,9 +308,10 @@ class SteadfastWidget : GlanceAppWidget() {
             ) {
                 Text(
                     text = rankName,
+                    maxLines = 1,
                     style = TextStyle(
                         color = GlanceTheme.colors.onSurface,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )

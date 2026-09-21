@@ -16,7 +16,12 @@ object WidgetUpdater {
         try {
             SteadfastWidget().updateAll(context)
         } catch (e: Exception) {
-            // In case widget is not yet placed
+            // In case standard widget is not yet placed
+        }
+        try {
+            SteadfastCircleWidget().updateAll(context)
+        } catch (e: Exception) {
+            // In case circle widget is not yet placed
         }
     }
 

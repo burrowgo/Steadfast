@@ -53,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
 import com.example.steadfast.data.prefs.ThemeMode
+import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.ui.theme.CardShape
 import java.io.InputStreamReader
 
@@ -77,6 +78,7 @@ fun SettingsScreen(
 
     var showRenameDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showWidgetShapeDialog by remember { mutableStateOf(false) }
     var showEraseDialog by remember { mutableStateOf(false) }
     var showLicensesDialog by remember { mutableStateOf(false) }
 
@@ -187,6 +189,31 @@ fun SettingsScreen(
                             }
                             Text(
                                 text = themeName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    // Widget Shape Row
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { showWidgetShapeDialog = true },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.settings_widget_shape),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            val shapeName = when (uiState.widgetShape) {
+                                WidgetShape.ROUNDED -> stringResource(R.string.widget_shape_rounded)
+                                WidgetShape.CIRCLE -> stringResource(R.string.widget_shape_circle)
+                            }
+                            Text(
+                                text = shapeName,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -388,6 +415,18 @@ fun SettingsScreen(
             )
         }
 
+        // Widget Shape Dialog
+        if (showWidgetShapeDialog) {
+            WidgetShapeSelectionDialog(
+                currentShape = uiState.widgetShape,
+                onSelectShape = {
+                    viewModel.setWidgetShape(it)
+                    showWidgetShapeDialog = false
+                },
+                onDismiss = { showWidgetShapeDialog = false }
+            )
+        }
+
         // Erase Confirmation Dialog
         if (showEraseDialog) {
             AlertDialog(
@@ -497,6 +536,49 @@ private fun ThemeSelectionDialog(
                         RadioButton(
                             selected = currentTheme == mode,
                             onClick = { onSelectTheme(mode) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(nameRes))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.edit_reason_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun WidgetShapeSelectionDialog(
+    currentShape: WidgetShape,
+    onSelectShape: (WidgetShape) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val shapes = listOf(
+        WidgetShape.ROUNDED to R.string.widget_shape_rounded,
+        WidgetShape.CIRCLE to R.string.widget_shape_circle
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_widget_shape)) },
+        text = {
+            Column {
+                shapes.forEach { (shape, nameRes) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectShape(shape) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentShape == shape,
+                            onClick = { onSelectShape(shape) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(nameRes))

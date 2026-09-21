@@ -21,3 +21,8 @@ This file records architecture and tooling choices not explicitly settled by `AG
 ## 5. Midnight Worker Grace Buffer
 - **Decision:** Scheduled `MidnightUpdateWorker` for 00:01 local time (1 minute after midnight) instead of 00:00:00.
 - **Rationale:** Ensures device clock and time zone transitions have settled past midnight before recalculating day counts.
+
+## 6. Widget Shapes and 1×1 Size Support
+- **Decision:** Added a 1×1 (`TINY_SIZE`, 50×50dp) responsive size bucket to `SteadfastWidget`, added a user-selectable `WidgetShape` (Rounded Rectangle vs. Circle) in Settings, and provided a dedicated `SteadfastCircleWidget` provider so circular widgets can also be placed directly from the launcher widget picker.
+- **Rationale:** Gives users flexibility to customize home-screen aesthetics between rounded square cards and circular dials across 1×1, 2×2, and 4×2 sizes while keeping the codebase unified via an inherited Glance widget implementation.
+

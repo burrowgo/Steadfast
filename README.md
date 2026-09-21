@@ -10,9 +10,9 @@
 - **Kind, Non-Shaming Resets:** Every reset is logged with an optional reason and suggestion chips. Undo is available via snackbar. A reset starts a new run immediately at day 0.
 - **Army Ranks Ladder:** 20 data-driven ranks from Recruit to General of the Army based on streak length. Badge art is drawn geometrically in Compose. Shows progress to next rank and preserves the all-time highest rank achieved.
 - **Motivational Quotes:** Deterministic daily quote selection from an offline pool of 60+ curated original quotes. Automatically switches to a "comeback" pool for 24 hours following a reset.
-- **Glance Home-Screen Widget:** Responsive (2×2 small counter and 4×2 wide counter with rank progress) with dynamic color support (Android 12+) and brand fallback.
+- **Glance Home-Screen Widget:** Highly customizable and responsive across 1×1 (compact mini-counter), 2×2 (standard counter), and 4×2 (wide counter with rank progress). Supports both **Rounded Rectangle** and **Circular** shapes, selectable via in-app Settings or directly from the launcher widget picker. Fully supports dynamic color (Android 12+) with brand fallback.
 - **Privacy First:** No accounts, no analytics, no ads, no cloud sync, and **no `INTERNET` permission**. Full Android Auto Backup for local Room database and DataStore settings.
-- **Customizable:** System/Light/Dark theme, dynamic wallpaper colors toggle, optional gentle evening check-in notification, and CSV export.
+- **Customizable:** System/Light/Dark theme, rounded/circular widget shape, dynamic wallpaper colors toggle, optional gentle evening check-in notification, and CSV export.
 
 ---
 

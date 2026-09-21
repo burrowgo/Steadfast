@@ -4,7 +4,9 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <application xmlns:tools="http://schemas.android.com/tools" tools:targetApi="33"
+    <application
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:targetApi="33"
         android:name=".SteadfastApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -34,6 +36,17 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/steadfast_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SteadfastCircleWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/steadfast_circle_widget_info" />
         </receiver>
 
         <receiver

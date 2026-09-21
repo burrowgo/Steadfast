@@ -8,6 +8,7 @@ import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.UserSettings
+import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.notifications.NotificationHelper
 import com.example.steadfast.widget.WidgetUpdater
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +25,8 @@ data class SettingsUiState(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val useDynamicColor: Boolean = true,
     val reminderEnabled: Boolean = false,
-    val reminderTime: String = "20:00"
+    val reminderTime: String = "20:00",
+    val widgetShape: WidgetShape = WidgetShape.ROUNDED
 )
 
 class SettingsViewModel(
@@ -44,7 +46,8 @@ class SettingsViewModel(
             themeMode = settings.themeMode,
             useDynamicColor = settings.useDynamicColor,
             reminderEnabled = settings.reminderEnabled,
-            reminderTime = settings.reminderTime
+            reminderTime = settings.reminderTime,
+            widgetShape = settings.widgetShape
         )
     }.stateIn(
         scope = viewModelScope,
@@ -72,6 +75,13 @@ class SettingsViewModel(
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setDynamicColor(enabled)
+        }
+    }
+
+    fun setWidgetShape(shape: WidgetShape) {
+        viewModelScope.launch {
+            settingsRepository.setWidgetShape(shape)
+            WidgetUpdater.updateAll(context)
         }
     }
 

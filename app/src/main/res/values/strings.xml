@@ -128,4 +128,11 @@
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
     </plurals>
+
+
+    <!-- Widget Shape & Options -->
+    <string name="settings_widget_shape">Widget shape</string>
+    <string name="widget_shape_rounded">Rounded rectangle</string>
+    <string name="widget_shape_circle">Circular</string>
+    <string name="widget_circle_description">Steadfast circular streak counter badge</string>
 </resources>

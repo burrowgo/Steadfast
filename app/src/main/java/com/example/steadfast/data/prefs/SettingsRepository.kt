@@ -27,13 +27,26 @@ enum class ThemeMode {
     }
 }
 
+enum class WidgetShape {
+    ROUNDED,
+    CIRCLE;
+
+    companion object {
+        fun fromString(value: String?): WidgetShape = when (value?.lowercase()) {
+            "circle" -> CIRCLE
+            else -> ROUNDED
+        }
+    }
+}
+
 data class UserSettings(
     val habitName: String = "",
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val useDynamicColor: Boolean = true,
     val reminderEnabled: Boolean = false,
     val reminderTime: String = "20:00",
-    val lastCelebratedRankIndex: Int = 0
+    val lastCelebratedRankIndex: Int = 0,
+    val widgetShape: WidgetShape = WidgetShape.ROUNDED
 )
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -45,6 +58,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
         val KEY_REMINDER_TIME = stringPreferencesKey("reminder_time")
         val KEY_LAST_CELEBRATED_RANK = intPreferencesKey("last_celebrated_rank_index")
+        val KEY_WIDGET_SHAPE = stringPreferencesKey("widget_shape")
     }
 
     val settingsFlow: Flow<UserSettings> = dataStore.data.map { preferences ->
@@ -54,7 +68,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             useDynamicColor = preferences[KEY_DYNAMIC_COLOR] ?: true,
             reminderEnabled = preferences[KEY_REMINDER_ENABLED] ?: false,
             reminderTime = preferences[KEY_REMINDER_TIME] ?: "20:00",
-            lastCelebratedRankIndex = preferences[KEY_LAST_CELEBRATED_RANK] ?: 0
+            lastCelebratedRankIndex = preferences[KEY_LAST_CELEBRATED_RANK] ?: 0,
+            widgetShape = WidgetShape.fromString(preferences[KEY_WIDGET_SHAPE])
         )
     }
 
@@ -91,6 +106,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setLastCelebratedRankIndex(index: Int) {
         dataStore.edit { preferences ->
             preferences[KEY_LAST_CELEBRATED_RANK] = index
+        }
+    }
+
+    suspend fun setWidgetShape(shape: WidgetShape) {
+        dataStore.edit { preferences ->
+            preferences[KEY_WIDGET_SHAPE] = shape.name.lowercase()
         }
     }
 
