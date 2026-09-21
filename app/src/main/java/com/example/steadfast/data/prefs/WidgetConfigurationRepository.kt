@@ -18,11 +18,15 @@ class WidgetConfigurationRepository(context: Context) {
     }
 
     fun setHabitIdForWidget(appWidgetId: Int, habitId: Long) {
-        prefs.edit().putLong(keyFor(appWidgetId), habitId).apply()
+        prefs.edit().putLong(keyFor(appWidgetId), habitId).commit()
     }
 
     fun removeWidget(appWidgetId: Int) {
-        prefs.edit().remove(keyFor(appWidgetId)).apply()
+        prefs.edit().remove(keyFor(appWidgetId)).commit()
+    }
+
+    fun clearAll() {
+        prefs.edit().clear().commit()
     }
 
     private fun keyFor(appWidgetId: Int): String = "widget_habit_$appWidgetId"

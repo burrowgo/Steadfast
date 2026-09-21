@@ -9,6 +9,16 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.8.0-alpha.3",
+            title = "What’s New in v0.8.0-alpha.3",
+            highlights = listOf(
+                "Independent Multi-Habit Widgets: Each home-screen widget now correctly displays its selected habit with independent streak tracking.",
+                "Direct Widget Navigation: Tapping any widget opens directly into that habit's detail view.",
+                "Full Habit Management in Settings: View, edit (name, icon, color, start date), and add all habits directly from Settings.",
+                "Backup Import & Lifecycle Polish: Multi-habit CSV restore with database integrity and automatic cleanup for removed widgets."
+            )
+        ),
+        ChangelogRelease(
             version = "0.8.0-alpha.2",
             title = "What’s New in v0.8.0-alpha.2",
             highlights = listOf(

@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -65,6 +66,13 @@ import com.example.steadfast.data.prefs.FirstDayOfWeek
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.data.updater.UpdateCheckResult
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import com.example.steadfast.domain.model.HabitVisuals
+import com.example.steadfast.domain.model.HabitWithStreak
+import com.example.steadfast.ui.components.AddEditHabitDialog
 import com.example.steadfast.ui.components.UpdateAvailableDialog
 import com.example.steadfast.ui.components.WhatsNewDialog
 import com.example.steadfast.ui.theme.CardShape
@@ -88,12 +96,15 @@ fun SettingsScreen(
             settingsRepository = container.settingsRepository,
             habitRepository = container.habitRepository,
             context = context,
-            updateChecker = container.updateChecker
+            updateChecker = container.updateChecker,
+            widgetConfigurationRepository = container.widgetConfigurationRepository
         )
     )
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    var editingHabit by remember { mutableStateOf<HabitWithStreak?>(null) }
+    var showAddHabitDialog by remember { mutableStateOf(false) }
     var showRenameDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showWidgetShapeDialog by remember { mutableStateOf(false) }
@@ -177,89 +188,49 @@ fun SettingsScreen(
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Habit Section
-            if (uiState.activeHabitExists) {
-                SettingsSectionHeader(stringResource(R.string.settings_section_habit))
-                Card(
-                    shape = CardShape,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { showRenameDialog = true },
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.settings_habit_name),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = uiState.habitName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+            // Habits Section
+            SettingsSectionHeader(stringResource(R.string.settings_section_habit))
+            Card(
+                shape = CardShape,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    if (uiState.habits.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.habit_empty_title),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        uiState.habits.forEachIndexed { index, habitItem ->
+                            if (index > 0) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                             }
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_edit),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.outline
+                            HabitSettingsRow(
+                                habitItem = habitItem,
+                                onEdit = { editingHabit = habitItem }
                             )
                         }
+                    }
 
-                        if (uiState.activeStartDate != null) {
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-                            val currentStartDate = uiState.activeStartDate!!
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        DatePickerDialog(
-                                            context,
-                                            { _, year, month, dayOfMonth ->
-                                                val selected = LocalDate.of(year, month + 1, dayOfMonth)
-                                                if (!selected.isAfter(LocalDate.now())) {
-                                                    viewModel.updateStartDate(selected)
-                                                }
-                                            },
-                                            currentStartDate.year,
-                                            currentStartDate.monthValue - 1,
-                                            currentStartDate.dayOfMonth
-                                        ).apply {
-                                            datePicker.maxDate = System.currentTimeMillis()
-                                        }.show()
-                                    },
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = stringResource(R.string.settings_start_date),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Text(
-                                        text = currentStartDate.toString(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_edit),
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.outline
-                                )
-                            }
-                        }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedButton(
+                        onClick = { showAddHabitDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_add),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.add_habit_button))
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
             }
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Appearance Section
             SettingsSectionHeader(stringResource(R.string.settings_section_appearance))
@@ -643,6 +614,46 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(28.dp))
+        }
+
+        // Edit Habit Dialog
+        if (editingHabit != null) {
+            val item = editingHabit!!
+            AddEditHabitDialog(
+                onDismiss = { editingHabit = null },
+                onConfirm = { name, icon, color, startDate ->
+                    viewModel.updateHabit(
+                        id = item.habit.id,
+                        newName = name,
+                        icon = icon,
+                        color = color,
+                        startDate = startDate
+                    )
+                    editingHabit = null
+                },
+                initialName = item.habit.name,
+                initialIcon = item.habit.icon,
+                initialColor = item.habit.color,
+                initialStartDate = item.activeStreak?.startDate?.let { LocalDate.ofEpochDay(it) } ?: LocalDate.now(),
+                isEditing = true
+            )
+        }
+
+        // Add Habit Dialog
+        if (showAddHabitDialog) {
+            AddEditHabitDialog(
+                onDismiss = { showAddHabitDialog = false },
+                onConfirm = { name, icon, color, startDate ->
+                    viewModel.createHabit(
+                        name = name,
+                        icon = icon,
+                        color = color,
+                        startDate = startDate
+                    )
+                    showAddHabitDialog = false
+                },
+                isEditing = false
+            )
         }
 
         // Rename Dialog
@@ -1065,4 +1076,72 @@ private fun LicensesDialog(
             }
         }
     )
+}
+
+@Composable
+private fun HabitSettingsRow(
+    habitItem: HabitWithStreak,
+    onEdit: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val habit = habitItem.habit
+    val streakDays = habitItem.currentStreakDays
+    val iconRes = HabitVisuals.getIconResource(habit.icon)
+    val color = Color(habit.color)
+    val startDateStr = habitItem.activeStreak?.let { LocalDate.ofEpochDay(it.startDate).toString() }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onEdit),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = 0.15f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = habit.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                val subtitle = buildString {
+                    append("$streakDays ")
+                    append(if (streakDays == 1) "day" else "days")
+                    if (startDateStr != null) {
+                        append(" • Started $startDateStr")
+                    }
+                }
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        IconButton(onClick = onEdit) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_edit),
+                contentDescription = stringResource(R.string.edit_habit_title),
+                tint = MaterialTheme.colorScheme.outline
+            )
+        }
+    }
 }

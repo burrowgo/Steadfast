@@ -90,8 +90,10 @@ fun WidgetSettingsScreen(
         factory = SettingsViewModel.provideFactory(
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
+            habitRepository = container.habitRepository,
             context = context,
-            updateChecker = container.updateChecker
+            updateChecker = container.updateChecker,
+            widgetConfigurationRepository = container.widgetConfigurationRepository
         )
     )
 

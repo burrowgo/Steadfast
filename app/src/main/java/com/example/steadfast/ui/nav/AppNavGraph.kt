@@ -60,10 +60,24 @@ val bottomNavItems = listOf(
 
 @Composable
 fun MainApp(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    initialHabitId: Long? = null,
+    onHabitHandled: () -> Unit = {}
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    androidx.compose.runtime.LaunchedEffect(initialHabitId) {
+        if (initialHabitId != null && initialHabitId > 0) {
+            navController.navigate(Screen.HabitDetail.createRoute(initialHabitId)) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+            }
+            onHabitHandled()
+        }
+    }
 
     val isTopLevelDestination = bottomNavItems.any { it.screen.route == currentRoute }
 

@@ -1,17 +1,20 @@
 package com.example.steadfast.widget
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
-import androidx.glance.action.actionStartActivity
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
@@ -20,6 +23,8 @@ import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.getAppWidgetState
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -34,6 +39,8 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.width
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
+import androidx.glance.state.GlanceStateDefinition
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
@@ -67,15 +74,31 @@ open class SteadfastWidget(
 ) : GlanceAppWidget() {
 
     companion object {
+        val KEY_HABIT_ID = longPreferencesKey("widget_habit_id")
+        const val EXTRA_HABIT_ID = "com.example.steadfast.extra.HABIT_ID"
         val TINY_SIZE = DpSize(40.dp, 40.dp) // 1x1
         val WIDE_SHORT_SIZE = DpSize(180.dp, 40.dp) // 4x1, 3x1
         val SMALL_SIZE = DpSize(100.dp, 75.dp) // 2x2
         val WIDE_SIZE = DpSize(180.dp, 75.dp) // 4x2
     }
 
+    override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
+
     override val sizeMode: SizeMode = SizeMode.Responsive(
         setOf(TINY_SIZE, WIDE_SHORT_SIZE, SMALL_SIZE, WIDE_SIZE)
     )
+
+    override suspend fun onDelete(context: Context, id: GlanceId) {
+        super.onDelete(context, id)
+        val appWidgetId = try {
+            GlanceAppWidgetManager(context).getAppWidgetId(id)
+        } catch (e: Exception) {
+            -1
+        }
+        if (appWidgetId > 0) {
+            WidgetConfigurationRepository(context).removeWidget(appWidgetId)
+        }
+    }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val database = AppDatabase.getInstance(context)
@@ -85,8 +108,39 @@ open class SteadfastWidget(
             -1
         }
 
+        val glancePrefs = try {
+            getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
+        } catch (e: Exception) {
+            null
+        }
+
+        val stateHabitId = glancePrefs?.get(KEY_HABIT_ID)
         val widgetConfigRepo = WidgetConfigurationRepository(context)
-        val configuredHabitId = if (appWidgetId > 0) widgetConfigRepo.getHabitIdForWidget(appWidgetId) else null
+        val repoHabitId = if (appWidgetId > 0) widgetConfigRepo.getHabitIdForWidget(appWidgetId) else null
+
+        val configuredHabitId = repoHabitId ?: stateHabitId
+
+        if (repoHabitId != null && stateHabitId != repoHabitId) {
+            try {
+                updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { prefs ->
+                    prefs.toMutablePreferences().apply {
+                        this[KEY_HABIT_ID] = repoHabitId
+                    }
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        } else if (repoHabitId == null && stateHabitId != null) {
+            try {
+                updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { prefs ->
+                    prefs.toMutablePreferences().apply {
+                        remove(KEY_HABIT_ID)
+                    }
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
 
         val (habit, active) = if (configuredHabitId != null) {
             val h = database.habitDao().getHabitById(configuredHabitId)
@@ -99,14 +153,11 @@ open class SteadfastWidget(
         } else {
             val firstH = database.habitDao().getActiveHabits().firstOrNull()
             val s = firstH?.let { database.streakDao().getActiveStreak(it.id) } ?: database.streakDao().getActiveStreak()
-            if (appWidgetId > 0 && firstH != null) {
-                widgetConfigRepo.setHabitIdForWidget(appWidgetId, firstH.id)
-            }
             Pair(firstH, s)
         }
 
         val resolvedStreak = if (habit != null && active != null && habit.name.isNotBlank()) {
-            active.copy(habitName = habit.name)
+            active.copy(habitName = habit.name, habitId = habit.id)
         } else {
             active
         }
@@ -223,13 +274,22 @@ open class SteadfastWidget(
 
         val colors = resolveWidgetColors(opacity = opacity, fontColor = fontColor, bgTheme = bgTheme)
 
+        val clickIntent = Intent(context, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            val habitId = activeStreak?.habitId ?: -1L
+            if (habitId > 0) {
+                putExtra(EXTRA_HABIT_ID, habitId)
+            }
+        }
+
         val backgroundModifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
             .background(colors.background)
             .cornerRadius(cornerRadius)
             .padding(padding)
-            .clickable(actionStartActivity<MainActivity>())
+            .clickable(actionStartActivity(clickIntent))
 
         if (activeStreak == null) {
             // Empty state

@@ -245,6 +245,7 @@
     <string name="habit_empty_title">Build Steadfast Habits</string>
     <string name="habit_empty_subtitle">Track your daily consistency, earn military ranks, and build unbreakable habits. Tap below to begin.</string>
     <string name="habit_empty_button">Add Habit</string>
+    <string name="add_habit_button">Add Habit</string>
     <string name="habit_tab_active">Active</string>
     <string name="habit_tab_archived">Archived</string>
     <string name="habit_all_habits">All Habits</string>

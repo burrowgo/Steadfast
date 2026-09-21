@@ -35,6 +35,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
 import com.example.steadfast.data.prefs.ThemeMode
@@ -110,7 +114,21 @@ class WidgetConfigureActivity : ComponentActivity() {
                         habits = habitsWithStreaks,
                         onHabitSelected = { item ->
                             container.widgetConfigurationRepository.setHabitIdForWidget(appWidgetId, item.habit.id)
-                            scope.launch {
+                            lifecycleScope.launch {
+                                try {
+                                    val manager = GlanceAppWidgetManager(this@WidgetConfigureActivity)
+                                    val glanceId = manager.getGlanceIdBy(appWidgetId)
+                                    updateAppWidgetState(this@WidgetConfigureActivity, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                                        prefs.toMutablePreferences().apply {
+                                            this[SteadfastWidget.KEY_HABIT_ID] = item.habit.id
+                                        }
+                                    }
+                                    SteadfastWidget().update(this@WidgetConfigureActivity, glanceId)
+                                    SteadfastCircleWidget().update(this@WidgetConfigureActivity, glanceId)
+                                } catch (e: Exception) {
+                                    // Widget ID might not be mapped yet by launcher
+                                }
+
                                 WidgetUpdater.updateAll(this@WidgetConfigureActivity)
                                 val resultValue = Intent().apply {
                                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)

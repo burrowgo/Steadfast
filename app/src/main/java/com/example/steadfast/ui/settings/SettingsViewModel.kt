@@ -22,10 +22,13 @@ import com.example.steadfast.domain.ChangelogRepository
 import com.example.steadfast.R
 import com.example.steadfast.notifications.NotificationHelper
 import com.example.steadfast.widget.WidgetUpdater
+import com.example.steadfast.data.prefs.WidgetConfigurationRepository
+import com.example.steadfast.domain.model.HabitWithStreak
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.InputStream
@@ -33,6 +36,7 @@ import java.io.OutputStream
 import java.time.LocalDate
 
 data class SettingsUiState(
+    val habits: List<HabitWithStreak> = emptyList(),
     val habitName: String = "",
     val activeHabitExists: Boolean = false,
     val activeStartDate: LocalDate? = null,
@@ -58,25 +62,46 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val context: Context,
     private val habitRepository: com.example.steadfast.data.HabitRepository? = null,
-    private val updateChecker: UpdateChecker = DefaultUpdateChecker()
+    private val updateChecker: UpdateChecker = DefaultUpdateChecker(),
+    private val widgetConfigurationRepository: WidgetConfigurationRepository? = null,
+    coroutineScope: kotlinx.coroutines.CoroutineScope? = null,
+    sharingStarted: SharingStarted = SharingStarted.WhileSubscribed(5000)
 ) : ViewModel() {
+
+    private val scope = coroutineScope ?: viewModelScope
+
+    private data class UpdateState(
+        val checking: Boolean = false,
+        val result: UpdateCheckResult? = null,
+        val whatsNew: ChangelogRelease? = null
+    )
 
     private val isCheckingForUpdate = MutableStateFlow(false)
     private val updateResult = MutableStateFlow<UpdateCheckResult?>(null)
     private val showWhatsNew = MutableStateFlow<ChangelogRelease?>(null)
 
-    val uiState: StateFlow<SettingsUiState> = combine(
-        settingsRepository.settingsFlow,
-        streakRepository.activeStreak,
+    private val updateStateFlow = combine(
         isCheckingForUpdate,
         updateResult,
         showWhatsNew
-    ) { settings, active, checking, updateRes, whatsNew ->
-        val effectiveName = active?.habitName ?: settings.habitName
-        val startDate = active?.let { LocalDate.ofEpochDay(it.startDate) }
+    ) { checking, result, whatsNew ->
+        UpdateState(checking, result, whatsNew)
+    }
+
+    private val habitsFlow = habitRepository?.activeHabitsWithStreaks ?: flowOf(emptyList())
+
+    val uiState: StateFlow<SettingsUiState> = combine(
+        settingsRepository.settingsFlow,
+        habitsFlow,
+        updateStateFlow
+    ) { settings, habitsList, updateState ->
+        val firstHabit = habitsList.firstOrNull()
+        val effectiveName = firstHabit?.habit?.name ?: settings.habitName
+        val startDate = firstHabit?.activeStreak?.startDate?.let { LocalDate.ofEpochDay(it) }
         SettingsUiState(
+            habits = habitsList,
             habitName = effectiveName,
-            activeHabitExists = active != null,
+            activeHabitExists = habitsList.isNotEmpty(),
             activeStartDate = startDate,
             themeMode = settings.themeMode,
             useDynamicColor = settings.useDynamicColor,
@@ -89,28 +114,77 @@ class SettingsViewModel(
             widgetShowHabitName = settings.widgetShowHabitName,
             autoUpdateFrequency = settings.autoUpdateFrequency,
             lastUpdateCheckTime = settings.lastUpdateCheckTime,
-            isCheckingForUpdate = checking,
-            updateResult = updateRes,
-            showWhatsNew = whatsNew,
+            isCheckingForUpdate = updateState.checking,
+            updateResult = updateState.result,
+            showWhatsNew = updateState.whatsNew,
             firstDayOfWeek = settings.firstDayOfWeek
         )
     }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
+        scope = scope,
+        started = sharingStarted,
         initialValue = SettingsUiState()
     )
 
     fun setFirstDayOfWeek(firstDay: FirstDayOfWeek) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setFirstDayOfWeek(firstDay)
+        }
+    }
+
+    fun updateHabit(
+        id: Long,
+        newName: String,
+        icon: String,
+        color: Long,
+        startDate: LocalDate
+    ) {
+        val trimmed = newName.trim().take(40)
+        if (trimmed.isNotBlank()) {
+            scope.launch {
+                habitRepository?.updateHabit(id, trimmed, icon, color)
+                streakRepository.updateActiveStartDate(habitId = id, newStartDate = startDate)
+                streakRepository.updateActiveHabitName(habitId = id, newName = trimmed)
+                settingsRepository.setHabitName(trimmed)
+                WidgetUpdater.updateAll(context)
+            }
+        }
+    }
+
+    fun createHabit(
+        name: String,
+        icon: String,
+        color: Long,
+        startDate: LocalDate
+    ) {
+        val trimmed = name.trim().take(40)
+        if (trimmed.isNotBlank()) {
+            scope.launch {
+                habitRepository?.createHabit(trimmed, icon, color, startDate)
+                WidgetUpdater.updateAll(context)
+            }
+        }
+    }
+
+    fun deleteHabit(id: Long) {
+        scope.launch {
+            habitRepository?.deleteHabit(id)
+            WidgetUpdater.updateAll(context)
         }
     }
 
     fun renameHabit(newName: String) {
         val trimmed = newName.trim().take(40)
         if (trimmed.isNotBlank()) {
-            viewModelScope.launch {
-                streakRepository.updateActiveHabitName(trimmed)
+            scope.launch {
+                val firstHabit = uiState.value.habits.firstOrNull()
+                val targetId = firstHabit?.habit?.id ?: 1L
+                habitRepository?.updateHabit(
+                    id = targetId,
+                    name = trimmed,
+                    icon = firstHabit?.habit?.icon ?: "shield",
+                    color = firstHabit?.habit?.color ?: 0xFF4C662BL
+                )
+                streakRepository.updateActiveHabitName(targetId, trimmed)
                 settingsRepository.setHabitName(trimmed)
                 WidgetUpdater.updateAll(context)
             }
@@ -118,61 +192,62 @@ class SettingsViewModel(
     }
 
     fun updateStartDate(newStartDate: LocalDate) {
-        viewModelScope.launch {
-            streakRepository.updateActiveStartDate(newStartDate)
+        scope.launch {
+            val targetId = uiState.value.habits.firstOrNull()?.habit?.id ?: 1L
+            streakRepository.updateActiveStartDate(targetId, newStartDate)
             WidgetUpdater.updateAll(context)
         }
     }
 
     fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setThemeMode(mode)
         }
     }
 
     fun setDynamicColor(enabled: Boolean) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setDynamicColor(enabled)
         }
     }
 
     fun setWidgetShape(shape: WidgetShape) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setWidgetShape(shape)
             WidgetUpdater.updateAll(context)
         }
     }
 
     fun setWidgetBackgroundOpacity(opacity: Int) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setWidgetBackgroundOpacity(opacity)
             WidgetUpdater.updateAll(context)
         }
     }
 
     fun setWidgetFontColor(color: WidgetFontColor) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setWidgetFontColor(color)
             WidgetUpdater.updateAll(context)
         }
     }
 
     fun setWidgetBgTheme(theme: WidgetBgTheme) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setWidgetBgTheme(theme)
             WidgetUpdater.updateAll(context)
         }
     }
 
     fun setWidgetShowHabitName(show: Boolean) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setWidgetShowHabitName(show)
             WidgetUpdater.updateAll(context)
         }
     }
 
     fun setReminderEnabled(enabled: Boolean) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setReminderEnabled(enabled)
             if (enabled) {
                 NotificationHelper.scheduleDailyReminder(context, uiState.value.reminderTime)
@@ -183,7 +258,7 @@ class SettingsViewModel(
     }
 
     fun setReminderTime(time: String) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setReminderTime(time)
             if (uiState.value.reminderEnabled) {
                 NotificationHelper.scheduleDailyReminder(context, time)
@@ -192,7 +267,7 @@ class SettingsViewModel(
     }
 
     fun exportCsv(outputStream: OutputStream) {
-        viewModelScope.launch {
+        scope.launch {
             try {
                 val streaks = streakRepository.getAllStreaks()
                 outputStream.bufferedWriter().use { writer ->
@@ -211,62 +286,82 @@ class SettingsViewModel(
         }
     }
 
-    fun importCsv(inputStream: InputStream, onComplete: (Boolean, Int) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val lines = inputStream.bufferedReader().readLines()
-                if (lines.isEmpty()) {
-                    onComplete(false, 0)
-                    return@launch
-                }
-                val streaks = mutableListOf<com.example.steadfast.data.db.StreakEntity>()
-                var activeHabitName: String? = null
+    data class CsvStreakRow(
+        val habitName: String,
+        val startDate: Long,
+        val endDate: Long?,
+        val lengthDays: Int?,
+        val reason: String?
+    )
 
-                for (i in 1 until lines.size) {
-                    val line = lines[i].trim()
-                    if (line.isBlank()) continue
-                    val parts = parseCsvLine(line)
-                    if (parts.size < 3) continue
-                    val habitName = parts.getOrNull(1)?.ifBlank { "Habit" } ?: "Habit"
-                    val startStr = parts.getOrNull(2) ?: continue
-                    val endStr = parts.getOrNull(3)?.ifBlank { null }
-                    val lengthStr = parts.getOrNull(4)?.ifBlank { null }
-                    val reason = parts.getOrNull(5)?.ifBlank { null }
-
-                    val startDate = LocalDate.parse(startStr).toEpochDay()
-                    val endDate = endStr?.let { LocalDate.parse(it).toEpochDay() }
-                    val lengthDays = lengthStr?.toIntOrNull()
-                    val isEnded = endDate != null
-
-                    val streak = com.example.steadfast.data.db.StreakEntity(
-                        id = 0,
-                        habitName = habitName,
-                        startDate = startDate,
-                        startedAt = startDate * 86400000L,
-                        endDate = endDate,
-                        endedAt = if (isEnded) (endDate!! * 86400000L) else null,
-                        lengthDays = lengthDays,
-                        reason = reason
-                    )
-                    streaks.add(streak)
-                    if (!isEnded) {
-                        activeHabitName = habitName
-                    }
-                }
-
-                if (streaks.isNotEmpty()) {
-                    streakRepository.restoreStreaks(streaks)
-                    if (activeHabitName != null) {
-                        settingsRepository.setHabitName(activeHabitName)
-                    }
-                    WidgetUpdater.updateAll(context)
-                    onComplete(true, streaks.size)
-                } else {
-                    onComplete(false, 0)
-                }
-            } catch (e: Exception) {
+    fun importCsv(inputStream: InputStream, onComplete: (Boolean, Int) -> Unit): kotlinx.coroutines.Job = scope.launch {
+        try {
+            val lines = inputStream.bufferedReader().readLines()
+            if (lines.isEmpty()) {
                 onComplete(false, 0)
+                return@launch
             }
+            val rawRows = mutableListOf<CsvStreakRow>()
+            for (i in 1 until lines.size) {
+                val line = lines[i].trim()
+                if (line.isBlank()) continue
+                val parts = parseCsvLine(line)
+                if (parts.size < 3) continue
+                val habitName = parts.getOrNull(1)?.ifBlank { "Habit" } ?: "Habit"
+                val startStr = parts.getOrNull(2) ?: continue
+                val endStr = parts.getOrNull(3)?.ifBlank { null }
+                val lengthStr = parts.getOrNull(4)?.ifBlank { null }
+                val reason = parts.getOrNull(5)?.ifBlank { null }
+
+                val startDate = LocalDate.parse(startStr).toEpochDay()
+                val endDate = endStr?.let { LocalDate.parse(it).toEpochDay() }
+                val lengthDays = lengthStr?.toIntOrNull()
+                rawRows.add(CsvStreakRow(habitName, startDate, endDate, lengthDays, reason))
+            }
+
+            if (rawRows.isEmpty()) {
+                onComplete(false, 0)
+                return@launch
+            }
+
+            // Ensure habits exist for all imported habit names
+            val habitMap = mutableMapOf<String, Long>()
+            for (row in rawRows) {
+                if (!habitMap.containsKey(row.habitName)) {
+                    val habitId = habitRepository?.createHabit(
+                        name = row.habitName,
+                        startDate = LocalDate.ofEpochDay(row.startDate)
+                    ) ?: 1L
+                    habitMap[row.habitName] = habitId
+                }
+            }
+
+            val streaks = rawRows.map { row ->
+                val hId = habitMap[row.habitName] ?: 1L
+                val isEnded = row.endDate != null
+                com.example.steadfast.data.db.StreakEntity(
+                    id = 0,
+                    habitId = hId,
+                    habitName = row.habitName,
+                    startDate = row.startDate,
+                    startedAt = row.startDate * 86400000L,
+                    endDate = row.endDate,
+                    endedAt = if (isEnded) (row.endDate!! * 86400000L) else null,
+                    lengthDays = row.lengthDays,
+                    reason = row.reason
+                )
+            }
+
+            streakRepository.restoreStreaks(streaks)
+            val activeHabitName = rawRows.lastOrNull { it.endDate == null }?.habitName
+            if (activeHabitName != null) {
+                settingsRepository.setHabitName(activeHabitName)
+            }
+            WidgetUpdater.updateAll(context)
+            onComplete(true, streaks.size)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onComplete(false, 0)
         }
     }
 
@@ -288,20 +383,23 @@ class SettingsViewModel(
         return result
     }
 
-    fun eraseAllData() {
-        viewModelScope.launch {
-            NotificationHelper.cancelDailyReminder(context)
-            streakRepository.clearAllData()
-            settingsRepository.clearAll()
-            habitRepository?.clearAllData()
-            val defaultName = context.getString(R.string.app_name)
-            habitRepository?.createHabit(defaultName)
-            WidgetUpdater.updateAll(context)
+    fun eraseAllData(): kotlinx.coroutines.Job = scope.launch {
+        NotificationHelper.cancelDailyReminder(context)
+        streakRepository.clearAllData()
+        settingsRepository.clearAll()
+        habitRepository?.clearAllData()
+        widgetConfigurationRepository?.clearAll()
+        val defaultName = try {
+            context.getString(R.string.app_name)
+        } catch (e: Exception) {
+            "Steadfast"
         }
+        habitRepository?.createHabit(defaultName)
+        WidgetUpdater.updateAll(context)
     }
 
     fun checkForUpdates() {
-        viewModelScope.launch {
+        scope.launch {
             isCheckingForUpdate.value = true
             val currentVersion = try {
                 context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.4"
@@ -319,7 +417,7 @@ class SettingsViewModel(
     }
 
     fun setAutoUpdateFrequency(frequency: AutoUpdateFrequency) {
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setAutoUpdateFrequency(frequency)
             AutoUpdateScheduler.schedule(context, frequency)
         }
@@ -327,7 +425,7 @@ class SettingsViewModel(
 
     fun dismissUpdateResult() {
         updateResult.value = null
-        viewModelScope.launch {
+        scope.launch {
             settingsRepository.setPendingUpdate(null)
         }
     }
@@ -346,11 +444,19 @@ class SettingsViewModel(
             settingsRepository: SettingsRepository,
             habitRepository: com.example.steadfast.data.HabitRepository? = null,
             context: Context,
-            updateChecker: UpdateChecker = DefaultUpdateChecker()
+            updateChecker: UpdateChecker = DefaultUpdateChecker(),
+            widgetConfigurationRepository: WidgetConfigurationRepository? = null
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SettingsViewModel(streakRepository, settingsRepository, context, habitRepository, updateChecker) as T
+                return SettingsViewModel(
+                    streakRepository,
+                    settingsRepository,
+                    context,
+                    habitRepository,
+                    updateChecker,
+                    widgetConfigurationRepository
+                ) as T
             }
         }
     }

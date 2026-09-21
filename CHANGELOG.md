@@ -4,6 +4,22 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-alpha.3] - 2026-09-22
+
+### Fixed
+- **Independent Multi-Habit Widgets:** Resolved an issue where multiple home-screen widgets configured with different habits displayed the same habit. Each widget instance now correctly binds to and independently renders its configured habit via dual-layer Glance state and synchronous repository persistence.
+- **Race Condition in Widget Placement:** Eliminated premature fallback overwrites in the widget provider that previously reset newly placed widgets to the first habit before configuration completed.
+- **Foreign Key Integrity on CSV Import:** Fixed backup restoration to automatically ensure habits exist in the database, avoiding database constraint failures when importing streaks from multiple habits.
+
+### Added
+- **Full Habit Management in Settings:** Upgraded the Settings page to list all active habits with category icon badges, custom color accents, current streak counts, and start dates.
+- **Edit Any Habit from Settings:** Tapping any habit in Settings opens the full edit dialog to modify name, icon, color theme, and start date.
+- **Create Habits from Settings:** Added an "Add Habit" action button directly in Settings for quick habit creation.
+- **Direct Widget Deep-Linking:** Tapping a habit's home-screen widget opens directly into that specific habit's detail screen.
+- **Widget Lifecycle Cleanup:** Automatically purges widget preference entries when a widget is deleted from the user's home screen.
+
+---
+
 ## [0.8.0-alpha.2] - 2026-09-22
 
 ### Added
