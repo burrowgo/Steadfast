@@ -13,7 +13,7 @@
     <img src="assets/badge_github.png" alt="Download on GitHub" height="50" />
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://obtainium.imranr.dev/?r=https://github.com/burrowgo/Steadfast">
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.example.steadfast%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fburrowgo%2FSteadfast%22%2C%22author%22%3A%22burrowgo%22%2C%22name%22%3A%22Steadfast%22%7D">
     <img src="assets/badge_obtainium.png" alt="Get it on Obtainium" height="50" />
   </a>
 </p>
@@ -48,7 +48,7 @@ With full Jetpack Glance widget support, you can place responsive, glanceable ha
     <img src="assets/badge_github.png" alt="Download on GitHub" height="55" />
   </a>
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://obtainium.imranr.dev/?r=https://github.com/burrowgo/Steadfast">
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.example.steadfast%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fburrowgo%2FSteadfast%22%2C%22author%22%3A%22burrowgo%22%2C%22name%22%3A%22Steadfast%22%7D">
     <img src="assets/badge_obtainium.png" alt="Get it on Obtainium" height="55" />
   </a>
 </p>
@@ -57,7 +57,13 @@ With full Jetpack Glance widget support, you can place responsive, glanceable ha
 
 Track and receive automatic background updates directly through [Obtainium](https://github.com/ImranR98/Obtainium):
 
-- **One-Click Install:** Tap the **Get it on Obtainium** badge above or open [this link on your device](https://obtainium.imranr.dev/?r=https://github.com/burrowgo/Steadfast).
+<p align="center">
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.example.steadfast%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fburrowgo%2FSteadfast%22%2C%22author%22%3A%22burrowgo%22%2C%22name%22%3A%22Steadfast%22%7D">
+    <img src="assets/badge_obtainium.png" alt="Add to Obtainium" height="48" />
+  </a>
+</p>
+
+- **One-Click Install:** Tap the badge above on your Android device to automatically import and track Steadfast.
 - **Manual App Source:** Add `https://github.com/burrowgo/Steadfast` in the Obtainium app.
 
 ### 2. GitHub Releases (Direct APK)
