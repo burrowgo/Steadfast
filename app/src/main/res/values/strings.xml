@@ -44,7 +44,7 @@
     <string name="chip_other">Other</string>
 
     <!-- Ranks -->
-    <string name="ranks_title">Army Ranks</string>
+    <string name="ranks_title">Ranks</string>
     <string name="current_rank_header">Current Rank</string>
     <string name="highest_rank_header">Highest Rank Achieved</string>
     <string name="rank_status_earned">Earned</string>
