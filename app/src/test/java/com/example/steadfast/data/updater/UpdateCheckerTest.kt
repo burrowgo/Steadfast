@@ -19,10 +19,13 @@ class UpdateCheckerTest {
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.6.0", "0.5.0"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("v0.6.0", "0.5.0"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.7.0", "0.6.0"))
+        assertTrue(DefaultUpdateChecker.isNewerVersion("v0.7.0", "0.6.0"))
+        assertTrue(DefaultUpdateChecker.isNewerVersion("0.8.0", "0.7.0"))
     }
 
     @Test
     fun isNewerVersion_higherPatch_returnsTrue() {
+        assertTrue(DefaultUpdateChecker.isNewerVersion("0.7.1", "0.7.0"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.6.1", "0.6.0"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.5.1", "0.5.0"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.4.1", "0.4.0"))
@@ -30,29 +33,30 @@ class UpdateCheckerTest {
 
     @Test
     fun isNewerVersion_higherMajor_returnsTrue() {
-        assertTrue(DefaultUpdateChecker.isNewerVersion("1.0.0", "0.6.0"))
+        assertTrue(DefaultUpdateChecker.isNewerVersion("1.0.0", "0.7.0"))
     }
 
     @Test
     fun isNewerVersion_sameVersion_returnsFalse() {
-        assertFalse(DefaultUpdateChecker.isNewerVersion("0.6.0", "0.6.0"))
-        assertFalse(DefaultUpdateChecker.isNewerVersion("v0.6.0", "0.6.0"))
-        assertFalse(DefaultUpdateChecker.isNewerVersion("0.6.0-beta", "0.6.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.7.0", "0.7.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("v0.7.0", "0.7.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.7.0-beta", "0.7.0"))
     }
 
     @Test
     fun isNewerVersion_olderVersion_returnsFalse() {
-        assertFalse(DefaultUpdateChecker.isNewerVersion("0.5.0", "0.6.0"))
-        assertFalse(DefaultUpdateChecker.isNewerVersion("0.4.0", "0.6.0"))
-        assertFalse(DefaultUpdateChecker.isNewerVersion("0.3.0", "0.6.0"))
-        assertFalse(DefaultUpdateChecker.isNewerVersion("0.1.0", "0.6.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.6.0", "0.7.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.5.0", "0.7.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.4.0", "0.7.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.3.0", "0.7.0"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.1.0", "0.7.0"))
     }
 
     @Test
     fun findReleaseApkUrl_prioritizesReleaseOverDebugApk() {
         val assets = listOf(
-            ReleaseAsset("steadfast-v0.6.0-debug.apk", "https://github.com/download/debug.apk"),
-            ReleaseAsset("steadfast-v0.6.0-release.apk", "https://github.com/download/release.apk"),
+            ReleaseAsset("steadfast-v0.7.0-debug.apk", "https://github.com/download/debug.apk"),
+            ReleaseAsset("steadfast-v0.7.0-release.apk", "https://github.com/download/release.apk"),
             ReleaseAsset("checksums.txt", "https://github.com/download/checksums.txt")
         )
 

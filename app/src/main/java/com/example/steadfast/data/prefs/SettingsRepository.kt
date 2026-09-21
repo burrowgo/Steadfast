@@ -41,6 +41,38 @@ enum class WidgetShape {
     }
 }
 
+enum class WidgetFontColor {
+    DEFAULT,
+    WHITE,
+    BLACK,
+    BRAND;
+
+    companion object {
+        fun fromString(value: String?): WidgetFontColor = when (value?.lowercase()) {
+            "white" -> WHITE
+            "black" -> BLACK
+            "brand" -> BRAND
+            else -> DEFAULT
+        }
+    }
+}
+
+enum class WidgetBgTheme {
+    DEFAULT,
+    BLACK,
+    CHARCOAL,
+    WHITE;
+
+    companion object {
+        fun fromString(value: String?): WidgetBgTheme = when (value?.lowercase()) {
+            "black" -> BLACK
+            "charcoal" -> CHARCOAL
+            "white" -> WHITE
+            else -> DEFAULT
+        }
+    }
+}
+
 enum class AutoUpdateFrequency {
     WEEKLY,
     DAILY,
@@ -63,6 +95,9 @@ data class UserSettings(
     val reminderTime: String = "20:00",
     val lastCelebratedRankIndex: Int = 0,
     val widgetShape: WidgetShape = WidgetShape.ROUNDED,
+    val widgetBackgroundOpacity: Int = 100,
+    val widgetFontColor: WidgetFontColor = WidgetFontColor.DEFAULT,
+    val widgetBgTheme: WidgetBgTheme = WidgetBgTheme.DEFAULT,
     val autoUpdateFrequency: AutoUpdateFrequency = AutoUpdateFrequency.WEEKLY,
     val lastUpdateCheckTime: Long = 0L
 )
@@ -77,6 +112,9 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_REMINDER_TIME = stringPreferencesKey("reminder_time")
         val KEY_LAST_CELEBRATED_RANK = intPreferencesKey("last_celebrated_rank_index")
         val KEY_WIDGET_SHAPE = stringPreferencesKey("widget_shape")
+        val KEY_WIDGET_OPACITY = intPreferencesKey("widget_background_opacity")
+        val KEY_WIDGET_FONT_COLOR = stringPreferencesKey("widget_font_color")
+        val KEY_WIDGET_BG_THEME = stringPreferencesKey("widget_bg_theme")
         val KEY_LAST_SEEN_VERSION = stringPreferencesKey("last_seen_version")
         val KEY_AUTO_UPDATE_FREQUENCY = stringPreferencesKey("auto_update_frequency")
         val KEY_LAST_UPDATE_CHECK_TIME = longPreferencesKey("last_update_check_time")
@@ -95,6 +133,9 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             reminderTime = preferences[KEY_REMINDER_TIME] ?: "20:00",
             lastCelebratedRankIndex = preferences[KEY_LAST_CELEBRATED_RANK] ?: 0,
             widgetShape = WidgetShape.fromString(preferences[KEY_WIDGET_SHAPE]),
+            widgetBackgroundOpacity = (preferences[KEY_WIDGET_OPACITY] ?: 100).coerceIn(0, 100),
+            widgetFontColor = WidgetFontColor.fromString(preferences[KEY_WIDGET_FONT_COLOR]),
+            widgetBgTheme = WidgetBgTheme.fromString(preferences[KEY_WIDGET_BG_THEME]),
             autoUpdateFrequency = AutoUpdateFrequency.fromString(preferences[KEY_AUTO_UPDATE_FREQUENCY]),
             lastUpdateCheckTime = preferences[KEY_LAST_UPDATE_CHECK_TIME] ?: 0L
         )
@@ -139,6 +180,24 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setWidgetShape(shape: WidgetShape) {
         dataStore.edit { preferences ->
             preferences[KEY_WIDGET_SHAPE] = shape.name.lowercase()
+        }
+    }
+
+    suspend fun setWidgetBackgroundOpacity(opacity: Int) {
+        dataStore.edit { preferences ->
+            preferences[KEY_WIDGET_OPACITY] = opacity.coerceIn(0, 100)
+        }
+    }
+
+    suspend fun setWidgetFontColor(color: WidgetFontColor) {
+        dataStore.edit { preferences ->
+            preferences[KEY_WIDGET_FONT_COLOR] = color.name.lowercase()
+        }
+    }
+
+    suspend fun setWidgetBgTheme(theme: WidgetBgTheme) {
+        dataStore.edit { preferences ->
+            preferences[KEY_WIDGET_BG_THEME] = theme.name.lowercase()
         }
     }
 

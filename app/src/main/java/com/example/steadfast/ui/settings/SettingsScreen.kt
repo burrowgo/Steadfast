@@ -75,6 +75,7 @@ import java.time.LocalDate
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToWidgetSettings: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -290,16 +291,18 @@ fun SettingsScreen(
                         }
                     }
 
-                    // Widget Shape Row
+                    // Widget Customization Row
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable { showWidgetShapeDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigateToWidgetSettings() },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = stringResource(R.string.settings_widget_shape),
+                                text = stringResource(R.string.settings_widget_customization),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -307,12 +310,23 @@ fun SettingsScreen(
                                 WidgetShape.ROUNDED -> stringResource(R.string.widget_shape_rounded)
                                 WidgetShape.CIRCLE -> stringResource(R.string.widget_shape_circle)
                             }
+                            val fontName = when (uiState.widgetFontColor) {
+                                com.example.steadfast.data.prefs.WidgetFontColor.DEFAULT -> stringResource(R.string.widget_font_color_default)
+                                com.example.steadfast.data.prefs.WidgetFontColor.WHITE -> stringResource(R.string.widget_font_color_white)
+                                com.example.steadfast.data.prefs.WidgetFontColor.BLACK -> stringResource(R.string.widget_font_color_black)
+                                com.example.steadfast.data.prefs.WidgetFontColor.BRAND -> stringResource(R.string.widget_font_color_brand)
+                            }
                             Text(
-                                text = shapeName,
+                                text = "$shapeName • ${uiState.widgetBackgroundOpacity}% • $fontName",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chevron_right),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.outline
+                        )
                     }
 
                     // Dynamic Color Toggle (Android 12+)
@@ -491,9 +505,9 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     val versionName = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.6.0"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.0"
                         } catch (e: Exception) {
-                            "0.6.0"
+                            "0.7.0"
                         }
                     }
                     Text(

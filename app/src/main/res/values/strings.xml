@@ -177,4 +177,29 @@
     <string name="notification_channel_updates_desc">Notifications when a new version of Steadfast is available</string>
     <string name="notification_update_title">Steadfast Update Available</string>
     <string name="notification_update_body">Version %1$s is available. Tap to update.</string>
+    <!-- Widget Customization -->
+    <string name="settings_widget_customization">Widget Customization</string>
+    <string name="settings_widget_customization_desc">Customize transparency, colors, and shape</string>
+    <string name="widget_customization_title">Widget Customization</string>
+    <string name="widget_preview_title">Live Preview</string>
+    <string name="widget_opacity_title">Background Opacity</string>
+    <string name="widget_opacity_percent">%1$d%%</string>
+    <string name="widget_opacity_glass">0% (Clear)</string>
+    <string name="widget_opacity_solid">100% (Solid)</string>
+    <string name="widget_font_color_title">Text Color</string>
+    <string name="widget_font_color_default">Theme Default</string>
+    <string name="widget_font_color_white">Pure White</string>
+    <string name="widget_font_color_black">Pure Black</string>
+    <string name="widget_font_color_brand">Brand Olive</string>
+    <string name="widget_bg_theme_title">Background Color</string>
+    <string name="widget_bg_theme_default">Theme Surface</string>
+    <string name="widget_bg_theme_black">Pure Black</string>
+    <string name="widget_bg_theme_charcoal">Charcoal</string>
+    <string name="widget_bg_theme_white">Pure White</string>
+    <string name="widget_preview_size_2x2">2×2</string>
+    <string name="widget_preview_size_4x1">4×1</string>
+    <string name="widget_preview_size_1x1">1×1</string>
+    <string name="widget_wallpaper_dark">Dark</string>
+    <string name="widget_wallpaper_light">Light</string>
+    <string name="widget_wallpaper_pattern">Pattern</string>
 </resources>

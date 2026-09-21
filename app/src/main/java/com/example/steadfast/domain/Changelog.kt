@@ -9,6 +9,15 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.0",
+            title = "What’s New in v0.7.0",
+            highlights = listOf(
+                "Widget Customization: Full control over widget background opacity/transparency (from 0% glass to 100% solid).",
+                "Text & Background Color Themes: Choose from Theme Default, Pure White, Pure Black, and Brand Olive text, paired with customizable background colors.",
+                "Live Interactive Widget Preview: Preview your customized widget in real-time across 2x2, 4x1, and 1x1 sizes with simulated dark and light wallpapers directly in Settings."
+            )
+        ),
+        ChangelogRelease(
             version = "0.6.0",
             title = "What’s New in v0.6.0",
             highlights = listOf(

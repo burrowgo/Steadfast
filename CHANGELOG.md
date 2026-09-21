@@ -4,6 +4,17 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-09-21
+
+### Added
+- **Widget Customization Screen:** Introduced a dedicated widget customization screen in Settings with live, real-time widget previews.
+- **Background Transparency / Opacity Slider:** Customize widget background opacity from 0% (crystal-clear glass) to 100% (solid) with convenient quick presets.
+- **Text & Font Color Options:** Switch between Theme Default (dynamic Material You), Pure White (crisp high contrast for photo/dark wallpapers), Pure Black (high contrast for light wallpapers), and Brand Olive.
+- **Background Color Themes:** Choose between Theme Surface, Pure Black (AMOLED dark), Charcoal, and Pure White backgrounds.
+- **Simulated Wallpaper Preview:** Test widget transparency and color contrast against simulated dark and light wallpapers directly inside the app before applying to your launcher.
+
+---
+
 ## [0.6.0] - 2026-09-21
 
 ### Fixed

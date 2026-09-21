@@ -10,6 +10,8 @@ import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.UserSettings
 import com.example.steadfast.data.prefs.WidgetShape
+import com.example.steadfast.data.prefs.WidgetFontColor
+import com.example.steadfast.data.prefs.WidgetBgTheme
 import com.example.steadfast.data.updater.AutoUpdateScheduler
 import com.example.steadfast.data.updater.DefaultUpdateChecker
 import com.example.steadfast.data.updater.UpdateCheckResult
@@ -37,6 +39,9 @@ data class SettingsUiState(
     val reminderEnabled: Boolean = false,
     val reminderTime: String = "20:00",
     val widgetShape: WidgetShape = WidgetShape.ROUNDED,
+    val widgetBackgroundOpacity: Int = 100,
+    val widgetFontColor: WidgetFontColor = WidgetFontColor.DEFAULT,
+    val widgetBgTheme: WidgetBgTheme = WidgetBgTheme.DEFAULT,
     val autoUpdateFrequency: AutoUpdateFrequency = AutoUpdateFrequency.WEEKLY,
     val lastUpdateCheckTime: Long = 0L,
     val isCheckingForUpdate: Boolean = false,
@@ -73,6 +78,9 @@ class SettingsViewModel(
             reminderEnabled = settings.reminderEnabled,
             reminderTime = settings.reminderTime,
             widgetShape = settings.widgetShape,
+            widgetBackgroundOpacity = settings.widgetBackgroundOpacity,
+            widgetFontColor = settings.widgetFontColor,
+            widgetBgTheme = settings.widgetBgTheme,
             autoUpdateFrequency = settings.autoUpdateFrequency,
             lastUpdateCheckTime = settings.lastUpdateCheckTime,
             isCheckingForUpdate = checking,
@@ -118,6 +126,27 @@ class SettingsViewModel(
     fun setWidgetShape(shape: WidgetShape) {
         viewModelScope.launch {
             settingsRepository.setWidgetShape(shape)
+            WidgetUpdater.updateAll(context)
+        }
+    }
+
+    fun setWidgetBackgroundOpacity(opacity: Int) {
+        viewModelScope.launch {
+            settingsRepository.setWidgetBackgroundOpacity(opacity)
+            WidgetUpdater.updateAll(context)
+        }
+    }
+
+    fun setWidgetFontColor(color: WidgetFontColor) {
+        viewModelScope.launch {
+            settingsRepository.setWidgetFontColor(color)
+            WidgetUpdater.updateAll(context)
+        }
+    }
+
+    fun setWidgetBgTheme(theme: WidgetBgTheme) {
+        viewModelScope.launch {
+            settingsRepository.setWidgetBgTheme(theme)
             WidgetUpdater.updateAll(context)
         }
     }
@@ -252,9 +281,9 @@ class SettingsViewModel(
         viewModelScope.launch {
             isCheckingForUpdate.value = true
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.6.0"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.0"
             } catch (e: Exception) {
-                "0.6.0"
+                "0.7.0"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
             settingsRepository.setLastUpdateCheckTime(System.currentTimeMillis())

@@ -12,11 +12,11 @@ android {
     val vCode = providers.environmentVariable("VERSION_CODE")
         .map { it.toInt() }
         .orElse(providers.gradleProperty("versionCode").map { it.toInt() })
-        .getOrElse(6)
+        .getOrElse(7)
 
     val vName = providers.environmentVariable("VERSION_NAME")
         .orElse(providers.gradleProperty("versionName"))
-        .getOrElse("0.6.0")
+        .getOrElse("0.7.0")
 
     defaultConfig {
         applicationId = "com.example.steadfast"

@@ -30,12 +30,14 @@ import com.example.steadfast.ui.history.HistoryScreen
 import com.example.steadfast.ui.home.HomeScreen
 import com.example.steadfast.ui.ranks.RanksScreen
 import com.example.steadfast.ui.settings.SettingsScreen
+import com.example.steadfast.ui.settings.WidgetSettingsScreen
 
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Ranks : Screen("ranks")
     data object History : Screen("history")
     data object Settings : Screen("settings")
+    data object WidgetSettings : Screen("widget_settings")
 }
 
 data class BottomNavItem(
@@ -118,6 +120,12 @@ fun MainApp(
                     }
                     composable(Screen.Settings.route) {
                         SettingsScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToWidgetSettings = { navController.navigate(Screen.WidgetSettings.route) }
+                        )
+                    }
+                    composable(Screen.WidgetSettings.route) {
+                        WidgetSettingsScreen(
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

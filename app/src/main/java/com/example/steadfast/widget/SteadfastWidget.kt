@@ -2,6 +2,7 @@ package com.example.steadfast.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,17 +37,28 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import com.example.steadfast.MainActivity
 import com.example.steadfast.R
 import com.example.steadfast.data.db.AppDatabase
 import com.example.steadfast.data.db.StreakEntity
 import com.example.steadfast.data.prefs.SettingsRepository
+import com.example.steadfast.data.prefs.WidgetBgTheme
+import com.example.steadfast.data.prefs.WidgetFontColor
 import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.data.prefs.dataStore
 import com.example.steadfast.domain.RankLadder
 import com.example.steadfast.domain.StreakCalculator
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
+
+data class WidgetThemeColors(
+    val primaryText: ColorProvider,
+    val secondaryText: ColorProvider,
+    val accentText: ColorProvider,
+    val progressTrack: ColorProvider,
+    val background: ColorProvider
+)
 
 open class SteadfastWidget(
     private val forceCircle: Boolean = false
@@ -71,13 +83,94 @@ open class SteadfastWidget(
 
         provideContent {
             GlanceTheme {
-                WidgetRoot(activeStreak = active, isCircle = isCircle)
+                WidgetRoot(
+                    activeStreak = active,
+                    isCircle = isCircle,
+                    opacity = settings.widgetBackgroundOpacity,
+                    fontColor = settings.widgetFontColor,
+                    bgTheme = settings.widgetBgTheme
+                )
             }
         }
     }
 
     @Composable
-    private fun WidgetRoot(activeStreak: StreakEntity?, isCircle: Boolean) {
+    private fun resolveWidgetColors(
+        opacity: Int,
+        fontColor: WidgetFontColor,
+        bgTheme: WidgetBgTheme
+    ): WidgetThemeColors {
+        val alpha = (opacity.coerceIn(0, 100) / 100f)
+
+        val background: ColorProvider = if (alpha <= 0.01f) {
+            ColorProvider(Color.Transparent)
+        } else {
+            when (bgTheme) {
+                WidgetBgTheme.BLACK -> ColorProvider(Color.Black.copy(alpha = alpha))
+                WidgetBgTheme.CHARCOAL -> ColorProvider(Color(0xFF1E1E1E).copy(alpha = alpha))
+                WidgetBgTheme.WHITE -> ColorProvider(Color.White.copy(alpha = alpha))
+                WidgetBgTheme.DEFAULT -> {
+                    if (opacity >= 100) {
+                        GlanceTheme.colors.surface
+                    } else {
+                        androidx.glance.color.ColorProvider(
+                            day = Color(0xFFF3F4F6).copy(alpha = alpha),
+                            night = Color(0xFF1E201E).copy(alpha = alpha)
+                        )
+                    }
+                }
+            }
+        }
+
+        val primaryText: ColorProvider
+        val secondaryText: ColorProvider
+        val accentText: ColorProvider
+        val progressTrack: ColorProvider
+
+        when (fontColor) {
+            WidgetFontColor.WHITE -> {
+                primaryText = ColorProvider(Color.White)
+                secondaryText = ColorProvider(Color(0xFFD0D0D0))
+                accentText = ColorProvider(Color(0xFFCDEDA3))
+                progressTrack = ColorProvider(Color(0x40FFFFFF))
+            }
+            WidgetFontColor.BLACK -> {
+                primaryText = ColorProvider(Color.Black)
+                secondaryText = ColorProvider(Color(0xFF4A4A4A))
+                accentText = ColorProvider(Color(0xFF2E441E))
+                progressTrack = ColorProvider(Color(0x33000000))
+            }
+            WidgetFontColor.BRAND -> {
+                primaryText = androidx.glance.color.ColorProvider(day = Color(0xFF2E441E), night = Color(0xFFCDEDA3))
+                secondaryText = androidx.glance.color.ColorProvider(day = Color(0xFF556B2F), night = Color(0xFFAAB49F))
+                accentText = androidx.glance.color.ColorProvider(day = Color(0xFF4C662B), night = Color(0xFFB1D18A))
+                progressTrack = androidx.glance.color.ColorProvider(day = Color(0x334C662B), night = Color(0x33B1D18A))
+            }
+            WidgetFontColor.DEFAULT -> {
+                primaryText = GlanceTheme.colors.onSurface
+                secondaryText = GlanceTheme.colors.onSurfaceVariant
+                accentText = GlanceTheme.colors.primary
+                progressTrack = GlanceTheme.colors.surfaceVariant
+            }
+        }
+
+        return WidgetThemeColors(
+            primaryText = primaryText,
+            secondaryText = secondaryText,
+            accentText = accentText,
+            progressTrack = progressTrack,
+            background = background
+        )
+    }
+
+    @Composable
+    private fun WidgetRoot(
+        activeStreak: StreakEntity?,
+        isCircle: Boolean,
+        opacity: Int,
+        fontColor: WidgetFontColor,
+        bgTheme: WidgetBgTheme
+    ) {
         val context = LocalContext.current
         val size = LocalSize.current
         val isWideShort = size.width >= 170.dp && size.height < 75.dp
@@ -93,10 +186,12 @@ open class SteadfastWidget(
             else -> 10.dp
         }
 
+        val colors = resolveWidgetColors(opacity = opacity, fontColor = fontColor, bgTheme = bgTheme)
+
         val backgroundModifier = GlanceModifier
             .fillMaxSize()
             .appWidgetBackground()
-            .background(GlanceTheme.colors.surface)
+            .background(colors.background)
             .cornerRadius(cornerRadius)
             .padding(padding)
             .clickable(actionStartActivity<MainActivity>())
@@ -115,7 +210,7 @@ open class SteadfastWidget(
                             text = context.getString(R.string.start_habit_button),
                             maxLines = 1,
                             style = TextStyle(
-                                color = GlanceTheme.colors.primary,
+                                color = colors.accentText,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.Center
@@ -130,7 +225,7 @@ open class SteadfastWidget(
                                 text = context.getString(R.string.app_name),
                                 maxLines = 1,
                                 style = TextStyle(
-                                    color = GlanceTheme.colors.onSurface,
+                                    color = colors.primaryText,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -140,7 +235,7 @@ open class SteadfastWidget(
                                 text = context.getString(R.string.widget_tap_to_start),
                                 maxLines = 1,
                                 style = TextStyle(
-                                    color = GlanceTheme.colors.primary,
+                                    color = colors.accentText,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -156,7 +251,7 @@ open class SteadfastWidget(
                                 text = context.getString(R.string.app_name),
                                 maxLines = 1,
                                 style = TextStyle(
-                                    color = GlanceTheme.colors.onSurface,
+                                    color = colors.primaryText,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center
@@ -167,7 +262,7 @@ open class SteadfastWidget(
                                 text = context.getString(R.string.widget_tap_to_start),
                                 maxLines = 1,
                                 style = TextStyle(
-                                    color = GlanceTheme.colors.primary,
+                                    color = colors.accentText,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     textAlign = TextAlign.Center
@@ -190,7 +285,7 @@ open class SteadfastWidget(
             ) {
                 when {
                     isTiny -> {
-                        TinyWidgetContent(days = days)
+                        TinyWidgetContent(days = days, colors = colors)
                     }
                     isWideShort -> {
                         WideShortWidgetContent(
@@ -199,7 +294,8 @@ open class SteadfastWidget(
                             rankName = rankName,
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
                             daysToNext = rankProgress.daysToNextRank,
-                            progressToNext = rankProgress.progressToNext
+                            progressToNext = rankProgress.progressToNext,
+                            colors = colors
                         )
                     }
                     isWideTall -> {
@@ -209,13 +305,15 @@ open class SteadfastWidget(
                             rankName = rankName,
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
                             daysToNext = rankProgress.daysToNextRank,
-                            progressToNext = rankProgress.progressToNext
+                            progressToNext = rankProgress.progressToNext,
+                            colors = colors
                         )
                     }
                     else -> {
                         SmallWidgetContent(
                             habitName = activeStreak.habitName,
-                            days = days
+                            days = days,
+                            colors = colors
                         )
                     }
                 }
@@ -224,7 +322,7 @@ open class SteadfastWidget(
     }
 
     @Composable
-    private fun TinyWidgetContent(days: Int) {
+    private fun TinyWidgetContent(days: Int, colors: WidgetThemeColors) {
         val context = LocalContext.current
         Column(
             modifier = GlanceModifier.fillMaxSize(),
@@ -240,7 +338,7 @@ open class SteadfastWidget(
                 text = days.toString(),
                 maxLines = 1,
                 style = TextStyle(
-                    color = GlanceTheme.colors.onSurface,
+                    color = colors.primaryText,
                     fontSize = fontSize,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -250,7 +348,7 @@ open class SteadfastWidget(
                 text = context.getString(R.string.days_label).uppercase(),
                 maxLines = 1,
                 style = TextStyle(
-                    color = GlanceTheme.colors.primary,
+                    color = colors.accentText,
                     fontSize = 8.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -262,7 +360,8 @@ open class SteadfastWidget(
     @Composable
     private fun SmallWidgetContent(
         habitName: String,
-        days: Int
+        days: Int,
+        colors: WidgetThemeColors
     ) {
         val context = LocalContext.current
         Column(
@@ -274,7 +373,7 @@ open class SteadfastWidget(
                 text = habitName,
                 maxLines = 1,
                 style = TextStyle(
-                    color = GlanceTheme.colors.onSurfaceVariant,
+                    color = colors.secondaryText,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
@@ -289,7 +388,7 @@ open class SteadfastWidget(
                 text = days.toString(),
                 maxLines = 1,
                 style = TextStyle(
-                    color = GlanceTheme.colors.onSurface,
+                    color = colors.primaryText,
                     fontSize = fontSize,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -299,7 +398,7 @@ open class SteadfastWidget(
                 text = context.getString(R.string.days_label),
                 maxLines = 1,
                 style = TextStyle(
-                    color = GlanceTheme.colors.primary,
+                    color = colors.accentText,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -315,7 +414,8 @@ open class SteadfastWidget(
         rankName: String,
         nextRankName: String?,
         daysToNext: Int,
-        progressToNext: Float
+        progressToNext: Float,
+        colors: WidgetThemeColors
     ) {
         val context = LocalContext.current
         Row(
@@ -332,7 +432,7 @@ open class SteadfastWidget(
                     text = habitName,
                     maxLines = 1,
                     style = TextStyle(
-                        color = GlanceTheme.colors.onSurfaceVariant,
+                        color = colors.secondaryText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -348,7 +448,7 @@ open class SteadfastWidget(
                         text = days.toString(),
                         maxLines = 1,
                         style = TextStyle(
-                            color = GlanceTheme.colors.onSurface,
+                            color = colors.primaryText,
                             fontSize = fontSize,
                             fontWeight = FontWeight.Bold
                         )
@@ -358,7 +458,7 @@ open class SteadfastWidget(
                         text = context.getString(R.string.days_label),
                         maxLines = 1,
                         style = TextStyle(
-                            color = GlanceTheme.colors.primary,
+                            color = colors.accentText,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -383,7 +483,7 @@ open class SteadfastWidget(
                         maxLines = 1,
                         modifier = GlanceModifier.defaultWeight(),
                         style = TextStyle(
-                            color = GlanceTheme.colors.onSurface,
+                            color = colors.primaryText,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -397,7 +497,7 @@ open class SteadfastWidget(
                         text = subtitle,
                         maxLines = 1,
                         style = TextStyle(
-                            color = GlanceTheme.colors.onSurfaceVariant,
+                            color = colors.secondaryText,
                             fontSize = 10.sp
                         )
                     )
@@ -406,8 +506,8 @@ open class SteadfastWidget(
                 LinearProgressIndicator(
                     progress = progressToNext,
                     modifier = GlanceModifier.fillMaxWidth().height(4.dp),
-                    color = GlanceTheme.colors.primary,
-                    backgroundColor = GlanceTheme.colors.surfaceVariant
+                    color = colors.accentText,
+                    backgroundColor = colors.progressTrack
                 )
             }
         }
@@ -420,7 +520,8 @@ open class SteadfastWidget(
         rankName: String,
         nextRankName: String?,
         daysToNext: Int,
-        progressToNext: Float
+        progressToNext: Float,
+        colors: WidgetThemeColors
     ) {
         val context = LocalContext.current
         Row(
@@ -437,7 +538,7 @@ open class SteadfastWidget(
                     text = habitName,
                     maxLines = 1,
                     style = TextStyle(
-                        color = GlanceTheme.colors.onSurfaceVariant,
+                        color = colors.secondaryText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
@@ -452,7 +553,7 @@ open class SteadfastWidget(
                     text = days.toString(),
                     maxLines = 1,
                     style = TextStyle(
-                        color = GlanceTheme.colors.onSurface,
+                        color = colors.primaryText,
                         fontSize = fontSize,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -462,7 +563,7 @@ open class SteadfastWidget(
                     text = context.getString(R.string.days_label),
                     maxLines = 1,
                     style = TextStyle(
-                        color = GlanceTheme.colors.primary,
+                        color = colors.accentText,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
@@ -482,7 +583,7 @@ open class SteadfastWidget(
                     text = rankName,
                     maxLines = 1,
                     style = TextStyle(
-                        color = GlanceTheme.colors.onSurface,
+                        color = colors.primaryText,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -491,8 +592,8 @@ open class SteadfastWidget(
                 LinearProgressIndicator(
                     progress = progressToNext,
                     modifier = GlanceModifier.fillMaxWidth().height(5.dp),
-                    color = GlanceTheme.colors.primary,
-                    backgroundColor = GlanceTheme.colors.surfaceVariant
+                    color = colors.accentText,
+                    backgroundColor = colors.progressTrack
                 )
                 Spacer(modifier = GlanceModifier.height(4.dp))
                 val subtitle = if (nextRankName != null) {
@@ -504,7 +605,7 @@ open class SteadfastWidget(
                     text = subtitle,
                     maxLines = 1,
                     style = TextStyle(
-                        color = GlanceTheme.colors.onSurfaceVariant,
+                        color = colors.secondaryText,
                         fontSize = 11.sp
                     )
                 )
