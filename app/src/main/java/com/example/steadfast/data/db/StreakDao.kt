@@ -71,6 +71,9 @@ interface StreakDao {
     @Query("DELETE FROM streak")
     suspend fun deleteAll()
 
+    @Query("INSERT OR IGNORE INTO habit (id, name, icon, color, createdAt, isArchived, sortOrder) VALUES (:habitId, :habitName, 'shield', 4283204907, :startedAtMillis, 0, 0)")
+    suspend fun ensureHabitExists(habitId: Long, habitName: String, startedAtMillis: Long)
+
     @Transaction
     suspend fun startNewRun(
         habitId: Long,
@@ -78,6 +81,7 @@ interface StreakDao {
         startDateEpochDay: Long,
         startedAtMillis: Long
     ): Long {
+        ensureHabitExists(habitId, habitName, startedAtMillis)
         val currentActive = getActiveStreak(habitId)
         if (currentActive != null) {
             val length = (startDateEpochDay - currentActive.startDate).coerceAtLeast(0).toInt()
