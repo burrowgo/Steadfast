@@ -32,6 +32,8 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
 
+import com.example.steadfast.data.prefs.FirstDayOfWeek
+
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data object FirstRun : HomeUiState
@@ -42,7 +44,9 @@ sealed interface HomeUiState {
         val rankProgress: RankProgress,
         val quote: Quote,
         val isResetSheetOpen: Boolean = false,
-        val rankUpToCelebrate: Rank? = null
+        val rankUpToCelebrate: Rank? = null,
+        val history: List<StreakEntity> = emptyList(),
+        val firstDayOfWeek: FirstDayOfWeek = FirstDayOfWeek.MONDAY
     ) : HomeUiState
 }
 
@@ -188,12 +192,20 @@ class HomeViewModel(
                         rankProgress = progress,
                         quote = quote,
                         isResetSheetOpen = isSheetOpen,
-                        rankUpToCelebrate = celebrationRank
+                        rankUpToCelebrate = celebrationRank,
+                        history = data.history,
+                        firstDayOfWeek = settings.firstDayOfWeek
                     )
                 }
             }.collect { state ->
                 _uiState.value = state
             }
+        }
+    }
+
+    fun setFirstDayOfWeek(firstDay: FirstDayOfWeek) {
+        viewModelScope.launch {
+            settingsRepository.setFirstDayOfWeek(firstDay)
         }
     }
 

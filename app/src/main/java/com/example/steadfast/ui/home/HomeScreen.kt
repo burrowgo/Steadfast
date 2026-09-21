@@ -61,6 +61,8 @@ import com.example.steadfast.ui.components.RankUpDialog
 import com.example.steadfast.ui.components.ResetSheet
 import com.example.steadfast.ui.components.UpdateAvailableDialog
 import com.example.steadfast.ui.components.WhatsNewDialog
+import com.example.steadfast.ui.components.HabitCommitGraph
+import com.example.steadfast.data.prefs.FirstDayOfWeek
 import com.example.steadfast.ui.theme.CardShape
 import com.example.steadfast.ui.theme.LocalRankColors
 import kotlinx.coroutines.flow.collectLatest
@@ -160,7 +162,8 @@ fun HomeScreen(
                     ActiveHomeContent(
                         state = state,
                         onOpenResetSheet = { viewModel.openResetSheet() },
-                        onNextQuote = { viewModel.nextQuote() }
+                        onNextQuote = { viewModel.nextQuote() },
+                        onFirstDayOfWeekChange = { viewModel.setFirstDayOfWeek(it) }
                     )
 
                     if (state.isResetSheetOpen) {
@@ -205,6 +208,7 @@ private fun ActiveHomeContent(
     state: HomeUiState.Active,
     onOpenResetSheet: () -> Unit,
     onNextQuote: () -> Unit,
+    onFirstDayOfWeekChange: (FirstDayOfWeek) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -311,7 +315,17 @@ private fun ActiveHomeContent(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 3. Reset Button (Tonal / Outlined, unobtrusive)
+            // 3. Consistency Heatmap Graph
+            HabitCommitGraph(
+                history = state.history,
+                activeStreak = state.streak,
+                firstDayOfWeek = state.firstDayOfWeek,
+                onFirstDayOfWeekChange = onFirstDayOfWeekChange
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 4. Reset Button (Tonal / Outlined, unobtrusive)
             OutlinedButton(
                 onClick = onOpenResetSheet,
                 shape = RoundedCornerShape(16.dp),

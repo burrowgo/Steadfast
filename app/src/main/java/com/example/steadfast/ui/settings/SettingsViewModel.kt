@@ -47,7 +47,8 @@ data class SettingsUiState(
     val lastUpdateCheckTime: Long = 0L,
     val isCheckingForUpdate: Boolean = false,
     val updateResult: UpdateCheckResult? = null,
-    val showWhatsNew: ChangelogRelease? = null
+    val showWhatsNew: ChangelogRelease? = null,
+    val firstDayOfWeek: com.example.steadfast.data.prefs.FirstDayOfWeek = com.example.steadfast.data.prefs.FirstDayOfWeek.MONDAY
 )
 
 class SettingsViewModel(
@@ -87,7 +88,8 @@ class SettingsViewModel(
             lastUpdateCheckTime = settings.lastUpdateCheckTime,
             isCheckingForUpdate = checking,
             updateResult = updateRes,
-            showWhatsNew = whatsNew
+            showWhatsNew = whatsNew,
+            firstDayOfWeek = settings.firstDayOfWeek
         )
     }.stateIn(
         scope = viewModelScope,
@@ -122,6 +124,12 @@ class SettingsViewModel(
     fun setDynamicColor(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setDynamicColor(enabled)
+        }
+    }
+
+    fun setFirstDayOfWeek(firstDay: com.example.steadfast.data.prefs.FirstDayOfWeek) {
+        viewModelScope.launch {
+            settingsRepository.setFirstDayOfWeek(firstDay)
         }
     }
 
