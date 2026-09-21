@@ -1,5 +1,6 @@
 package com.example.steadfast.ui.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,7 @@ import com.example.steadfast.domain.Rank
 import com.example.steadfast.domain.RankLadder
 import com.example.steadfast.domain.RankProgress
 import com.example.steadfast.domain.StreakCalculator
+import com.example.steadfast.widget.WidgetUpdater
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -50,6 +52,7 @@ class HomeViewModel(
     private val streakRepository: StreakRepository,
     private val settingsRepository: SettingsRepository,
     private val quoteRepository: QuoteRepository,
+    private val context: Context,
     private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
 
@@ -127,6 +130,7 @@ class HomeViewModel(
             streakRepository.startHabit(name)
             settingsRepository.setHabitName(name)
             settingsRepository.setLastCelebratedRankIndex(0)
+            WidgetUpdater.updateAll(context)
         }
     }
 
@@ -144,6 +148,7 @@ class HomeViewModel(
             streakRepository.resetStreak(reason)
             settingsRepository.setLastCelebratedRankIndex(0)
             quoteOffset.value = 0
+            WidgetUpdater.updateAll(context)
             _events.emit(HomeEvent.ShowResetSuccessSnackbar)
         }
     }
@@ -151,6 +156,7 @@ class HomeViewModel(
     fun undoReset() {
         viewModelScope.launch {
             streakRepository.undoLastReset()
+            WidgetUpdater.updateAll(context)
         }
     }
 
@@ -167,11 +173,12 @@ class HomeViewModel(
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
             quoteRepository: QuoteRepository,
+            context: Context,
             clock: Clock
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return HomeViewModel(streakRepository, settingsRepository, quoteRepository, clock) as T
+                return HomeViewModel(streakRepository, settingsRepository, quoteRepository, context, clock) as T
             }
         }
     }

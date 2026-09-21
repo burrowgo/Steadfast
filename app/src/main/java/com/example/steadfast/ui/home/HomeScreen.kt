@@ -66,6 +66,7 @@ fun HomeScreen(
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
             quoteRepository = container.quoteRepository,
+            context = context,
             clock = container.clock
         )
     )
