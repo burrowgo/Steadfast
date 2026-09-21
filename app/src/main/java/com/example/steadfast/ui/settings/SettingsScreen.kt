@@ -488,9 +488,9 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     val versionName = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.3.0"
                         } catch (e: Exception) {
-                            "0.2.0"
+                            "0.3.0"
                         }
                     }
                     Text(

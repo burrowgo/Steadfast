@@ -103,8 +103,8 @@ class DefaultUpdateChecker(
 
     companion object {
         fun isNewerVersion(latest: String, current: String): Boolean {
-            val cleanLatest = latest.removePrefix("v").trim()
-            val cleanCurrent = current.removePrefix("v").trim()
+            val cleanLatest = latest.removePrefix("v").substringBefore("-").trim()
+            val cleanCurrent = current.removePrefix("v").substringBefore("-").trim()
             if (cleanLatest.isEmpty() || cleanCurrent.isEmpty()) return false
 
             val latestParts = cleanLatest.split(".").mapNotNull { it.toIntOrNull() }

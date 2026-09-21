@@ -75,11 +75,20 @@ class HomeViewModel(
         viewModelScope.launch {
             val lastSeen = settingsRepository.lastSeenVersionFlow.first()
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.3.0"
             } catch (e: Exception) {
-                "0.2.0"
+                "0.3.0"
             }
             if (lastSeen == null) {
+                // Check if user is upgrading from a previous version without last_seen_version set
+                val hasExistingHabit = streakRepository.activeStreak.first() != null ||
+                        streakRepository.history.first().isNotEmpty()
+                if (hasExistingHabit) {
+                    val release = ChangelogRepository.getRelease(currentVersion)
+                    if (release != null) {
+                        _whatsNewRelease.value = release
+                    }
+                }
                 settingsRepository.setLastSeenVersion(currentVersion)
             } else if (lastSeen != currentVersion) {
                 val release = ChangelogRepository.getRelease(currentVersion)

@@ -4,11 +4,18 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-09-21
+
+### Added
+- **In-App Update Checker:** Check for and download new releases directly from GitHub within the Settings screen.
+- **What's New Dialog:** Highlights changes and new features automatically on the first app open after an update, also accessible anytime in Settings.
+- **Automated Release Notes in CI:** GitHub Actions automatically extracts release notes from `CHANGELOG.md` and populates the GitHub release description.
+
+---
+
 ## [0.2.0] - 2026-09-21
 
 ### Added
-- **In-App Update Checker:** Check for and download the latest Steadfast releases directly from GitHub within the Settings screen.
-- **What's New Dialog:** Highlights changes and new features automatically on the first app open after an update.
 - **Custom / Migrated Start Date:** Choose a past start date during habit setup or adjust your active habit's start date anytime in Settings without losing streak progress.
 - **Data Backup & Restore:** Import previously exported Steadfast CSV files to restore active and past streak history.
 - **Milestone Achievement Sharing:** Share your unlocked rank milestones directly to any app with native system sharing.

@@ -246,9 +246,9 @@ class SettingsViewModel(
         viewModelScope.launch {
             isCheckingForUpdate.value = true
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.3.0"
             } catch (e: Exception) {
-                "0.2.0"
+                "0.3.0"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
             isCheckingForUpdate.value = false

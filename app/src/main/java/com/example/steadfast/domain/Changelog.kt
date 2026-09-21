@@ -9,10 +9,18 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.3.0",
+            title = "What’s New in v0.3.0",
+            highlights = listOf(
+                "In-App Updates: Check for and download new releases directly from GitHub within Settings.",
+                "What’s New Dialog: Automatically discover new features and highlights after updating.",
+                "Direct Download: Easily download updated release APKs with one tap."
+            )
+        ),
+        ChangelogRelease(
             version = "0.2.0",
             title = "What’s New in v0.2.0",
             highlights = listOf(
-                "In-App Updates: Check for and download the latest Steadfast releases directly from Settings.",
                 "Custom Start Date: Choose a past start date during setup or adjust it anytime in Settings without losing your streak.",
                 "Data Backup & Restore: Import previous Steadfast CSV backups to restore active and past streak history.",
                 "Milestone Sharing: Easily share unlocked rank achievements directly to your favorite apps.",
@@ -35,8 +43,8 @@ object ChangelogRepository {
     )
 
     fun getRelease(version: String): ChangelogRelease? {
-        val clean = version.removePrefix("v").trim()
-        return releases.firstOrNull { it.version.removePrefix("v").trim() == clean }
+        val clean = version.removePrefix("v").substringBefore("-").trim()
+        return releases.firstOrNull { it.version.removePrefix("v").substringBefore("-").trim() == clean }
             ?: releases.firstOrNull()
     }
 }

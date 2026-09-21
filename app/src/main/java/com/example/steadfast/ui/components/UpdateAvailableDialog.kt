@@ -95,3 +95,21 @@ fun UpdateAvailableDialog(
         }
     )
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, name = "UpdateAvailable Light")
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "UpdateAvailable Dark")
+@Composable
+private fun UpdateAvailableDialogPreview() {
+    com.example.steadfast.ui.theme.SteadfastTheme {
+        UpdateAvailableDialog(
+            update = UpdateCheckResult.UpdateAvailable(
+                version = "0.3.0",
+                releaseNotes = "• In-App Update Checker\n• What's New Dialog",
+                downloadUrl = "",
+                releasePageUrl = ""
+            ),
+            onUpdate = {},
+            onDismiss = {}
+        )
+    }
+}

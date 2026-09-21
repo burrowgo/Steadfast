@@ -88,3 +88,15 @@ fun WhatsNewDialog(
         }
     )
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, name = "WhatsNew Light")
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "WhatsNew Dark")
+@Composable
+private fun WhatsNewDialogPreview() {
+    com.example.steadfast.ui.theme.SteadfastTheme {
+        WhatsNewDialog(
+            release = com.example.steadfast.domain.ChangelogRepository.releases.first(),
+            onDismiss = {}
+        )
+    }
+}
