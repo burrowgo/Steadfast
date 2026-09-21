@@ -13,3 +13,11 @@ This file records architecture and tooling choices not explicitly settled by `AG
 ## 3. Font Loading Strategy
 - **Decision:** Bundled official Google Fonts `barlow_condensed_bold.ttf`, `barlow_condensed_semibold.ttf`, and variable `manrope.ttf` into `res/font/`, and bundled license texts into `assets/licenses/`.
 - **Rationale:** Meets Section 9.3 offline bundling requirement while remaining fully OFL licensed and self-contained.
+
+## 4. Release Signing Fallback
+- **Decision:** Configured release build to use debug signing configuration as fallback when custom signing credentials are not supplied in `local.properties`.
+- **Rationale:** Enables `./gradlew assembleRelease` to succeed immediately out-of-the-box for verification without requiring a local production keystore.
+
+## 5. Midnight Worker Grace Buffer
+- **Decision:** Scheduled `MidnightUpdateWorker` for 00:01 local time (1 minute after midnight) instead of 00:00:00.
+- **Rationale:** Ensures device clock and time zone transitions have settled past midnight before recalculating day counts.

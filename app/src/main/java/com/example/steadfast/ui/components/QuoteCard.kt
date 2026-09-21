@@ -82,3 +82,17 @@ fun QuoteCard(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, name = "QuoteCard Light")
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "QuoteCard Dark")
+@Composable
+private fun QuoteCardPreview() {
+    com.example.steadfast.ui.theme.SteadfastTheme {
+        androidx.compose.foundation.layout.Box(modifier = Modifier.padding(16.dp)) {
+            QuoteCard(
+                quote = QuoteDisplay("Small days stack into big streaks.", null),
+                onNextQuote = {}
+            )
+        }
+    }
+}

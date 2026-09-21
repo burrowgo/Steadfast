@@ -151,3 +151,12 @@ fun DayCounter(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, name = "DayCounter Light")
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "DayCounter Dark")
+@Composable
+private fun DayCounterPreview() {
+    com.example.steadfast.ui.theme.SteadfastTheme {
+        DayCounter(days = 12, progressToNext = 0.65f)
+    }
+}

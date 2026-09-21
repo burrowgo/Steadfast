@@ -3,6 +3,7 @@ package com.example.steadfast.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -251,4 +252,21 @@ private fun DrawScope.drawStar(color: Color, center: Offset, outerRadius: Float)
     }
     path.close()
     drawPath(path, color, style = Fill)
+}
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, name = "RankBadges")
+@Composable
+private fun RankBadgePreview() {
+    com.example.steadfast.ui.theme.SteadfastTheme {
+        androidx.compose.foundation.layout.Row(
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            RankBadge(com.example.steadfast.domain.RankLadder.ranks[0])
+            RankBadge(com.example.steadfast.domain.RankLadder.ranks[1])
+            RankBadge(com.example.steadfast.domain.RankLadder.ranks[4])
+            RankBadge(com.example.steadfast.domain.RankLadder.ranks[11])
+            RankBadge(com.example.steadfast.domain.RankLadder.ranks[19])
+        }
+    }
 }

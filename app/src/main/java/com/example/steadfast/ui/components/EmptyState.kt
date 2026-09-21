@@ -110,3 +110,12 @@ fun EmptyState(
         }
     }
 }
+
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, name = "EmptyState Light")
+@androidx.compose.ui.tooling.preview.Preview(showBackground = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES, name = "EmptyState Dark")
+@Composable
+private fun EmptyStatePreview() {
+    com.example.steadfast.ui.theme.SteadfastTheme {
+        EmptyState(onStartHabit = {})
+    }
+}
