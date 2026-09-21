@@ -55,14 +55,20 @@ class StreakRepository(
 
     suspend fun getActiveStreak(): StreakEntity? = streakDao.getActiveStreak()
 
-    suspend fun startHabit(habitName: String): Long {
-        val today = StreakCalculator.today(clock)
+    suspend fun startHabit(
+        habitName: String,
+        startDate: LocalDate = StreakCalculator.today(clock)
+    ): Long {
         val nowMillis = clock.millis()
         return streakDao.startNewRun(
             habitName = habitName.trim(),
-            startDateEpochDay = today.toEpochDay(),
+            startDateEpochDay = startDate.toEpochDay(),
             startedAtMillis = nowMillis
         )
+    }
+
+    suspend fun updateActiveStartDate(newStartDate: LocalDate) {
+        streakDao.updateActiveStartDate(newStartDate.toEpochDay())
     }
 
     suspend fun resetStreak(reason: String?): Long? {
@@ -90,6 +96,11 @@ class StreakRepository(
 
     suspend fun getAllStreaks(): List<StreakEntity> {
         return streakDao.getAllStreaks()
+    }
+
+    suspend fun restoreStreaks(streaks: List<StreakEntity>) {
+        streakDao.deleteAll()
+        streakDao.insertAll(streaks)
     }
 
     suspend fun clearAllData() {

@@ -125,9 +125,9 @@ class HomeViewModel(
         }
     }
 
-    fun startHabit(name: String) {
+    fun startHabit(name: String, startDate: LocalDate = LocalDate.now(clock)) {
         viewModelScope.launch {
-            streakRepository.startHabit(name)
+            streakRepository.startHabit(name, startDate)
             settingsRepository.setHabitName(name)
             settingsRepository.setLastCelebratedRankIndex(0)
             WidgetUpdater.updateAll(context)

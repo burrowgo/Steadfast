@@ -40,6 +40,7 @@ fun RankUpDialog(
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     val rankName = stringResource(rank.nameRes)
     val rankAccent = LocalRankColors.current.accent
 
@@ -47,11 +48,27 @@ fun RankUpDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true),
         confirmButton = {
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            Button(onClick = onDismiss) {
                 Text(stringResource(R.string.celebration_continue))
+            }
+        },
+        dismissButton = {
+            androidx.compose.material3.OutlinedButton(
+                onClick = {
+                    val shareText = context.getString(
+                        R.string.share_achievement_text,
+                        rank.minDays,
+                        rankName
+                    )
+                    val sendIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                        putExtra(android.content.Intent.EXTRA_TEXT, shareText)
+                        type = "text/plain"
+                    }
+                    val shareIntent = android.content.Intent.createChooser(sendIntent, null)
+                    context.startActivity(shareIntent)
+                }
+            ) {
+                Text(stringResource(R.string.share_button))
             }
         },
         title = {

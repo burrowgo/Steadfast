@@ -141,6 +141,8 @@ fun ResetSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -154,6 +156,7 @@ fun ResetSheet(
 
                 Button(
                     onClick = {
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
                         onConfirmReset(reasonText.ifBlank { null })
                     },
                     colors = ButtonDefaults.buttonColors(

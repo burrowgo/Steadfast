@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -198,6 +199,8 @@ private fun ElapsedTicker(
         String.format(Locale.US, "+ %02dh %02dm %02ds", hours, minutes, seconds)
     }
 
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = if (isDayZero) {
@@ -205,7 +208,9 @@ private fun ElapsedTicker(
         } else {
             MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         },
-        modifier = modifier
+        modifier = modifier.clickable {
+            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+        }
     ) {
         Text(
             text = text,

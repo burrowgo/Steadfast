@@ -127,4 +127,10 @@ interface StreakDao {
 
     @Query("UPDATE streak SET habitName = :habitName WHERE endedAt IS NULL")
     suspend fun updateActiveHabitName(habitName: String)
+
+    @Query("UPDATE streak SET startDate = :newStartDateEpochDay WHERE endedAt IS NULL")
+    suspend fun updateActiveStartDate(newStartDateEpochDay: Long)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(streaks: List<StreakEntity>)
 }

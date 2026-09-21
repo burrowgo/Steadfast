@@ -47,6 +47,7 @@ fun QuoteCard(
     if (quote == null) return
 
     val cd = stringResource(R.string.cd_quote_card)
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
 
     Card(
         shape = CardShape,
@@ -55,7 +56,10 @@ fun QuoteCard(
         ),
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onNextQuote)
+            .clickable(onClick = {
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                onNextQuote()
+            })
             .semantics { contentDescription = cd }
     ) {
         AnimatedContent(

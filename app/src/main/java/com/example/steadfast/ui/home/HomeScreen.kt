@@ -138,7 +138,7 @@ fun HomeScreen(
 
                 is HomeUiState.FirstRun -> {
                     EmptyState(
-                        onStartHabit = { name -> viewModel.startHabit(name) }
+                        onStartHabit = { name, date -> viewModel.startHabit(name, date) }
                     )
                 }
 
