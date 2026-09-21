@@ -15,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +38,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -67,6 +65,7 @@ fun HomeScreen(
         factory = HomeViewModel.provideFactory(
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
+            quoteRepository = container.quoteRepository,
             clock = container.clock
         )
     )
@@ -145,7 +144,8 @@ fun HomeScreen(
                 is HomeUiState.Active -> {
                     ActiveHomeContent(
                         state = state,
-                        onOpenResetSheet = { viewModel.openResetSheet() }
+                        onOpenResetSheet = { viewModel.openResetSheet() },
+                        onNextQuote = { viewModel.nextQuote() }
                     )
 
                     if (state.isResetSheetOpen) {
@@ -175,6 +175,7 @@ fun HomeScreen(
 private fun ActiveHomeContent(
     state: HomeUiState.Active,
     onOpenResetSheet: () -> Unit,
+    onNextQuote: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -244,7 +245,7 @@ private fun ActiveHomeContent(
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            // 3. Reset Button (Tonal, unobtrusive)
+            // 3. Reset Button (Tonal / Outlined, unobtrusive)
             OutlinedButton(
                 onClick = onOpenResetSheet,
                 colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
@@ -276,10 +277,10 @@ private fun ActiveHomeContent(
         ) {
             QuoteCard(
                 quote = QuoteDisplay(
-                    text = "Small days stack into big streaks.",
-                    author = null
+                    text = state.quote.text,
+                    author = state.quote.author
                 ),
-                onNextQuote = {}
+                onNextQuote = onNextQuote
             )
         }
     }

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.db.StreakEntity
 import com.example.steadfast.data.prefs.SettingsRepository
+import com.example.steadfast.domain.Quote
+import com.example.steadfast.domain.QuoteRepository
 import com.example.steadfast.domain.Rank
 import com.example.steadfast.domain.RankLadder
 import com.example.steadfast.domain.RankProgress
@@ -17,7 +19,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
@@ -30,6 +31,7 @@ sealed interface HomeUiState {
         val habitName: String,
         val days: Int,
         val rankProgress: RankProgress,
+        val quote: Quote,
         val isResetSheetOpen: Boolean = false,
         val rankUpToCelebrate: Rank? = null
     ) : HomeUiState
@@ -39,9 +41,15 @@ sealed interface HomeEvent {
     data object ShowResetSuccessSnackbar : HomeEvent
 }
 
+private data class StreakData(
+    val active: StreakEntity?,
+    val history: List<StreakEntity>
+)
+
 class HomeViewModel(
     private val streakRepository: StreakRepository,
     private val settingsRepository: SettingsRepository,
+    private val quoteRepository: QuoteRepository,
     private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
 
@@ -53,15 +61,23 @@ class HomeViewModel(
 
     private val isResetSheetOpen = MutableStateFlow(false)
     private val rankToCelebrate = MutableStateFlow<Rank?>(null)
+    private val quoteOffset = MutableStateFlow(0)
 
     init {
+        val streakDataFlow = combine(
+            streakRepository.activeStreak,
+            streakRepository.history
+        ) { active, history -> StreakData(active, history) }
+
         viewModelScope.launch {
             combine(
-                streakRepository.activeStreak,
+                streakDataFlow,
                 settingsRepository.settingsFlow,
                 isResetSheetOpen,
-                rankToCelebrate
-            ) { active, settings, isSheetOpen, celebrationRank ->
+                rankToCelebrate,
+                quoteOffset
+            ) { data, settings, isSheetOpen, celebrationRank, offset ->
+                val active = data.active
                 if (active == null) {
                     HomeUiState.FirstRun
                 } else {
@@ -69,18 +85,33 @@ class HomeViewModel(
                     val days = StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
                     val progress = RankLadder.getRankProgress(days)
 
-                    // Check for rank-up celebration
+                    // Rank-up celebration trigger
                     if (progress.currentRank.level > settings.lastCelebratedRankIndex && celebrationRank == null) {
-                        // Trigger one-time celebration
-                        rankToCelebrate.value = progress.currentRank
-                        settingsRepository.setLastCelebratedRankIndex(progress.currentRank.level)
+                        viewModelScope.launch {
+                            rankToCelebrate.value = progress.currentRank
+                            settingsRepository.setLastCelebratedRankIndex(progress.currentRank.level)
+                        }
                     }
+
+                    // Check if a reset occurred within the last 24 hours
+                    val latestEnded = data.history.firstOrNull()
+                    val nowMillis = clock.millis()
+                    val isWithin24HoursOfReset = latestEnded?.endedAt?.let {
+                        (nowMillis - it) < (24 * 60 * 60 * 1000L)
+                    } ?: false
+
+                    val quote = quoteRepository.getQuoteForDay(
+                        isComeback = isWithin24HoursOfReset,
+                        date = today,
+                        userOffset = offset
+                    )
 
                     HomeUiState.Active(
                         streak = active,
                         habitName = active.habitName,
                         days = days,
                         rankProgress = progress,
+                        quote = quote,
                         isResetSheetOpen = isSheetOpen,
                         rankUpToCelebrate = celebrationRank
                     )
@@ -112,6 +143,7 @@ class HomeViewModel(
             isResetSheetOpen.value = false
             streakRepository.resetStreak(reason)
             settingsRepository.setLastCelebratedRankIndex(0)
+            quoteOffset.value = 0
             _events.emit(HomeEvent.ShowResetSuccessSnackbar)
         }
     }
@@ -122,6 +154,10 @@ class HomeViewModel(
         }
     }
 
+    fun nextQuote() {
+        quoteOffset.value += 1
+    }
+
     fun dismissCelebration() {
         rankToCelebrate.value = null
     }
@@ -130,11 +166,12 @@ class HomeViewModel(
         fun provideFactory(
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
+            quoteRepository: QuoteRepository,
             clock: Clock
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return HomeViewModel(streakRepository, settingsRepository, clock) as T
+                return HomeViewModel(streakRepository, settingsRepository, quoteRepository, clock) as T
             }
         }
     }

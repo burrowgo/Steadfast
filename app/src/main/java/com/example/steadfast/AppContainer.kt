@@ -5,12 +5,14 @@ import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.db.AppDatabase
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.dataStore
+import com.example.steadfast.domain.QuoteRepository
 import java.time.Clock
 
 interface AppContainer {
     val clock: Clock
     val streakRepository: StreakRepository
     val settingsRepository: SettingsRepository
+    val quoteRepository: QuoteRepository
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -26,5 +28,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val settingsRepository: SettingsRepository by lazy {
         SettingsRepository(context.dataStore)
+    }
+
+    override val quoteRepository: QuoteRepository by lazy {
+        QuoteRepository.loadFromRaw(context, clock)
     }
 }
