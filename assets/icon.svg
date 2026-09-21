@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#557332"/>
+      <stop offset="100%" stop-color="#3E5423"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FCD366"/>
+      <stop offset="100%" stop-color="#E5B537"/>
+    </linearGradient>
+    <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <!-- Background with rounded corners -->
+  <rect width="108" height="108" rx="24" fill="url(#bgGrad)"/>
+  <!-- Outer Shield Motif -->
+  <g filter="url(#dropShadow)">
+    <path fill="url(#goldGrad)" d="M54,25 L80,42 L80,65 L54,84 L28,65 L28,42 Z"/>
+    <path fill="#435B26" d="M54,31 L74,45 L74,62 L54,77 L34,62 L34,45 Z"/>
+    <!-- Chevrons -->
+    <path fill="url(#goldGrad)" d="M54,39 L67,50 L62,54 L54,47 L46,54 L41,50 Z"/>
+    <path fill="url(#goldGrad)" d="M54,52 L67,63 L62,67 L54,60 L46,67 L41,63 Z"/>
+  </g>
+</svg>
