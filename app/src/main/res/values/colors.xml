@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="seed">#4C662B</color>
+    <color name="primary">#4C662B</color>
+    <color name="onPrimary">#FFFFFF</color>
+    <color name="primaryContainer">#CDEDA3</color>
+    <color name="onPrimaryContainer">#354E16</color>
+    <color name="background">#F9FAEF</color>
+    <color name="onBackground">#1A1C16</color>
+</resources>

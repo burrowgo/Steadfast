@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Steadfast</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_ranks">Ranks</string>
+    <string name="nav_history">History</string>
+    <string name="action_settings">Settings</string>
+
+    <!-- Home -->
+    <string name="day_zero_subtitle">Day one. Make it to tomorrow.</string>
+    <string name="days_label">days</string>
+    <string name="reset_button">Reset streak</string>
+    <string name="days_to_next_rank">%1$d days to %2$s</string>
+    <string name="highest_rank_reached">Highest rank achieved</string>
+    <string name="rank_achieved_banner">Rank achieved!</string>
+    <string name="celebration_dismiss">Dismiss</string>
+    <string name="celebration_continue">Keep Going</string>
+
+    <!-- First Run -->
+    <string name="start_habit_title">What habit are you building?</string>
+    <string name="start_habit_hint">e.g. No sugar, Daily reading</string>
+    <string name="start_habit_button">Start</string>
+
+    <!-- Reset Sheet -->
+    <string name="reset_sheet_title">Reset your streak?</string>
+    <string name="reset_sheet_body">You made it %1$d days as %2$s. That still counts.</string>
+    <string name="reset_sheet_reason_label">Why are you resetting? (optional)</string>
+    <string name="reset_sheet_reason_hint">What happened?</string>
+    <string name="reset_sheet_confirm">Reset streak</string>
+    <string name="reset_sheet_cancel">Cancel</string>
+    <string name="reset_snackbar_message">Streak reset. Fresh start.</string>
+    <string name="reset_snackbar_undo">Undo</string>
+
+    <!-- Suggestion Chips -->
+    <string name="chip_busy_day">Busy day</string>
+    <string name="chip_festival">Festival</string>
+    <string name="chip_travel">Travel</string>
+    <string name="chip_illness">Illness</string>
+    <string name="chip_stress">Stress</string>
+    <string name="chip_social_event">Social event</string>
+    <string name="chip_forgot">Forgot</string>
+    <string name="chip_other">Other</string>
+
+    <!-- Ranks -->
+    <string name="ranks_title">Army Ranks</string>
+    <string name="current_rank_header">Current Rank</string>
+    <string name="highest_rank_header">Highest Rank Achieved</string>
+    <string name="rank_status_earned">Earned</string>
+    <string name="rank_status_next">In progress</string>
+    <string name="rank_status_locked">Locked</string>
+    <string name="rank_time_approx">%1$s · %2$d days</string>
+
+    <!-- Rank Names -->
+    <string name="rank_recruit">Recruit</string>
+    <string name="rank_private">Private</string>
+    <string name="rank_private_first_class">Private First Class</string>
+    <string name="rank_corporal">Corporal</string>
+    <string name="rank_sergeant">Sergeant</string>
+    <string name="rank_staff_sergeant">Staff Sergeant</string>
+    <string name="rank_sergeant_first_class">Sergeant First Class</string>
+    <string name="rank_master_sergeant">Master Sergeant</string>
+    <string name="rank_sergeant_major">Sergeant Major</string>
+    <string name="rank_second_lieutenant">Second Lieutenant</string>
+    <string name="rank_first_lieutenant">First Lieutenant</string>
+    <string name="rank_captain">Captain</string>
+    <string name="rank_major">Major</string>
+    <string name="rank_lieutenant_colonel">Lieutenant Colonel</string>
+    <string name="rank_colonel">Colonel</string>
+    <string name="rank_brigadier_general">Brigadier General</string>
+    <string name="rank_major_general">Major General</string>
+    <string name="rank_lieutenant_general">Lieutenant General</string>
+    <string name="rank_general">General</string>
+    <string name="rank_general_of_the_army">General of the Army</string>
+
+    <!-- History -->
+    <string name="history_title">History</string>
+    <string name="history_longest_streak">Longest streak</string>
+    <string name="history_total_attempts">Total attempts</string>
+    <string name="history_current_attempt">Current attempt</string>
+    <string name="history_empty">No resets yet. Keep going.</string>
+    <string name="no_reason_given">No reason given</string>
+    <string name="edit_reason_title">Edit Reset Reason</string>
+    <string name="edit_reason_save">Save</string>
+    <string name="edit_reason_cancel">Cancel</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_habit">Habit</string>
+    <string name="settings_habit_name">Habit name</string>
+    <string name="settings_rename_habit">Rename habit</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_dynamic_color">Dynamic color</string>
+    <string name="settings_dynamic_color_desc">Match device wallpaper colors</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_reminder">Daily reminder</string>
+    <string name="settings_reminder_desc">Gentle evening check-in</string>
+    <string name="settings_reminder_time">Reminder time</string>
+    <string name="settings_section_data">Data</string>
+    <string name="settings_export_csv">Export history (CSV)</string>
+    <string name="settings_erase_all">Erase all data</string>
+    <string name="erase_dialog_title">Erase all data?</string>
+    <string name="erase_dialog_body">This will permanently delete all your habit history, streaks, and settings. This cannot be undone.</string>
+    <string name="erase_dialog_confirm">Erase</string>
+    <string name="erase_dialog_cancel">Cancel</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_version">Version %1$s</string>
+    <string name="settings_licenses">Open source licenses</string>
+    <string name="notification_channel_name">Daily check-in</string>
+    <string name="notification_channel_desc">Daily habit streak reminders</string>
+    <string name="notification_body">Day %1$d · %2$s — still going strong?</string>
+
+    <!-- Widget -->
+    <string name="widget_description">Steadfast streak counter and rank</string>
+    <string name="widget_tap_to_start">Tap to start</string>
+
+    <!-- Accessibility -->
+    <string name="cd_quote_card">Motivational quote. Tap for next quote.</string>
+    <string name="cd_streak_counter">%1$d days streak</string>
+    <string name="cd_rank_badge">%1$s rank badge</string>
+    
+    <plurals name="days_count">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+</resources>
