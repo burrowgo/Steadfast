@@ -177,6 +177,25 @@
     <string name="notification_channel_updates_desc">Notifications when a new version of Steadfast is available</string>
     <string name="notification_update_title">Steadfast Update Available</string>
     <string name="notification_update_body">Version %1$s is available. Tap to update.</string>
+
+    <!-- In-App Update Downloader & Installer -->
+    <string name="update_downloading_title">Downloading Update…</string>
+    <string name="update_downloading_desc">Downloading Steadfast v%1$s</string>
+    <string name="update_cancel">Cancel</string>
+    <string name="update_download_progress">%1$s / %2$s (%3$d%%)</string>
+    <string name="update_download_progress_indeterminate">%1$s downloaded</string>
+    <string name="update_ready_title">Update Downloaded</string>
+    <string name="update_ready_desc">Steadfast v%1$s is downloaded and ready to install. The installer should open automatically.</string>
+    <string name="update_install_now">Install</string>
+    <string name="update_done">Done</string>
+    <string name="update_permission_title">Permission Needed</string>
+    <string name="update_permission_desc">Steadfast needs permission to install app updates. Tap Grant Permission to enable \'Allow from this source\' in Settings, then tap Install.</string>
+    <string name="update_grant_permission">Grant Permission</string>
+    <string name="update_error_title">Download Failed</string>
+    <string name="update_error_desc">Could not download update: %1$s</string>
+    <string name="update_retry">Retry</string>
+    <string name="update_open_browser">Download in Browser</string>
+
     <!-- Widget Customization -->
     <string name="settings_widget_customization">Widget Customization</string>
     <string name="settings_widget_customization_desc">Customize transparency, colors, and shape</string>

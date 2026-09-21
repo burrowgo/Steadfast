@@ -186,13 +186,6 @@ fun HomeScreen(
             if (updateAvailable != null) {
                 UpdateAvailableDialog(
                     update = updateAvailable!!,
-                    onUpdate = { url ->
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                        }
-                        context.startActivity(intent)
-                        viewModel.dismissUpdateDialog()
-                    },
                     onDismiss = { viewModel.dismissUpdateDialog() }
                 )
             }

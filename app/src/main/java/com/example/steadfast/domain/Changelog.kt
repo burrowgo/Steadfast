@@ -9,6 +9,15 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.1",
+            title = "What’s New in v0.7.1",
+            highlights = listOf(
+                "In-App Update Downloader: Seamlessly download release APK updates directly inside the app with live download progress indicators.",
+                "Direct Package Installation: Automatically prompt the Android package installer when download finishes without redirecting to an external browser.",
+                "Permission & Fallback Handling: Guided 'Install unknown apps' permission management with fallback browser download support."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.0",
             title = "What’s New in v0.7.0",
             highlights = listOf(

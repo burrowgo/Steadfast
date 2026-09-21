@@ -4,6 +4,19 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-09-21
+
+### Fixed
+- **In-App Update Download & Installation:** Resolved an issue where updating redirected to an external browser and stalled at 100% without prompting installation. App updates are now downloaded directly within Steadfast with live progress tracking.
+- **Direct Package Installer Prompt:** App automatically launches the Android package installer via secure `FileProvider` upon download completion.
+- **Unknown Sources Permission Support:** Added a guided permission flow for Android's "Install unknown apps" setting with auto-resumption when returning to the app.
+- **Update Notification Routing:** Tapping the update notification now directly opens the in-app updater instead of launching external browser downloads.
+
+### Added
+- **Browser Download Fallback:** Added a manual fallback option to open release downloads in the browser if desired or in case of network issues.
+
+---
+
 ## [0.7.0] - 2026-09-21
 
 ### Added

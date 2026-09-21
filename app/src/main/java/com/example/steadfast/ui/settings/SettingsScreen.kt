@@ -505,9 +505,9 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     val versionName = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.0"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.1"
                         } catch (e: Exception) {
-                            "0.7.0"
+                            "0.7.1"
                         }
                     }
                     Text(
@@ -709,13 +709,6 @@ fun SettingsScreen(
             val update = uiState.updateResult as UpdateCheckResult.UpdateAvailable
             UpdateAvailableDialog(
                 update = update,
-                onUpdate = { url ->
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
-                    context.startActivity(intent)
-                    viewModel.dismissUpdateResult()
-                },
                 onDismiss = { viewModel.dismissUpdateResult() }
             )
         }

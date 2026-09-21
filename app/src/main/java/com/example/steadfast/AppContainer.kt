@@ -5,6 +5,8 @@ import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.db.AppDatabase
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.dataStore
+import com.example.steadfast.data.updater.AppUpdateDownloader
+import com.example.steadfast.data.updater.DefaultAppUpdateDownloader
 import com.example.steadfast.data.updater.DefaultUpdateChecker
 import com.example.steadfast.data.updater.UpdateChecker
 import com.example.steadfast.domain.QuoteRepository
@@ -16,6 +18,7 @@ interface AppContainer {
     val settingsRepository: SettingsRepository
     val quoteRepository: QuoteRepository
     val updateChecker: UpdateChecker
+    val updateDownloader: AppUpdateDownloader
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -39,5 +42,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val updateChecker: UpdateChecker by lazy {
         DefaultUpdateChecker()
+    }
+
+    override val updateDownloader: AppUpdateDownloader by lazy {
+        DefaultAppUpdateDownloader(context)
     }
 }
