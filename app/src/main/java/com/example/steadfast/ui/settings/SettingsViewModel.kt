@@ -18,6 +18,7 @@ import com.example.steadfast.data.updater.UpdateCheckResult
 import com.example.steadfast.data.updater.UpdateChecker
 import com.example.steadfast.domain.ChangelogRelease
 import com.example.steadfast.domain.ChangelogRepository
+import com.example.steadfast.R
 import com.example.steadfast.notifications.NotificationHelper
 import com.example.steadfast.widget.WidgetUpdater
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -54,6 +55,7 @@ class SettingsViewModel(
     private val streakRepository: StreakRepository,
     private val settingsRepository: SettingsRepository,
     private val context: Context,
+    private val habitRepository: com.example.steadfast.data.HabitRepository? = null,
     private val updateChecker: UpdateChecker = DefaultUpdateChecker()
 ) : ViewModel() {
 
@@ -282,6 +284,9 @@ class SettingsViewModel(
             NotificationHelper.cancelDailyReminder(context)
             streakRepository.clearAllData()
             settingsRepository.clearAll()
+            habitRepository?.clearAllData()
+            val defaultName = context.getString(R.string.app_name)
+            habitRepository?.createHabit(defaultName)
             WidgetUpdater.updateAll(context)
         }
     }
@@ -330,12 +335,13 @@ class SettingsViewModel(
         fun provideFactory(
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
+            habitRepository: com.example.steadfast.data.HabitRepository? = null,
             context: Context,
             updateChecker: UpdateChecker = DefaultUpdateChecker()
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SettingsViewModel(streakRepository, settingsRepository, context, updateChecker) as T
+                return SettingsViewModel(streakRepository, settingsRepository, context, habitRepository, updateChecker) as T
             }
         }
     }

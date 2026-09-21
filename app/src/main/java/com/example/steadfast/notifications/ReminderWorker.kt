@@ -4,10 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.steadfast.SteadfastApp
-import com.example.steadfast.domain.RankLadder
-import com.example.steadfast.domain.StreakCalculator
 import kotlinx.coroutines.flow.first
-import java.time.LocalDate
 
 class ReminderWorker(
     context: Context,
@@ -23,17 +20,15 @@ class ReminderWorker(
             return Result.success()
         }
 
-        val active = container.streakRepository.getActiveStreak()
-        if (active != null) {
-            val today = LocalDate.now(container.clock)
-            val days = StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
-            val rank = RankLadder.getRankForDays(days)
-            val rankName = applicationContext.getString(rank.nameRes)
+        val activeHabits = container.habitRepository.activeHabitsWithStreaks.first()
+        if (activeHabits.isNotEmpty()) {
+            val primary = activeHabits.first()
+            val rankName = applicationContext.getString(primary.currentRank.nameRes)
 
             NotificationHelper.showDailyCheckIn(
                 context = applicationContext,
-                habitName = active.habitName,
-                days = days,
+                habitName = primary.habit.name,
+                days = primary.currentStreakDays,
                 rankName = rankName
             )
         }
