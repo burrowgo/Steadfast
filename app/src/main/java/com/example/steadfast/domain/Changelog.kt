@@ -9,6 +9,15 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.5.0",
+            title = "What’s New in v0.5.0",
+            highlights = listOf(
+                "Automatic Update Checks: Steadfast now checks for updates periodically in the background (Weekly by default, with Daily & Manual options).",
+                "Release APK Priority: Fixed update downloads to always fetch production release APK builds.",
+                "Background & Launch Alerts: Surface updates via system notifications and in-app alerts on open."
+            )
+        ),
+        ChangelogRelease(
             version = "0.4.0",
             title = "What’s New in v0.4.0",
             highlights = listOf(

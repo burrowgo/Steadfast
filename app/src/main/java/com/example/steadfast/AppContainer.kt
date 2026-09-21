@@ -5,6 +5,8 @@ import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.db.AppDatabase
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.dataStore
+import com.example.steadfast.data.updater.DefaultUpdateChecker
+import com.example.steadfast.data.updater.UpdateChecker
 import com.example.steadfast.domain.QuoteRepository
 import java.time.Clock
 
@@ -13,6 +15,7 @@ interface AppContainer {
     val streakRepository: StreakRepository
     val settingsRepository: SettingsRepository
     val quoteRepository: QuoteRepository
+    val updateChecker: UpdateChecker
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -32,5 +35,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val quoteRepository: QuoteRepository by lazy {
         QuoteRepository.loadFromRaw(context, clock)
+    }
+
+    override val updateChecker: UpdateChecker by lazy {
+        DefaultUpdateChecker()
     }
 }

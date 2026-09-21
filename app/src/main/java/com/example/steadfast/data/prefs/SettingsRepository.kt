@@ -6,8 +6,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.steadfast.data.updater.UpdateCheckResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -39,6 +41,20 @@ enum class WidgetShape {
     }
 }
 
+enum class AutoUpdateFrequency {
+    WEEKLY,
+    DAILY,
+    MANUAL;
+
+    companion object {
+        fun fromString(value: String?): AutoUpdateFrequency = when (value?.lowercase()) {
+            "daily" -> DAILY
+            "manual" -> MANUAL
+            else -> WEEKLY
+        }
+    }
+}
+
 data class UserSettings(
     val habitName: String = "",
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -46,7 +62,9 @@ data class UserSettings(
     val reminderEnabled: Boolean = false,
     val reminderTime: String = "20:00",
     val lastCelebratedRankIndex: Int = 0,
-    val widgetShape: WidgetShape = WidgetShape.ROUNDED
+    val widgetShape: WidgetShape = WidgetShape.ROUNDED,
+    val autoUpdateFrequency: AutoUpdateFrequency = AutoUpdateFrequency.WEEKLY,
+    val lastUpdateCheckTime: Long = 0L
 )
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -60,6 +78,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_LAST_CELEBRATED_RANK = intPreferencesKey("last_celebrated_rank_index")
         val KEY_WIDGET_SHAPE = stringPreferencesKey("widget_shape")
         val KEY_LAST_SEEN_VERSION = stringPreferencesKey("last_seen_version")
+        val KEY_AUTO_UPDATE_FREQUENCY = stringPreferencesKey("auto_update_frequency")
+        val KEY_LAST_UPDATE_CHECK_TIME = longPreferencesKey("last_update_check_time")
+        val KEY_PENDING_UPDATE_VERSION = stringPreferencesKey("pending_update_version")
+        val KEY_PENDING_UPDATE_NOTES = stringPreferencesKey("pending_update_notes")
+        val KEY_PENDING_UPDATE_URL = stringPreferencesKey("pending_update_url")
+        val KEY_PENDING_UPDATE_PAGE = stringPreferencesKey("pending_update_page")
     }
 
     val settingsFlow: Flow<UserSettings> = dataStore.data.map { preferences ->
@@ -70,7 +94,9 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             reminderEnabled = preferences[KEY_REMINDER_ENABLED] ?: false,
             reminderTime = preferences[KEY_REMINDER_TIME] ?: "20:00",
             lastCelebratedRankIndex = preferences[KEY_LAST_CELEBRATED_RANK] ?: 0,
-            widgetShape = WidgetShape.fromString(preferences[KEY_WIDGET_SHAPE])
+            widgetShape = WidgetShape.fromString(preferences[KEY_WIDGET_SHAPE]),
+            autoUpdateFrequency = AutoUpdateFrequency.fromString(preferences[KEY_AUTO_UPDATE_FREQUENCY]),
+            lastUpdateCheckTime = preferences[KEY_LAST_UPDATE_CHECK_TIME] ?: 0L
         )
     }
 
@@ -123,6 +149,55 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setLastSeenVersion(version: String) {
         dataStore.edit { preferences ->
             preferences[KEY_LAST_SEEN_VERSION] = version
+        }
+    }
+
+    suspend fun setAutoUpdateFrequency(frequency: AutoUpdateFrequency) {
+        dataStore.edit { preferences ->
+            preferences[KEY_AUTO_UPDATE_FREQUENCY] = frequency.name.lowercase()
+        }
+    }
+
+    val lastUpdateCheckTimeFlow: Flow<Long> = dataStore.data.map { preferences ->
+        preferences[KEY_LAST_UPDATE_CHECK_TIME] ?: 0L
+    }
+
+    suspend fun setLastUpdateCheckTime(timestamp: Long) {
+        dataStore.edit { preferences ->
+            preferences[KEY_LAST_UPDATE_CHECK_TIME] = timestamp
+        }
+    }
+
+    val pendingUpdateFlow: Flow<UpdateCheckResult.UpdateAvailable?> = dataStore.data.map { preferences ->
+        val version = preferences[KEY_PENDING_UPDATE_VERSION]
+        val downloadUrl = preferences[KEY_PENDING_UPDATE_URL]
+        val notes = preferences[KEY_PENDING_UPDATE_NOTES]
+        val page = preferences[KEY_PENDING_UPDATE_PAGE]
+        if (!version.isNullOrBlank() && !downloadUrl.isNullOrBlank()) {
+            UpdateCheckResult.UpdateAvailable(
+                version = version,
+                releaseNotes = notes.orEmpty(),
+                downloadUrl = downloadUrl,
+                releasePageUrl = page ?: "https://github.com/burrowgo/Steadfast/releases"
+            )
+        } else {
+            null
+        }
+    }
+
+    suspend fun setPendingUpdate(update: UpdateCheckResult.UpdateAvailable?) {
+        dataStore.edit { preferences ->
+            if (update != null) {
+                preferences[KEY_PENDING_UPDATE_VERSION] = update.version
+                preferences[KEY_PENDING_UPDATE_NOTES] = update.releaseNotes
+                preferences[KEY_PENDING_UPDATE_URL] = update.downloadUrl
+                preferences[KEY_PENDING_UPDATE_PAGE] = update.releasePageUrl
+            } else {
+                preferences.remove(KEY_PENDING_UPDATE_VERSION)
+                preferences.remove(KEY_PENDING_UPDATE_NOTES)
+                preferences.remove(KEY_PENDING_UPDATE_URL)
+                preferences.remove(KEY_PENDING_UPDATE_PAGE)
+            }
         }
     }
 

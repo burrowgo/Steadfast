@@ -5,17 +5,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.steadfast.data.StreakRepository
+import com.example.steadfast.data.prefs.AutoUpdateFrequency
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.UserSettings
 import com.example.steadfast.data.prefs.WidgetShape
-import com.example.steadfast.notifications.NotificationHelper
-import com.example.steadfast.widget.WidgetUpdater
+import com.example.steadfast.data.updater.AutoUpdateScheduler
 import com.example.steadfast.data.updater.DefaultUpdateChecker
 import com.example.steadfast.data.updater.UpdateCheckResult
 import com.example.steadfast.data.updater.UpdateChecker
 import com.example.steadfast.domain.ChangelogRelease
 import com.example.steadfast.domain.ChangelogRepository
+import com.example.steadfast.notifications.NotificationHelper
+import com.example.steadfast.widget.WidgetUpdater
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,6 +37,8 @@ data class SettingsUiState(
     val reminderEnabled: Boolean = false,
     val reminderTime: String = "20:00",
     val widgetShape: WidgetShape = WidgetShape.ROUNDED,
+    val autoUpdateFrequency: AutoUpdateFrequency = AutoUpdateFrequency.WEEKLY,
+    val lastUpdateCheckTime: Long = 0L,
     val isCheckingForUpdate: Boolean = false,
     val updateResult: UpdateCheckResult? = null,
     val showWhatsNew: ChangelogRelease? = null
@@ -69,6 +73,8 @@ class SettingsViewModel(
             reminderEnabled = settings.reminderEnabled,
             reminderTime = settings.reminderTime,
             widgetShape = settings.widgetShape,
+            autoUpdateFrequency = settings.autoUpdateFrequency,
+            lastUpdateCheckTime = settings.lastUpdateCheckTime,
             isCheckingForUpdate = checking,
             updateResult = updateRes,
             showWhatsNew = whatsNew
@@ -246,18 +252,32 @@ class SettingsViewModel(
         viewModelScope.launch {
             isCheckingForUpdate.value = true
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.4.0"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.5.0"
             } catch (e: Exception) {
-                "0.4.0"
+                "0.5.0"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
+            settingsRepository.setLastUpdateCheckTime(System.currentTimeMillis())
+            if (result is UpdateCheckResult.UpdateAvailable) {
+                settingsRepository.setPendingUpdate(result)
+            }
             isCheckingForUpdate.value = false
             updateResult.value = result
         }
     }
 
+    fun setAutoUpdateFrequency(frequency: AutoUpdateFrequency) {
+        viewModelScope.launch {
+            settingsRepository.setAutoUpdateFrequency(frequency)
+            AutoUpdateScheduler.schedule(context, frequency)
+        }
+    }
+
     fun dismissUpdateResult() {
         updateResult.value = null
+        viewModelScope.launch {
+            settingsRepository.setPendingUpdate(null)
+        }
     }
 
     fun showWhatsNew(version: String) {

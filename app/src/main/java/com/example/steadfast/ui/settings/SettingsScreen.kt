@@ -60,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
+import com.example.steadfast.data.prefs.AutoUpdateFrequency
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.data.updater.UpdateCheckResult
@@ -83,7 +84,8 @@ fun SettingsScreen(
         factory = SettingsViewModel.provideFactory(
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
-            context = context
+            context = context,
+            updateChecker = container.updateChecker
         )
     )
 
@@ -92,6 +94,7 @@ fun SettingsScreen(
     var showRenameDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showWidgetShapeDialog by remember { mutableStateOf(false) }
+    var showAutoUpdateDialog by remember { mutableStateOf(false) }
     var showEraseDialog by remember { mutableStateOf(false) }
     var showLicensesDialog by remember { mutableStateOf(false) }
 
@@ -488,9 +491,9 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     val versionName = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.4.0"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.5.0"
                         } catch (e: Exception) {
-                            "0.4.0"
+                            "0.5.0"
                         }
                     }
                     Text(
@@ -502,6 +505,21 @@ fun SettingsScreen(
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                     // Check for updates row
+                    val lastCheckedSubtitle = if (uiState.isCheckingForUpdate) {
+                        stringResource(R.string.settings_checking_updates)
+                    } else if (uiState.lastUpdateCheckTime > 0L) {
+                        val diff = System.currentTimeMillis() - uiState.lastUpdateCheckTime
+                        val days = (diff / (1000 * 3600 * 24)).toInt()
+                        val timeStr = when {
+                            days == 0 -> stringResource(R.string.settings_last_checked_today)
+                            days == 1 -> stringResource(R.string.settings_last_checked_yesterday)
+                            else -> stringResource(R.string.settings_last_checked_days_ago, days)
+                        }
+                        stringResource(R.string.settings_last_checked_format, timeStr)
+                    } else {
+                        stringResource(R.string.settings_never_checked)
+                    }
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -518,11 +536,7 @@ fun SettingsScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
-                                text = if (uiState.isCheckingForUpdate) {
-                                    stringResource(R.string.settings_checking_updates)
-                                } else {
-                                    "GitHub Releases"
-                                },
+                                text = lastCheckedSubtitle,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -531,6 +545,35 @@ fun SettingsScreen(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                    // Auto-update frequency row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showAutoUpdateDialog = true },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.settings_auto_update_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            val frequencyText = when (uiState.autoUpdateFrequency) {
+                                AutoUpdateFrequency.WEEKLY -> stringResource(R.string.settings_frequency_weekly)
+                                AutoUpdateFrequency.DAILY -> stringResource(R.string.settings_frequency_daily)
+                                AutoUpdateFrequency.MANUAL -> stringResource(R.string.settings_frequency_manual)
+                            }
+                            Text(
+                                text = frequencyText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -591,6 +634,18 @@ fun SettingsScreen(
                     showWidgetShapeDialog = false
                 },
                 onDismiss = { showWidgetShapeDialog = false }
+            )
+        }
+
+        // Auto-Update Frequency Dialog
+        if (showAutoUpdateDialog) {
+            AutoUpdateFrequencySelectionDialog(
+                currentFrequency = uiState.autoUpdateFrequency,
+                onSelectFrequency = {
+                    viewModel.setAutoUpdateFrequency(it)
+                    showAutoUpdateDialog = false
+                },
+                onDismiss = { showAutoUpdateDialog = false }
             )
         }
 
@@ -808,6 +863,50 @@ private fun WidgetShapeSelectionDialog(
                         RadioButton(
                             selected = currentShape == shape,
                             onClick = { onSelectShape(shape) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(nameRes))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.edit_reason_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun AutoUpdateFrequencySelectionDialog(
+    currentFrequency: AutoUpdateFrequency,
+    onSelectFrequency: (AutoUpdateFrequency) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val frequencies = listOf(
+        AutoUpdateFrequency.WEEKLY to R.string.settings_frequency_weekly,
+        AutoUpdateFrequency.DAILY to R.string.settings_frequency_daily,
+        AutoUpdateFrequency.MANUAL to R.string.settings_frequency_manual
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_auto_update_title)) },
+        text = {
+            Column {
+                frequencies.forEach { (freq, nameRes) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectFrequency(freq) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentFrequency == freq,
+                            onClick = { onSelectFrequency(freq) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(nameRes))

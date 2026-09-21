@@ -162,4 +162,19 @@
     <string name="settings_update_error">Unable to check for updates: %1$s</string>
     <string name="settings_whats_new">What’s New</string>
     <string name="whats_new_continue">Got it</string>
+
+    <!-- Automatic Updates -->
+    <string name="settings_auto_update_title">Automatic update checks</string>
+    <string name="settings_frequency_weekly">Weekly (Recommended)</string>
+    <string name="settings_frequency_daily">Daily</string>
+    <string name="settings_frequency_manual">Manual only</string>
+    <string name="settings_last_checked_format">Last checked: %1$s</string>
+    <string name="settings_last_checked_today">Checked today</string>
+    <string name="settings_last_checked_yesterday">Checked yesterday</string>
+    <string name="settings_last_checked_days_ago">Checked %1$d days ago</string>
+    <string name="settings_never_checked">Never checked</string>
+    <string name="notification_channel_updates_name">App Updates</string>
+    <string name="notification_channel_updates_desc">Notifications when a new version of Steadfast is available</string>
+    <string name="notification_update_title">Steadfast Update Available</string>
+    <string name="notification_update_body">Version %1$s is available. Tap to update.</string>
 </resources>

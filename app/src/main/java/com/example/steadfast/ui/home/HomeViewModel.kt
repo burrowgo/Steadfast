@@ -6,7 +6,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.db.StreakEntity
+import com.example.steadfast.data.prefs.AutoUpdateFrequency
 import com.example.steadfast.data.prefs.SettingsRepository
+import com.example.steadfast.data.updater.DefaultUpdateChecker
+import com.example.steadfast.data.updater.UpdateCheckResult
+import com.example.steadfast.data.updater.UpdateChecker
 import com.example.steadfast.domain.ChangelogRelease
 import com.example.steadfast.domain.ChangelogRepository
 import com.example.steadfast.domain.Quote
@@ -56,7 +60,8 @@ class HomeViewModel(
     private val settingsRepository: SettingsRepository,
     private val quoteRepository: QuoteRepository,
     private val context: Context,
-    private val clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.systemDefaultZone(),
+    private val updateChecker: UpdateChecker = DefaultUpdateChecker()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
@@ -71,13 +76,16 @@ class HomeViewModel(
     private val _whatsNewRelease = MutableStateFlow<ChangelogRelease?>(null)
     val whatsNewRelease: StateFlow<ChangelogRelease?> = _whatsNewRelease.asStateFlow()
 
+    private val _updateAvailable = MutableStateFlow<UpdateCheckResult.UpdateAvailable?>(null)
+    val updateAvailable: StateFlow<UpdateCheckResult.UpdateAvailable?> = _updateAvailable.asStateFlow()
+
     init {
         viewModelScope.launch {
             val lastSeen = settingsRepository.lastSeenVersionFlow.first()
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.4.0"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.5.0"
             } catch (e: Exception) {
-                "0.4.0"
+                "0.5.0"
             }
             if (lastSeen == null) {
                 // Check if user is upgrading from a previous version without last_seen_version set
@@ -96,6 +104,38 @@ class HomeViewModel(
                     _whatsNewRelease.value = release
                 }
                 settingsRepository.setLastSeenVersion(currentVersion)
+            }
+
+            // Periodic / background update checking
+            try {
+                val pending = settingsRepository.pendingUpdateFlow.first()
+                if (pending != null) {
+                    if (DefaultUpdateChecker.isNewerVersion(pending.version, currentVersion)) {
+                        _updateAvailable.value = pending
+                    } else {
+                        settingsRepository.setPendingUpdate(null)
+                    }
+                } else {
+                    val userSettings = settingsRepository.settingsFlow.first()
+                    if (userSettings.autoUpdateFrequency != AutoUpdateFrequency.MANUAL) {
+                        val intervalMillis = when (userSettings.autoUpdateFrequency) {
+                            AutoUpdateFrequency.DAILY -> 24 * 3600 * 1000L
+                            AutoUpdateFrequency.WEEKLY -> 7 * 24 * 3600 * 1000L
+                            AutoUpdateFrequency.MANUAL -> Long.MAX_VALUE
+                        }
+                        val now = System.currentTimeMillis()
+                        if (now - userSettings.lastUpdateCheckTime >= intervalMillis) {
+                            val result = updateChecker.checkForUpdate(currentVersion)
+                            settingsRepository.setLastUpdateCheckTime(now)
+                            if (result is UpdateCheckResult.UpdateAvailable) {
+                                settingsRepository.setPendingUpdate(result)
+                                _updateAvailable.value = result
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                // Silent fail for background check on launch
             }
         }
 
@@ -204,17 +244,25 @@ class HomeViewModel(
         _whatsNewRelease.value = null
     }
 
+    fun dismissUpdateDialog() {
+        _updateAvailable.value = null
+        viewModelScope.launch {
+            settingsRepository.setPendingUpdate(null)
+        }
+    }
+
     companion object {
         fun provideFactory(
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
             quoteRepository: QuoteRepository,
             context: Context,
-            clock: Clock
+            clock: Clock = Clock.systemDefaultZone(),
+            updateChecker: UpdateChecker = DefaultUpdateChecker()
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return HomeViewModel(streakRepository, settingsRepository, quoteRepository, context, clock) as T
+                return HomeViewModel(streakRepository, settingsRepository, quoteRepository, context, clock, updateChecker) as T
             }
         }
     }

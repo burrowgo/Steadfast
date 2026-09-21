@@ -24,6 +24,11 @@ sealed interface UpdateCheckResult {
     ) : UpdateCheckResult
 }
 
+data class ReleaseAsset(
+    val name: String,
+    val downloadUrl: String
+)
+
 interface UpdateChecker {
     suspend fun checkForUpdate(currentVersion: String): UpdateCheckResult
 }
@@ -67,21 +72,8 @@ class DefaultUpdateChecker(
             val releaseNotes = json.optString("body", "").trim()
             val releasePageUrl = json.optString("html_url", releasesPageUrl)
 
-            var apkDownloadUrl = releasePageUrl
             val assets = json.optJSONArray("assets")
-            if (assets != null) {
-                for (i in 0 until assets.length()) {
-                    val asset = assets.getJSONObject(i)
-                    val name = asset.optString("name", "")
-                    if (name.endsWith("-release.apk") || name.endsWith(".apk")) {
-                        val downloadUrl = asset.optString("browser_download_url")
-                        if (downloadUrl.isNotBlank()) {
-                            apkDownloadUrl = downloadUrl
-                            break
-                        }
-                    }
-                }
-            }
+            val apkDownloadUrl = findReleaseApkUrl(assets, releasePageUrl)
 
             if (isNewerVersion(remoteVersion, currentVersion)) {
                 UpdateCheckResult.UpdateAvailable(
@@ -118,6 +110,49 @@ class DefaultUpdateChecker(
                 if (l < c) return false
             }
             return false
+        }
+
+        fun parseAssets(assets: org.json.JSONArray?): List<ReleaseAsset> {
+            if (assets == null) return emptyList()
+            val list = mutableListOf<ReleaseAsset>()
+            for (i in 0 until assets.length()) {
+                val asset = assets.optJSONObject(i) ?: continue
+                val name = asset.optString("name", "")
+                val downloadUrl = asset.optString("browser_download_url", "")
+                if (downloadUrl.isNotBlank()) {
+                    list.add(ReleaseAsset(name, downloadUrl))
+                }
+            }
+            return list
+        }
+
+        fun findReleaseApkUrl(assets: List<ReleaseAsset>, fallbackUrl: String): String {
+            var candidateReleaseApk: String? = null
+            var candidateGenericApk: String? = null
+
+            for (asset in assets) {
+                val name = asset.name
+                val downloadUrl = asset.downloadUrl
+
+                if (name.endsWith(".apk", ignoreCase = true)) {
+                    val isExplicitRelease = name.contains("release", ignoreCase = true) &&
+                            !name.contains("debug", ignoreCase = true)
+                    val isDebug = name.contains("debug", ignoreCase = true)
+
+                    if (isExplicitRelease) {
+                        candidateReleaseApk = downloadUrl
+                        break
+                    } else if (!isDebug && candidateGenericApk == null) {
+                        candidateGenericApk = downloadUrl
+                    }
+                }
+            }
+
+            return candidateReleaseApk ?: candidateGenericApk ?: fallbackUrl
+        }
+
+        fun findReleaseApkUrl(assets: org.json.JSONArray?, fallbackUrl: String): String {
+            return findReleaseApkUrl(parseAssets(assets), fallbackUrl)
         }
     }
 }

@@ -4,6 +4,18 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-09-21
+
+### Added
+- **Automatic Periodic Update Checks:** App now automatically checks for new GitHub releases in the background at regular intervals (default: Weekly, with Daily and Manual options).
+- **Background & Launch Alerts:** Discovered updates are surfaced via system notification and an update dialog on app open.
+- **Update Frequency Settings:** Configure automatic check intervals in Settings under About, complete with last checked indicators.
+
+### Fixed
+- **Release APK Download Priority:** Resolved an issue where update checker downloaded debug builds; production `*-release.apk` builds are now explicitly prioritized.
+
+---
+
 ## [0.4.0] - 2026-09-21
 
 ### Changed

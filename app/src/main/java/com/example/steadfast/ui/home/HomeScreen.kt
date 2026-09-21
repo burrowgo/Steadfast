@@ -47,9 +47,12 @@ import com.example.steadfast.ui.components.DayCounter
 import com.example.steadfast.ui.components.EmptyState
 import com.example.steadfast.ui.components.QuoteCard
 import com.example.steadfast.ui.components.QuoteDisplay
+import android.content.Intent
+import android.net.Uri
 import com.example.steadfast.ui.components.RankBadge
 import com.example.steadfast.ui.components.RankUpDialog
 import com.example.steadfast.ui.components.ResetSheet
+import com.example.steadfast.ui.components.UpdateAvailableDialog
 import com.example.steadfast.ui.components.WhatsNewDialog
 import com.example.steadfast.ui.theme.LocalRankColors
 import kotlinx.coroutines.flow.collectLatest
@@ -68,12 +71,14 @@ fun HomeScreen(
             settingsRepository = container.settingsRepository,
             quoteRepository = container.quoteRepository,
             context = context,
-            clock = container.clock
+            clock = container.clock,
+            updateChecker = container.updateChecker
         )
     )
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val whatsNew by viewModel.whatsNewRelease.collectAsStateWithLifecycle()
+    val updateAvailable by viewModel.updateAvailable.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resetSnackbarMsg = stringResource(R.string.reset_snackbar_message)
     val undoMsg = stringResource(R.string.reset_snackbar_undo)
@@ -175,6 +180,20 @@ fun HomeScreen(
                 WhatsNewDialog(
                     release = whatsNew!!,
                     onDismiss = { viewModel.dismissWhatsNew() }
+                )
+            }
+
+            if (updateAvailable != null) {
+                UpdateAvailableDialog(
+                    update = updateAvailable!!,
+                    onUpdate = { url ->
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                        viewModel.dismissUpdateDialog()
+                    },
+                    onDismiss = { viewModel.dismissUpdateDialog() }
                 )
             }
         }
