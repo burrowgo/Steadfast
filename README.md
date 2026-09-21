@@ -41,50 +41,6 @@ With full Jetpack Glance widget support, you can place responsive, glanceable ha
 
 ---
 
-## 🚀 Download & Installation
-
-<p align="center">
-  <a href="https://github.com/burrowgo/Steadfast/releases/latest">
-    <img src="assets/badge_github.png" alt="Download on GitHub" height="55" />
-  </a>
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.example.steadfast%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fburrowgo%2FSteadfast%22%2C%22author%22%3A%22burrowgo%22%2C%22name%22%3A%22Steadfast%22%7D">
-    <img src="assets/badge_obtainium.png" alt="Get it on Obtainium" height="55" />
-  </a>
-</p>
-
-### 1. Obtainium (Recommended for Seamless Updates)
-
-Track and receive automatic background updates directly through [Obtainium](https://github.com/ImranR98/Obtainium):
-
-<p align="center">
-  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.example.steadfast%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fburrowgo%2FSteadfast%22%2C%22author%22%3A%22burrowgo%22%2C%22name%22%3A%22Steadfast%22%7D">
-    <img src="assets/badge_obtainium.png" alt="Add to Obtainium" height="48" />
-  </a>
-</p>
-
-- **One-Click Install:** Tap the badge above on your Android device to automatically import and track Steadfast.
-- **Manual App Source:** Add `https://github.com/burrowgo/Steadfast` in the Obtainium app.
-
-### 2. GitHub Releases (Direct APK)
-
-Download pre-compiled binaries directly from [GitHub Releases](https://github.com/burrowgo/Steadfast/releases/latest):
-
-| Package | Description |
-| :--- | :--- |
-| **`steadfast-v*-release.apk`** | Production build with R8 optimization, minification, and resource shrinking *(recommended)* |
-| **`steadfast-v*-debug.apk`** | Developer build with debuggable logging enabled |
-| **`steadfast-v*-release.aab`** | Android App Bundle for distribution |
-
-### 3. In-App Updates
-
-Steadfast features a built-in update manager in **Settings → About → Check for updates**:
-- **Automatic Checks:** Periodically checks for GitHub releases in the background (Weekly, Daily, or Manual).
-- **Direct In-App Download:** Streams release APK updates with a live download progress bar.
-- **Native Installation:** Directly launches the system package installer sheet via `FileProvider`.
-
----
-
 ## ✨ Features
 
 - 🎯 **Accurate, Drift-Free Day Counter:** The streak is computed dynamically at render time from your habit's start date—never drifted by skipped alarms or stored as an unstable ticking integer.
@@ -97,6 +53,7 @@ Steadfast features a built-in update manager in **Settings → About → Check f
   - **4×1 Horizontal Bar:** Compact single-row layout displaying habit streak, rank badge, and progress toward next milestone.
   - **1×1 Circular / Square Badge:** Minimalist glanceable counter.
   - **In-App Customization:** Live preview with adjustable background opacity (0% crystal glass to 100% solid), custom text colors (Theme Default, Pure White, Pure Black, Brand Olive), and background themes (AMOLED Black, Charcoal, Surface, Pure White).
+- 🔄 **In-App Updater & Background Checks:** Built-in update manager that automatically checks GitHub Releases (weekly or configurable), downloads APK updates with real-time progress, and prompts native package installation directly within the app.
 - 🔒 **100% Privacy & Offline-First:** No accounts, no ads, no analytics, and no tracking. All habit data remains on your device in a local Room database. The `INTERNET` permission is used strictly to query GitHub Releases and download updates.
 - 💾 **Data Ownership (Export & Import):** Export your complete streak and reset history to standard CSV at any time, or restore from previous Steadfast CSV backups.
 - 🔔 **Gentle Daily Reminders:** Optional scheduled evening check-in notification via WorkManager.
