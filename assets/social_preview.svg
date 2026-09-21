@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#12180E"/>
+      <stop offset="50%" stop-color="#192314"/>
+      <stop offset="100%" stop-color="#23301C"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDE28A"/>
+      <stop offset="100%" stop-color="#E5B537"/>
+    </linearGradient>
+    <linearGradient id="iconBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#557332"/>
+      <stop offset="100%" stop-color="#3B5021"/>
+    </linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bgGrad)"/>
+
+  <!-- Decorative ambient circles -->
+  <circle cx="1140" cy="140" r="320" fill="#4C662B" opacity="0.10"/>
+  <circle cx="120" cy="520" r="260" fill="#4C662B" opacity="0.08"/>
+
+  <!-- App Icon Card -->
+  <g transform="translate(130, 175)" filter="url(#shadow)">
+    <rect width="290" height="290" rx="64" fill="url(#iconBg)" stroke="#6F9444" stroke-width="4"/>
+    
+    <!-- Shield Insignia scaled from 108x108 -->
+    <g transform="translate(15, 15) scale(2.4)">
+      <path fill="url(#goldGrad)" d="M54,25 L80,42 L80,65 L54,84 L28,65 L28,42 Z"/>
+      <path fill="#3B5021" d="M54,31 L74,45 L74,62 L54,77 L34,62 L34,45 Z"/>
+      <path fill="url(#goldGrad)" d="M54,39 L67,50 L62,54 L54,47 L46,54 L41,50 Z"/>
+      <path fill="url(#goldGrad)" d="M54,52 L67,63 L62,67 L54,60 L46,67 L41,63 Z"/>
+    </g>
+  </g>
+
+  <!-- Typography Area -->
+  <g transform="translate(480, 205)">
+    <!-- Category Pill -->
+    <rect width="216" height="34" rx="17" fill="#2E4020" stroke="#547833" stroke-width="1.5"/>
+    <text x="108" y="22" fill="#D7E8CD" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif" font-size="13" font-weight="700" letter-spacing="2" text-anchor="middle">ANDROID HABIT TRACKER</text>
+
+    <!-- App Name -->
+    <text x="0" y="112" fill="#FFFFFF" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif" font-size="80" font-weight="800" letter-spacing="-1.5">Steadfast</text>
+
+    <!-- Tagline -->
+    <text x="0" y="160" fill="#CAD8C1" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif" font-size="22" font-weight="400">Mindful streaks, military ranks &amp; customizable Glance widgets.</text>
+
+    <!-- Feature Pills -->
+    <g transform="translate(0, 200)">
+      <!-- Pill 1: 100% Offline-First -->
+      <g>
+        <rect width="180" height="42" rx="12" fill="#1F2A18" stroke="#3D5030" stroke-width="1.5"/>
+        <!-- Shield lock vector -->
+        <path fill="#9FC18B" transform="translate(18, 11) scale(0.8)" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 6h2v2h-2V7zm0 4h2v6h-2v-6z"/>
+        <text x="106" y="26" fill="#C5DABA" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif" font-size="14" font-weight="600" text-anchor="middle">100% Offline-First</text>
+      </g>
+
+      <!-- Pill 2: Glance Widgets -->
+      <g transform="translate(196, 0)">
+        <rect width="176" height="42" rx="12" fill="#1F2A18" stroke="#3D5030" stroke-width="1.5"/>
+        <!-- Widget / Grid vector -->
+        <path fill="#9FC18B" transform="translate(18, 12) scale(0.75)" d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+        <text x="105" y="26" fill="#C5DABA" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif" font-size="14" font-weight="600" text-anchor="middle">Glance Widgets</text>
+      </g>
+
+      <!-- Pill 3: 20 Military Ranks -->
+      <g transform="translate(388, 0)">
+        <rect width="182" height="42" rx="12" fill="#1F2A18" stroke="#3D5030" stroke-width="1.5"/>
+        <!-- Star vector -->
+        <path fill="#9FC18B" transform="translate(18, 12) scale(0.75)" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+        <text x="108" y="26" fill="#C5DABA" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif" font-size="14" font-weight="600" text-anchor="middle">20 Military Ranks</text>
+      </g>
+    </g>
+  </g>
+</svg>
