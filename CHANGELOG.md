@@ -4,6 +4,22 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2026-09-22
+
+### Added
+- **Widget Habit Title Privacy Toggle:** Added a "Show Habit Name" toggle in Widget Settings allowing users to hide habit titles from home screen widgets for privacy and discrete tracking. Live preview in Widget Customization reflects the toggle immediately.
+- **Rank Milestone Linear Progress Indicator:** Added a linear progress bar inside the rank card on the home screen showing exact visual progress towards the next rank milestone.
+
+### Changed
+- **Standard App Title in Top App Bar:** Standardized the top bar on the home screen to display "Steadfast" instead of the habit title, adhering to standard Android UX design and protecting privacy.
+- **Prominent Habit Headline:** The active habit name is cleanly featured in bold headline typography within the main home screen body.
+- **Unified Rank Card Container:** Grouped the rank badge, rank name, and next milestone details inside a shape-clipped Material 3 surface card matching the design of the quote card and history summaries.
+
+### Fixed
+- **Clean Day Counter:** Removed the clunky Day 0 hint message below the counter ring, ensuring the day counter remains balanced, symmetric, and uncluttered.
+
+---
+
 ## [0.7.3] - 2026-09-21
 
 ### Fixed

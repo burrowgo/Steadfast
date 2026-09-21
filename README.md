@@ -137,9 +137,9 @@ Output binaries are generated at:
 Releases are automated via GitHub Actions (`.github/workflows/release.yml`):
 ```bash
 # Create and push release tag
-./scripts/release.sh 0.7.3
+./scripts/release.sh 0.7.4
 # or
-git tag -a v0.7.3 -m "Release v0.7.3" && git push origin v0.7.3
+git tag -a v0.7.4 -m "Release v0.7.4" && git push origin v0.7.4
 ```
 The automated CI pipeline runs unit tests and lint checks, builds production and debug APKs and the AAB bundle, generates SHA-256 checksums, and publishes release assets directly to GitHub Releases.
 

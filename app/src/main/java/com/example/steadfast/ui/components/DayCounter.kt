@@ -158,17 +158,6 @@ fun DayCounter(
                 }
             }
         }
-
-        if (days == 0) {
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = stringResource(R.string.day_zero_ticker_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center
-            )
-        }
     }
 }
 

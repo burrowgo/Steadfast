@@ -9,6 +9,16 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.4",
+            title = "What’s New in v0.7.4",
+            highlights = listOf(
+                "Polished Home UI & Standard App Title: Replaced the habit name in the top app bar with Steadfast for consistent app navigation and habit privacy.",
+                "Rank Progression Card: Encased current rank and next milestone in a unified Material 3 card with a smooth linear progress bar indicator.",
+                "Clean Counter Layout: Removed the Day 0 hint message below the day counter ring for a clean, symmetric presentation.",
+                "Widget Habit Title Privacy: Added a toggle in Widget Settings to hide or show habit names on home screen widgets for discrete tracking."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.3",
             title = "What’s New in v0.7.3",
             highlights = listOf(
