@@ -10,17 +10,25 @@
 
 <p align="center">
   <a href="https://github.com/burrowgo/Steadfast/releases/latest">
-    <img src="https://img.shields.io/github/v/release/burrowgo/Steadfast?style=for-the-badge&label=Latest%20Release&color=4C662B" alt="Latest Release" />
+    <img src="assets/badge_github.png" alt="Download on GitHub" height="50" />
   </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://obtainium.imranr.dev/?r=https://github.com/burrowgo/Steadfast">
-    <img src="https://img.shields.io/badge/Obtainium-Add%20App-007AFF?style=for-the-badge&logo=android&logoColor=white" alt="Add to Obtainium" />
+    <img src="assets/badge_obtainium.png" alt="Get it on Obtainium" height="50" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/burrowgo/Steadfast/releases/latest">
+    <img src="https://img.shields.io/github/v/release/burrowgo/Steadfast?style=flat-square&label=Release&color=4C662B" alt="Latest Release" />
   </a>
   <a href="https://github.com/burrowgo/Steadfast/blob/master/LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License: MIT" />
+    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT" />
   </a>
   <a href="https://android-arsenal.com/api?level=26">
-    <img src="https://img.shields.io/badge/Android-8.0%2B%20(API%2026%2B)-brightgreen.svg?style=for-the-badge&logo=android&logoColor=white" alt="API 26+" />
+    <img src="https://img.shields.io/badge/Android-8.0%2B%20(API%2026%2B)-brightgreen.svg?style=flat-square&logo=android&logoColor=white" alt="API 26+" />
   </a>
+  <img src="https://img.shields.io/badge/Offline--First-100%25-success?style=flat-square" alt="100% Offline-First" />
 </p>
 
 ---
@@ -35,30 +43,34 @@ With full Jetpack Glance widget support, you can place responsive, glanceable ha
 
 ## 🚀 Download & Installation
 
-### Option 1: Obtainium (Recommended for Auto-Updates)
-
-Install and track updates automatically using [Obtainium](https://github.com/ImranR98/Obtainium):
-
 <p align="center">
+  <a href="https://github.com/burrowgo/Steadfast/releases/latest">
+    <img src="assets/badge_github.png" alt="Download on GitHub" height="55" />
+  </a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
   <a href="https://obtainium.imranr.dev/?r=https://github.com/burrowgo/Steadfast">
-    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/badges/badge-add-to-obtainium.png" width="220" alt="Add to Obtainium" />
+    <img src="assets/badge_obtainium.png" alt="Get it on Obtainium" height="55" />
   </a>
 </p>
 
-- **One-click Import:** [Add to Obtainium](https://obtainium.imranr.dev/?r=https://github.com/burrowgo/Steadfast)
-- **Manual App Source URL:** `https://github.com/burrowgo/Steadfast`
+### 1. Obtainium (Recommended for Seamless Updates)
 
-### Option 2: GitHub Releases (Direct APK)
+Track and receive automatic background updates directly through [Obtainium](https://github.com/ImranR98/Obtainium):
 
-Download the latest production APK directly from [GitHub Releases](https://github.com/burrowgo/Steadfast/releases/latest):
+- **One-Click Install:** Tap the **Get it on Obtainium** badge above or open [this link on your device](https://obtainium.imranr.dev/?r=https://github.com/burrowgo/Steadfast).
+- **Manual App Source:** Add `https://github.com/burrowgo/Steadfast` in the Obtainium app.
 
-| Asset | Description |
+### 2. GitHub Releases (Direct APK)
+
+Download pre-compiled binaries directly from [GitHub Releases](https://github.com/burrowgo/Steadfast/releases/latest):
+
+| Package | Description |
 | :--- | :--- |
 | **`steadfast-v*-release.apk`** | Production build with R8 optimization, minification, and resource shrinking *(recommended)* |
 | **`steadfast-v*-debug.apk`** | Developer build with debuggable logging enabled |
-| **`steadfast-v*-release.aab`** | Android App Bundle for Google Play distribution |
+| **`steadfast-v*-release.aab`** | Android App Bundle for distribution |
 
-### Option 3: In-App Updates
+### 3. In-App Updates
 
 Steadfast features a built-in update manager in **Settings → About → Check for updates**:
 - **Automatic Checks:** Periodically checks for GitHub releases in the background (Weekly, Daily, or Manual).
