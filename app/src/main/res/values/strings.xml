@@ -223,4 +223,34 @@
     <string name="widget_wallpaper_pattern">Pattern</string>
     <string name="widget_show_habit_name_title">Show Habit Title</string>
     <string name="widget_show_habit_name_desc">Display your habit name on the widget. Turn off to keep your habit private from anyone glancing at your screen.</string>
+
+    <!-- Multi-Habit Management -->
+    <string name="add_habit_title">New Habit</string>
+    <string name="edit_habit_title">Edit Habit</string>
+    <string name="habit_name_label">Habit Name</string>
+    <string name="habit_name_hint">e.g., Daily Reading, No Sugar</string>
+    <string name="habit_name_error_blank">Please enter a habit name</string>
+    <string name="habit_icon_label">Icon</string>
+    <string name="habit_color_label">Color Theme</string>
+    <string name="habit_start_date_label">Started On</string>
+    <string name="habit_save_button">Save</string>
+    <string name="habit_create_button">Create Habit</string>
+    <string name="habit_cancel_button">Cancel</string>
+    <string name="habit_menu_edit">Edit Habit</string>
+    <string name="habit_menu_archive">Archive Habit</string>
+    <string name="habit_menu_unarchive">Unarchive Habit</string>
+    <string name="habit_menu_delete">Delete Habit</string>
+    <string name="habit_delete_dialog_title">Delete %1$s?</string>
+    <string name="habit_delete_dialog_message">This will permanently delete this habit and all its streak history and reset logs. This action cannot be undone.</string>
+    <string name="habit_delete_confirm">Delete</string>
+    <string name="habit_empty_title">Build Steadfast Habits</string>
+    <string name="habit_empty_subtitle">Track your daily consistency, earn military ranks, and build unbreakable habits. Tap below to begin.</string>
+    <string name="habit_empty_button">Add Habit</string>
+    <string name="habit_tab_active">Active</string>
+    <string name="habit_tab_archived">Archived</string>
+    <string name="habit_all_habits">All Habits</string>
+    <string name="habit_select_habit">Select Habit</string>
+    <string name="widget_configure_title">Choose a Habit</string>
+    <string name="widget_configure_subtitle">Select which habit this widget displays on your home screen:</string>
+    <string name="widget_configure_empty">No active habits found. Open Steadfast to add a habit first.</string>
 </resources>
