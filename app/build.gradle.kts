@@ -40,7 +40,15 @@ android {
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
             } else {
-                initWith(getByName("debug"))
+                val fallbackKeystore = file("debug.keystore")
+                if (fallbackKeystore.exists()) {
+                    storeFile = fallbackKeystore
+                    storePassword = "android"
+                    keyAlias = "androiddebugkey"
+                    keyPassword = "android"
+                } else {
+                    initWith(getByName("debug"))
+                }
             }
         }
     }
