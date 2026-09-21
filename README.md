@@ -10,7 +10,7 @@
 - **Kind, Non-Shaming Resets:** Every reset is logged with an optional reason and suggestion chips. Undo is available via snackbar. A reset starts a new run immediately at day 0.
 - **Army Ranks Ladder:** 20 data-driven ranks from Recruit to General of the Army based on streak length. Badge art is drawn geometrically in Compose. Shows progress to next rank and preserves the all-time highest rank achieved.
 - **Motivational Quotes:** Deterministic daily quote selection from an offline pool of 60+ curated original quotes. Automatically switches to a "comeback" pool for 24 hours following a reset.
-- **Glance Home-Screen Widget:** Highly customizable and responsive across 1×1 (compact mini-counter), 2×2 (standard counter), and 4×2 (wide counter with rank progress). Supports both **Rounded Rectangle** and **Circular** shapes, selectable via in-app Settings or directly from the launcher widget picker. Fully supports dynamic color (Android 12+) with brand fallback.
+- **Glance Home-Screen Widget:** Highly customizable and responsive across 1×1 (compact mini-counter), 2×2 (standard counter), 4×1 (streamlined horizontal bar), and 4×2 (wide counter with rank progress). Supports both **Rounded Rectangle** and **Circular** shapes, selectable via in-app Settings or directly from the launcher widget picker. Fully supports dynamic color (Android 12+) with brand fallback.
 - **Privacy First:** No accounts, no analytics, no ads, no cloud sync, and **no `INTERNET` permission**. Full Android Auto Backup for local Room database and DataStore settings.
 - **Customizable:** System/Light/Dark theme, rounded/circular widget shape, dynamic wallpaper colors toggle, optional gentle evening check-in notification, and CSV export.
 
@@ -72,19 +72,19 @@ Releases are triggered automatically by pushing any semantic version tag:
 
 ```bash
 # Option A: Using the release helper script (verifies, tests, tags, and pushes)
-./scripts/release.sh 0.5.0
+./scripts/release.sh 0.6.0
 
 # Option B: Using standard git commands
-git tag -a v0.5.0 -m "Release v0.5.0"
-git push origin v0.5.0
+git tag -a v0.6.0 -m "Release v0.6.0"
+git push origin v0.6.0
 ```
 
-Or manually triggered in GitHub Actions UI: **Actions → Release → Run workflow** (enter version name, e.g. `0.5.0`).
+Or manually triggered in GitHub Actions UI: **Actions → Release → Run workflow** (enter version name, e.g. `0.6.0`).
 
 **What the pipeline produces on each release:**
-- `steadfast-v0.5.0-release.apk`: Production-ready, R8-minified, and resource-shrunk APK for end-user installation.
-- `steadfast-v0.5.0-debug.apk`: Debug APK with logging and developer inspection enabled.
-- `steadfast-v0.5.0-release.aab`: Android App Bundle for Google Play distribution.
+- `steadfast-v0.6.0-release.apk`: Production-ready, R8-minified, and resource-shrunk APK for end-user installation.
+- `steadfast-v0.6.0-debug.apk`: Debug APK with logging and developer inspection enabled.
+- `steadfast-v0.6.0-release.aab`: Android App Bundle for Google Play distribution.
 - `checksums.txt` and `.sha256`: SHA-256 cryptographic verification checksums.
 - Automatic GitHub Release notes with commit changelog.
 

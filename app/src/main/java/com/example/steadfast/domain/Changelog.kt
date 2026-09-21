@@ -9,6 +9,15 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.6.0",
+            title = "What’s New in v0.6.0",
+            highlights = listOf(
+                "Widget Days Label Visibility: Fixed layout sizing so the 'days' label is always clearly visible on 2x2 and 4x1 home screen widgets without clipping.",
+                "Dedicated 4x1 Widget Layout: Introduced a streamlined horizontal layout for 4x1 widgets with habit streak and milestone progress.",
+                "Responsive Widget Sizing: Refined widget padding and font scaling across all grid configurations."
+            )
+        ),
+        ChangelogRelease(
             version = "0.5.0",
             title = "What’s New in v0.5.0",
             highlights = listOf(

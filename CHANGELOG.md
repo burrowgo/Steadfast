@@ -4,6 +4,16 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-09-21
+
+### Fixed
+- **Widget "days" Label Visibility:** Fixed an issue where the "days" label was clipped and hidden on 2×2 and 4×1 home screen widgets due to vertical overflow in Glance RemoteViews. Adjusted text font scaling and container padding so the label is reliably visible across all launcher grid densities.
+
+### Added
+- **Dedicated 4×1 Widget Layout:** Added a responsive single-row horizontal layout specifically tailored for 4×1 and 3×1 widget placements, cleanly presenting habit name, streak days, current rank, and progress to next rank.
+
+---
+
 ## [0.5.0] - 2026-09-21
 
 ### Added
