@@ -12,18 +12,24 @@ android {
     val vCode = providers.environmentVariable("VERSION_CODE")
         .map { it.toInt() }
         .orElse(providers.gradleProperty("versionCode").map { it.toInt() })
-        .getOrElse(11)
+        .getOrElse(12)
 
     val vName = providers.environmentVariable("VERSION_NAME")
         .orElse(providers.gradleProperty("versionName"))
-        .getOrElse("0.7.4")
+        .getOrElse("0.8.0-alpha.1")
+
+    val isAlpha = vName.contains("alpha", ignoreCase = true) ||
+        providers.environmentVariable("IS_ALPHA").map { it.toBoolean() }.getOrElse(false)
 
     defaultConfig {
-        applicationId = "com.example.steadfast"
+        applicationId = if (isAlpha) "com.example.steadfast.alpha" else "com.example.steadfast"
         minSdk = 26
         targetSdk = 35
         versionCode = vCode
         versionName = vName
+
+        resValue("string", "app_name", if (isAlpha) "Steadfast Alpha" else "Steadfast")
+        resValue("color", "launcher_bg_color", if (isAlpha) "#E65100" else "#4C662B")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

@@ -152,7 +152,7 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           name: "Steadfast ${{ env.TAG_NAME }}"
           draft: false
-          prerelease: ${{ github.event.inputs.prerelease || false }}
+          prerelease: ${{ contains(env.TAG_NAME, 'alpha') || contains(env.TAG_NAME, 'beta') || contains(env.TAG_NAME, 'rc') || github.event.inputs.prerelease == 'true' || github.event.inputs.prerelease == true }}
           body_path: release_notes.md
           files: |
             release-artifacts/steadfast-${{ env.TAG_NAME }}-release.apk
