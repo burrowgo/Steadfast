@@ -68,23 +68,25 @@ Steadfast includes automated GitHub Actions workflows:
 - Builds and uploads the debug APK as an artifact for quick testing.
 
 ### 2. Automated Semantic Releases (`.github/workflows/release.yml`)
-Releases are triggered automatically by pushing a semantic version git tag:
+Releases are triggered automatically by pushing any semantic version tag:
 
 ```bash
-# Example: Tagging and releasing version 1.0.1
-git tag v1.0.1
+# Option A: Using the release helper script (verifies, tests, tags, and pushes)
+./scripts/release.sh 1.0.1
+
+# Option B: Using standard git commands
+git tag -a v1.0.1 -m "Release v1.0.1"
 git push origin v1.0.1
 ```
 
-Or manually triggered in GitHub: **Actions → Release → Run workflow** (enter version name, e.g. `1.0.1`).
+Or manually triggered in GitHub Actions UI: **Actions → Release → Run workflow** (enter version name, e.g. `1.0.1`).
 
-**What the pipeline does:**
-1. Dynamically injects `VERSION_NAME` (`1.0.1`) and monotonic `VERSION_CODE` (`github.run_number`).
-2. Runs all unit tests and lint checks.
-3. Builds minified Release APK (`assembleRelease`) and Google Play App Bundle (`bundleRelease`).
-4. Signs with release keystore (if GitHub Secrets are configured) or debug fallback signature.
-5. Calculates SHA-256 checksums.
-6. Automatically publishes a GitHub Release with changelog and downloads attached.
+**What the pipeline produces on each release:**
+- `steadfast-v1.0.1-release.apk`: Production-ready, R8-minified, and resource-shrunk APK for end-user installation.
+- `steadfast-v1.0.1-debug.apk`: Debug APK with logging and developer inspection enabled.
+- `steadfast-v1.0.1-release.aab`: Android App Bundle for Google Play distribution.
+- `checksums.txt` and `.sha256`: SHA-256 cryptographic verification checksums.
+- Automatic GitHub Release notes with commit changelog.
 
 #### Optional: Setting up Production Release Signing Secrets
 In your GitHub Repository **Settings → Secrets and variables → Actions**, add:

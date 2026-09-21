@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+*'
+      - 'v*'
   workflow_dispatch:
     inputs:
       version_name:
@@ -83,29 +83,36 @@ jobs:
           VERSION_CODE: ${{ env.VERSION_CODE }}
         run: ./gradlew testDebugUnitTest lintDebug
 
-      - name: Build Release APK & AAB
+      - name: Build Release & Debug Artifacts
         env:
           VERSION_NAME: ${{ env.VERSION_NAME }}
           VERSION_CODE: ${{ env.VERSION_CODE }}
-        run: ./gradlew assembleRelease bundleRelease
+        run: ./gradlew assembleRelease assembleDebug bundleRelease
 
       - name: Package & Prepare Release Artifacts
         run: |
           mkdir -p release-artifacts
-          APK_SRC="app/build/outputs/apk/release/app-release.apk"
-          AAB_SRC="app/build/outputs/bundle/release/app-release.aab"
-          
-          APK_DEST="release-artifacts/steadfast-${{ env.TAG_NAME }}.apk"
-          AAB_DEST="release-artifacts/steadfast-${{ env.TAG_NAME }}.aab"
 
-          cp "$APK_SRC" "$APK_DEST"
-          cp "$AAB_SRC" "$AAB_DEST"
+          RELEASE_APK="app/build/outputs/apk/release/app-release.apk"
+          DEBUG_APK="app/build/outputs/apk/debug/app-debug.apk"
+          RELEASE_AAB="app/build/outputs/bundle/release/app-release.aab"
+
+          DEST_RELEASE_APK="release-artifacts/steadfast-${{ env.TAG_NAME }}-release.apk"
+          DEST_DEBUG_APK="release-artifacts/steadfast-${{ env.TAG_NAME }}-debug.apk"
+          DEST_RELEASE_AAB="release-artifacts/steadfast-${{ env.TAG_NAME }}-release.aab"
+
+          cp "$RELEASE_APK" "$DEST_RELEASE_APK"
+          cp "$DEBUG_APK" "$DEST_DEBUG_APK"
+          cp "$RELEASE_AAB" "$DEST_RELEASE_AAB"
 
           cd release-artifacts
-          sha256sum "steadfast-${{ env.TAG_NAME }}.apk" > "steadfast-${{ env.TAG_NAME }}.apk.sha256"
-          sha256sum "steadfast-${{ env.TAG_NAME }}.aab" > "steadfast-${{ env.TAG_NAME }}.aab.sha256"
+          sha256sum "steadfast-${{ env.TAG_NAME }}-release.apk" > "steadfast-${{ env.TAG_NAME }}-release.apk.sha256"
+          sha256sum "steadfast-${{ env.TAG_NAME }}-debug.apk" > "steadfast-${{ env.TAG_NAME }}-debug.apk.sha256"
+          sha256sum "steadfast-${{ env.TAG_NAME }}-release.aab" > "steadfast-${{ env.TAG_NAME }}-release.aab.sha256"
+          sha256sum steadfast-${{ env.TAG_NAME }}-* > checksums.txt
           cd ..
 
+          echo "Prepared artifacts:"
           ls -lh release-artifacts/
 
       - name: Create GitHub Release
@@ -117,7 +124,10 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease || false }}
           generate_release_notes: true
           files: |
-            release-artifacts/steadfast-${{ env.TAG_NAME }}.apk
-            release-artifacts/steadfast-${{ env.TAG_NAME }}.aab
-            release-artifacts/steadfast-${{ env.TAG_NAME }}.apk.sha256
-            release-artifacts/steadfast-${{ env.TAG_NAME }}.aab.sha256
+            release-artifacts/steadfast-${{ env.TAG_NAME }}-release.apk
+            release-artifacts/steadfast-${{ env.TAG_NAME }}-debug.apk
+            release-artifacts/steadfast-${{ env.TAG_NAME }}-release.aab
+            release-artifacts/steadfast-${{ env.TAG_NAME }}-release.apk.sha256
+            release-artifacts/steadfast-${{ env.TAG_NAME }}-debug.apk.sha256
+            release-artifacts/steadfast-${{ env.TAG_NAME }}-release.aab.sha256
+            release-artifacts/checksums.txt
