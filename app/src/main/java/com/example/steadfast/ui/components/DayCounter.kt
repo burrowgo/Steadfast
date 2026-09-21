@@ -17,10 +17,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -31,6 +37,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -39,11 +46,15 @@ import androidx.compose.ui.unit.sp
 import com.example.steadfast.R
 import com.example.steadfast.ui.theme.BarlowCondensed
 import com.example.steadfast.ui.theme.LocalRankColors
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import java.util.Locale
 
 @Composable
 fun DayCounter(
     days: Int,
     progressToNext: Float,
+    startedAtMillis: Long = 0L,
     modifier: Modifier = Modifier,
     size: Dp = 260.dp
 ) {
@@ -121,8 +132,8 @@ fun DayCounter(
                     Text(
                         text = count.toString(),
                         style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = if (count >= 1000) 84.sp else 112.sp,
-                            lineHeight = if (count >= 1000) 84.sp else 112.sp,
+                            fontSize = if (count >= 1000) 80.sp else 100.sp,
+                            lineHeight = if (count >= 1000) 80.sp else 100.sp,
                             fontFamily = BarlowCondensed,
                             fontWeight = FontWeight.Bold
                         ),
@@ -136,19 +147,80 @@ fun DayCounter(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                if (startedAtMillis > 0L) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    ElapsedTicker(
+                        startedAtMillis = startedAtMillis,
+                        isDayZero = days == 0
+                    )
+                }
             }
         }
 
         if (days == 0) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
-                text = stringResource(R.string.day_zero_subtitle),
+                text = stringResource(R.string.day_zero_ticker_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+private fun ElapsedTicker(
+    startedAtMillis: Long,
+    isDayZero: Boolean,
+    modifier: Modifier = Modifier
+) {
+    var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+    LaunchedEffect(startedAtMillis) {
+        while (isActive) {
+            nowMillis = System.currentTimeMillis()
+            val delayMs = 1000L - (nowMillis % 1000L)
+            delay(delayMs.coerceAtLeast(50L))
+        }
+    }
+
+    val elapsedSeconds = ((nowMillis - startedAtMillis) / 1000).coerceAtLeast(0L)
+    val hours = (elapsedSeconds / 3600) % 24
+    val minutes = (elapsedSeconds % 3600) / 60
+    val seconds = elapsedSeconds % 60
+
+    val text = if (isDayZero) {
+        String.format(Locale.US, "%02dh %02dm %02ds", hours, minutes, seconds)
+    } else {
+        String.format(Locale.US, "+ %02dh %02dm %02ds", hours, minutes, seconds)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = if (isDayZero) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        },
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.5.sp
+            ),
+            color = if (isDayZero) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+        )
     }
 }
 

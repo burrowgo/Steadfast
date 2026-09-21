@@ -193,12 +193,13 @@ private fun ActiveHomeContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // 1. Day Counter Hero
             DayCounter(
                 days = state.days,
-                progressToNext = state.rankProgress.progressToNext
+                progressToNext = state.rankProgress.progressToNext,
+                startedAtMillis = state.streak.startedAt
             )
 
             Spacer(modifier = Modifier.height(28.dp))

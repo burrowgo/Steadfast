@@ -55,4 +55,23 @@ class QuoteRepositoryTest {
         assertNotEquals(q0, q1)
         assertEquals(q0, q3) // 3 general quotes, offset 3 wraps around
     }
+
+    @Test
+    fun `periodic quote is stable within same hour slot`() {
+        val slotStartMillis = 3600000L * 500L // Aligned to an hour boundary
+        val q1 = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis + 5 * 60 * 1000L) // +5m
+        val q2 = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis + 45 * 60 * 1000L) // +45m
+        assertEquals(q1, q2)
+    }
+
+    @Test
+    fun `periodic quote changes across different slots and respects user offset`() {
+        val slotStartMillis = 3600000L * 500L
+        val q1 = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis, userOffset = 0)
+        val q2 = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis, userOffset = 1)
+        val q3 = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis, userOffset = 3) // wrap around
+
+        assertNotEquals(q1, q2)
+        assertEquals(q1, q3)
+    }
 }

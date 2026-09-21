@@ -135,4 +135,7 @@
     <string name="widget_shape_rounded">Rounded rectangle</string>
     <string name="widget_shape_circle">Circular</string>
     <string name="widget_circle_description">Steadfast circular streak counter badge</string>
+
+    <string name="shuffle_quote">Shuffle quote</string>
+    <string name="day_zero_ticker_hint">Day 1 unlocks at midnight • Every second counts</string>
 </resources>

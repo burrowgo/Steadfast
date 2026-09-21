@@ -26,3 +26,16 @@ This file records architecture and tooling choices not explicitly settled by `AG
 - **Decision:** Added a 1×1 (`TINY_SIZE`, 50×50dp) responsive size bucket to `SteadfastWidget`, added a user-selectable `WidgetShape` (Rounded Rectangle vs. Circle) in Settings, and provided a dedicated `SteadfastCircleWidget` provider so circular widgets can also be placed directly from the launcher widget picker.
 - **Rationale:** Gives users flexibility to customize home-screen aesthetics between rounded square cards and circular dials across 1×1, 2×2, and 4×2 sizes while keeping the codebase unified via an inherited Glance widget implementation.
 
+## 7. Live Elapsed Time Ticker & Day 0 Detail
+- **Decision:** Added an `ElapsedTicker` sub-composable inside `DayCounter` that runs a 1-second wall-clock aligned ticker for hours, minutes, and seconds from `startedAtMillis`. On Day 0, widgets also display elapsed hours rather than a bare 0.
+- **Rationale:** Day 0 is critical for motivation; displaying real-time hours, minutes, and seconds demonstrates immediate progress and eliminates the feeling of a static '0 days' counter.
+
+## 8. Hourly Pseudo-Randomized Quote Rotation
+- **Decision:** Shifted quote selection from a single daily index (`dayOfYear % pool.size`) to an hourly pseudo-randomized slot (`(nowMillis / 1.hour)` seeded random index), plus added an explicit shuffle button on `QuoteCard`.
+- **Rationale:** Prevents seeing the exact same quote on every app launch throughout the day while keeping quotes stable within a 1-hour reading session and allowing instantaneous manual shuffling.
+
+## 9. Top App Bar Edge-to-Edge Inset Handling
+- **Decision:** Set `contentWindowInsets = WindowInsets(0, 0, 0, 0)` on the root navigation `Scaffold` and only applied bottom padding for the `NavigationBar`.
+- **Rationale:** Eliminates the duplicate status bar inset padding that pushed the top bar and settings icon down by twice the system status bar height.
+
+

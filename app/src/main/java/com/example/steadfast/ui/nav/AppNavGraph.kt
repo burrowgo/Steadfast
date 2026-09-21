@@ -60,6 +60,7 @@ fun MainApp(
     val isTopLevelDestination = bottomNavItems.any { it.screen.route == currentRoute }
 
     Scaffold(
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (isTopLevelDestination) {
                 NavigationBar {
@@ -94,7 +95,7 @@ fun MainApp(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(bottom = innerPadding.calculateBottomPadding()),
             contentAlignment = Alignment.TopCenter
         ) {
             Box(modifier = Modifier.widthIn(max = 600.dp)) {

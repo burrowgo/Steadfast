@@ -26,9 +26,27 @@ class QuoteRepository(
         return pool[effectiveIndex]
     }
 
+    fun getPeriodicQuote(
+        isComeback: Boolean,
+        nowMillis: Long = clock.millis(),
+        userOffset: Int = 0,
+        intervalMinutes: Long = 60L
+    ): Quote {
+        val pool = if (isComeback && comebackQuotes.isNotEmpty()) comebackQuotes else generalQuotes
+        if (pool.isEmpty()) {
+            return Quote(text = "Small days stack into big streaks.")
+        }
+        val intervalMillis = (intervalMinutes * 60 * 1000L).coerceAtLeast(1000L)
+        val timeSlot = nowMillis / intervalMillis
+        // Deterministic pseudo-random seed per time slot and pool
+        val seed = timeSlot xor (if (isComeback) 0x5DEECE66DL else 0xBL)
+        val slotRandomIndex = kotlin.random.Random(seed).nextInt(pool.size)
+        val effectiveIndex = ((slotRandomIndex + userOffset) % pool.size + pool.size) % pool.size
+        return pool[effectiveIndex]
+    }
+
     fun getCurrentQuote(isComeback: Boolean, userOffset: Int = 0): Quote {
-        val today = LocalDate.now(clock)
-        return getQuoteForDay(isComeback, today, userOffset)
+        return getPeriodicQuote(isComeback, clock.millis(), userOffset)
     }
 
     companion object {

@@ -103,9 +103,9 @@ class HomeViewModel(
                         (nowMillis - it) < (24 * 60 * 60 * 1000L)
                     } ?: false
 
-                    val quote = quoteRepository.getQuoteForDay(
+                    val quote = quoteRepository.getPeriodicQuote(
                         isComeback = isWithin24HoursOfReset,
-                        date = today,
+                        nowMillis = nowMillis,
                         userOffset = offset
                     )
 
