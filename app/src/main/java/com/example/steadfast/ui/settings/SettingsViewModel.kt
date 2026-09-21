@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.prefs.AutoUpdateFrequency
+import com.example.steadfast.data.prefs.FirstDayOfWeek
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.UserSettings
@@ -48,7 +49,8 @@ data class SettingsUiState(
     val lastUpdateCheckTime: Long = 0L,
     val isCheckingForUpdate: Boolean = false,
     val updateResult: UpdateCheckResult? = null,
-    val showWhatsNew: ChangelogRelease? = null
+    val showWhatsNew: ChangelogRelease? = null,
+    val firstDayOfWeek: FirstDayOfWeek = FirstDayOfWeek.MONDAY
 )
 
 class SettingsViewModel(
@@ -89,13 +91,20 @@ class SettingsViewModel(
             lastUpdateCheckTime = settings.lastUpdateCheckTime,
             isCheckingForUpdate = checking,
             updateResult = updateRes,
-            showWhatsNew = whatsNew
+            showWhatsNew = whatsNew,
+            firstDayOfWeek = settings.firstDayOfWeek
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = SettingsUiState()
     )
+
+    fun setFirstDayOfWeek(firstDay: FirstDayOfWeek) {
+        viewModelScope.launch {
+            settingsRepository.setFirstDayOfWeek(firstDay)
+        }
+    }
 
     fun renameHabit(newName: String) {
         val trimmed = newName.trim().take(40)

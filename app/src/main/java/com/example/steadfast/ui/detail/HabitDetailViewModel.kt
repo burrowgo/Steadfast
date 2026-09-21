@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.steadfast.data.HabitRepository
 import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.db.StreakEntity
+import com.example.steadfast.data.prefs.FirstDayOfWeek
+import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.domain.Quote
 import com.example.steadfast.domain.QuoteRepository
 import com.example.steadfast.domain.Rank
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -37,7 +40,8 @@ data class HabitDetailUiState(
     val isEditDialogOpen: Boolean = false,
     val isDeleteDialogOpen: Boolean = false,
     val editingStreakReason: StreakEntity? = null,
-    val rankUpToCelebrate: Rank? = null
+    val rankUpToCelebrate: Rank? = null,
+    val firstDayOfWeek: FirstDayOfWeek = FirstDayOfWeek.MONDAY
 )
 
 class HabitDetailViewModel(
@@ -45,6 +49,7 @@ class HabitDetailViewModel(
     private val habitRepository: HabitRepository,
     private val streakRepository: StreakRepository,
     private val quoteRepository: QuoteRepository,
+    private val settingsRepository: SettingsRepository,
     private val context: Context,
     private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
@@ -66,7 +71,8 @@ class HabitDetailViewModel(
         isEditDialogOpen,
         isDeleteDialogOpen,
         editingStreakReason,
-        quoteOffset
+        quoteOffset,
+        settingsRepository.settingsFlow.map { it.firstDayOfWeek }
     ) { params: Array<Any?> ->
         val habitWithStreak = params[0] as? HabitWithStreak
         @Suppress("UNCHECKED_CAST")
@@ -76,6 +82,7 @@ class HabitDetailViewModel(
         val deleteOpen = params[4] as Boolean
         val editReasonStreak = params[5] as? StreakEntity
         val offset = params[6] as Int
+        val firstDay = params[7] as FirstDayOfWeek
 
         val quote = quoteRepository.getCurrentQuote(isComeback = false, userOffset = offset)
 
@@ -87,7 +94,8 @@ class HabitDetailViewModel(
             isEditDialogOpen = editOpen,
             isDeleteDialogOpen = deleteOpen,
             editingStreakReason = editReasonStreak,
-            rankUpToCelebrate = rankToCelebrate.value
+            rankUpToCelebrate = rankToCelebrate.value,
+            firstDayOfWeek = firstDay
         )
     }.stateIn(
         scope = viewModelScope,
@@ -161,12 +169,19 @@ class HabitDetailViewModel(
 
     fun nextQuote() { quoteOffset.value += 1 }
 
+    fun setFirstDayOfWeek(firstDay: FirstDayOfWeek) {
+        viewModelScope.launch {
+            settingsRepository.setFirstDayOfWeek(firstDay)
+        }
+    }
+
     companion object {
         fun provideFactory(
             habitId: Long,
             habitRepository: HabitRepository,
             streakRepository: StreakRepository,
             quoteRepository: QuoteRepository,
+            settingsRepository: SettingsRepository,
             context: Context,
             clock: Clock
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
@@ -177,6 +192,7 @@ class HabitDetailViewModel(
                     habitRepository,
                     streakRepository,
                     quoteRepository,
+                    settingsRepository,
                     context,
                     clock
                 ) as T

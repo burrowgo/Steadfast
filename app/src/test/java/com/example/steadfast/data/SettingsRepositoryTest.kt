@@ -107,4 +107,16 @@ class SettingsRepositoryTest {
         repository.setWidgetShowHabitName(true)
         assertEquals(true, repository.settingsFlow.first().widgetShowHabitName)
     }
+
+    @Test
+    fun `first day of week defaults to Monday and persists changes`() = runTest {
+        assertEquals(com.example.steadfast.data.prefs.FirstDayOfWeek.MONDAY, repository.settingsFlow.first().firstDayOfWeek)
+
+        repository.setFirstDayOfWeek(com.example.steadfast.data.prefs.FirstDayOfWeek.SUNDAY)
+        assertEquals(com.example.steadfast.data.prefs.FirstDayOfWeek.SUNDAY, repository.settingsFlow.first().firstDayOfWeek)
+
+        repository.setFirstDayOfWeek(com.example.steadfast.data.prefs.FirstDayOfWeek.MONDAY)
+        assertEquals(com.example.steadfast.data.prefs.FirstDayOfWeek.MONDAY, repository.settingsFlow.first().firstDayOfWeek)
+    }
 }
+

@@ -61,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
 import com.example.steadfast.data.prefs.AutoUpdateFrequency
+import com.example.steadfast.data.prefs.FirstDayOfWeek
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.data.updater.UpdateCheckResult
@@ -96,6 +97,7 @@ fun SettingsScreen(
     var showRenameDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showWidgetShapeDialog by remember { mutableStateOf(false) }
+    var showFirstDayOfWeekDialog by remember { mutableStateOf(false) }
     var showAutoUpdateDialog by remember { mutableStateOf(false) }
     var showEraseDialog by remember { mutableStateOf(false) }
     var showLicensesDialog by remember { mutableStateOf(false) }
@@ -328,6 +330,33 @@ fun SettingsScreen(
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.outline
                         )
+                    }
+
+                    // First Day of Week Row
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showFirstDayOfWeekDialog = true },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.settings_first_day_of_week),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            val firstDayText = when (uiState.firstDayOfWeek) {
+                                FirstDayOfWeek.MONDAY -> stringResource(R.string.first_day_monday)
+                                FirstDayOfWeek.SUNDAY -> stringResource(R.string.first_day_sunday)
+                            }
+                            Text(
+                                text = firstDayText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     // Dynamic Color Toggle (Android 12+)
@@ -652,6 +681,18 @@ fun SettingsScreen(
             )
         }
 
+        // First Day of Week Dialog
+        if (showFirstDayOfWeekDialog) {
+            FirstDayOfWeekSelectionDialog(
+                currentFirstDay = uiState.firstDayOfWeek,
+                onSelectFirstDay = {
+                    viewModel.setFirstDayOfWeek(it)
+                    showFirstDayOfWeekDialog = false
+                },
+                onDismiss = { showFirstDayOfWeekDialog = false }
+            )
+        }
+
         // Auto-Update Frequency Dialog
         if (showAutoUpdateDialog) {
             AutoUpdateFrequencySelectionDialog(
@@ -871,6 +912,49 @@ private fun WidgetShapeSelectionDialog(
                         RadioButton(
                             selected = currentShape == shape,
                             onClick = { onSelectShape(shape) }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(nameRes))
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.edit_reason_cancel))
+            }
+        }
+    )
+}
+
+@Composable
+private fun FirstDayOfWeekSelectionDialog(
+    currentFirstDay: FirstDayOfWeek,
+    onSelectFirstDay: (FirstDayOfWeek) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val options = listOf(
+        FirstDayOfWeek.MONDAY to R.string.first_day_monday,
+        FirstDayOfWeek.SUNDAY to R.string.first_day_sunday
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_first_day_of_week)) },
+        text = {
+            Column {
+                options.forEach { (firstDay, nameRes) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onSelectFirstDay(firstDay) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = currentFirstDay == firstDay,
+                            onClick = { onSelectFirstDay(firstDay) }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(stringResource(nameRes))

@@ -252,4 +252,20 @@
     <string name="widget_configure_title">Choose a Habit</string>
     <string name="widget_configure_subtitle">Select which habit this widget displays on your home screen:</string>
     <string name="widget_configure_empty">No active habits found. Open Steadfast to add a habit first.</string>
+
+    <!-- Commit Graph & First Day of Week -->
+    <string name="commit_graph_title">Consistency Graph</string>
+    <string name="commit_graph_legend_reset">Reset / Inactive</string>
+    <string name="commit_graph_legend_maintained">Maintained</string>
+    <string name="commit_graph_maintained">Maintained · Day %1$d</string>
+    <string name="commit_graph_reset">Reset</string>
+    <string name="commit_graph_reset_with_reason">Reset: %1$s</string>
+    <string name="commit_graph_inactive">No active streak</string>
+    <string name="commit_graph_summary">%1$d active days in the last 6 months</string>
+    <string name="commit_graph_tap_hint">Tap any day to see details</string>
+    <string name="commit_graph_less">Less</string>
+    <string name="commit_graph_more">More</string>
+    <string name="settings_first_day_of_week">First day of week</string>
+    <string name="first_day_monday">Monday</string>
+    <string name="first_day_sunday">Sunday</string>
 </resources>

@@ -87,6 +87,18 @@ enum class AutoUpdateFrequency {
     }
 }
 
+enum class FirstDayOfWeek {
+    MONDAY,
+    SUNDAY;
+
+    companion object {
+        fun fromString(value: String?): FirstDayOfWeek = when (value?.lowercase()) {
+            "sunday" -> SUNDAY
+            else -> MONDAY
+        }
+    }
+}
+
 data class UserSettings(
     val habitName: String = "",
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -100,7 +112,8 @@ data class UserSettings(
     val widgetBgTheme: WidgetBgTheme = WidgetBgTheme.DEFAULT,
     val widgetShowHabitName: Boolean = true,
     val autoUpdateFrequency: AutoUpdateFrequency = AutoUpdateFrequency.WEEKLY,
-    val lastUpdateCheckTime: Long = 0L
+    val lastUpdateCheckTime: Long = 0L,
+    val firstDayOfWeek: FirstDayOfWeek = FirstDayOfWeek.MONDAY
 )
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -124,6 +137,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_PENDING_UPDATE_NOTES = stringPreferencesKey("pending_update_notes")
         val KEY_PENDING_UPDATE_URL = stringPreferencesKey("pending_update_url")
         val KEY_PENDING_UPDATE_PAGE = stringPreferencesKey("pending_update_page")
+        val KEY_FIRST_DAY_OF_WEEK = stringPreferencesKey("first_day_of_week")
     }
 
     val settingsFlow: Flow<UserSettings> = dataStore.data.map { preferences ->
@@ -140,8 +154,15 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             widgetBgTheme = WidgetBgTheme.fromString(preferences[KEY_WIDGET_BG_THEME]),
             widgetShowHabitName = preferences[KEY_WIDGET_SHOW_HABIT_NAME] ?: true,
             autoUpdateFrequency = AutoUpdateFrequency.fromString(preferences[KEY_AUTO_UPDATE_FREQUENCY]),
-            lastUpdateCheckTime = preferences[KEY_LAST_UPDATE_CHECK_TIME] ?: 0L
+            lastUpdateCheckTime = preferences[KEY_LAST_UPDATE_CHECK_TIME] ?: 0L,
+            firstDayOfWeek = FirstDayOfWeek.fromString(preferences[KEY_FIRST_DAY_OF_WEEK])
         )
+    }
+
+    suspend fun setFirstDayOfWeek(firstDay: FirstDayOfWeek) {
+        dataStore.edit { preferences ->
+            preferences[KEY_FIRST_DAY_OF_WEEK] = firstDay.name.lowercase()
+        }
     }
 
     suspend fun setHabitName(name: String) {

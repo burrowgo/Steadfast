@@ -4,6 +4,17 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-alpha.2] - 2026-09-22
+
+### Added
+- **GitHub-Styled Consistency Graph:** Interactive 24-week contribution heatmap for each habit on the Habit Detail screen, displaying historical consistency and streaks at a glance.
+- **Reset vs. Maintained Day Highlighting:** Maintained streak days are highlighted in GitHub green with 4-tier intensity shading, while reset and streak-broken days are distinctively displayed in neutral grey.
+- **Interactive Day Inspection:** Tap any square in the heatmap to view exact date details, current streak day number, or the recorded reset reason.
+- **Customizable First Day of Week:** Default first day of the week is Monday, with an option to toggle between Monday and Sunday directly from the graph header or within Settings > Appearance.
+- **Persistent First Day of Week Preference:** User choice is stored via DataStore and synchronizes across all consistency graphs and settings screens.
+
+---
+
 ## [0.8.0-alpha.1] - 2026-09-22
 
 ### Added

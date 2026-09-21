@@ -64,6 +64,7 @@ import com.example.steadfast.domain.model.HabitVisuals
 import com.example.steadfast.ui.components.AddEditHabitDialog
 import com.example.steadfast.ui.components.DayCounter
 import com.example.steadfast.ui.components.DeleteHabitDialog
+import com.example.steadfast.ui.components.HabitCommitGraph
 import com.example.steadfast.ui.components.QuoteCard
 import com.example.steadfast.ui.components.QuoteDisplay
 import com.example.steadfast.ui.components.RankBadge
@@ -92,6 +93,7 @@ fun HabitDetailScreen(
             habitRepository = container.habitRepository,
             streakRepository = container.streakRepository,
             quoteRepository = container.quoteRepository,
+            settingsRepository = container.settingsRepository,
             context = context,
             clock = container.clock
         )
@@ -347,6 +349,17 @@ fun HabitDetailScreen(
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // 2.5 Consistency Graph (GitHub-styled Commit Heatmap)
+                    HabitCommitGraph(
+                        history = uiState.history,
+                        activeStreak = item.activeStreak,
+                        firstDayOfWeek = uiState.firstDayOfWeek,
+                        onFirstDayOfWeekChange = { viewModel.setFirstDayOfWeek(it) },
+                        clock = container.clock
+                    )
 
                     Spacer(modifier = Modifier.height(20.dp))
 

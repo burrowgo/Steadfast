@@ -9,6 +9,26 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.8.0-alpha.2",
+            title = "What’s New in v0.8.0-alpha.2",
+            highlights = listOf(
+                "GitHub-Styled Consistency Heatmap: Interactive 24-week contribution graph on each habit's detail screen.",
+                "Maintained vs Reset Day Highlights: Maintained streak days are displayed in vibrant green shades, and reset/streak-broken days in neutral grey.",
+                "Interactive Inspection: Tap any square to view date, streak day number, or reset reason.",
+                "Customizable Week Start: Default first day of week is Monday, with option to choose Sunday directly from graph or Settings."
+            )
+        ),
+        ChangelogRelease(
+            version = "0.8.0-alpha.1",
+            title = "What’s New in v0.8.0-alpha.1",
+            highlights = listOf(
+                "Multi-Habit Tracking: Track multiple habits simultaneously with independent streaks, ranks, history, and reset reasons.",
+                "Category Icons & Color Themes: Customize habits with 10 icons and unique color accents.",
+                "Habit Detail Screen: Dedicated view per habit featuring circular counter, milestones, and streak history.",
+                "Side-by-Side Alpha Install: Installs as Steadfast Alpha without replacing your stable app."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.4",
             title = "What’s New in v0.7.4",
             highlights = listOf(
