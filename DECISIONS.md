@@ -38,4 +38,9 @@ This file records architecture and tooling choices not explicitly settled by `AG
 - **Decision:** Set `contentWindowInsets = WindowInsets(0, 0, 0, 0)` on the root navigation `Scaffold` and only applied bottom padding for the `NavigationBar`.
 - **Rationale:** Eliminates the duplicate status bar inset padding that pushed the top bar and settings icon down by twice the system status bar height.
 
+## 10. Automated CI/CD & Dynamic Version Injection
+- **Decision:** Configured `app/build.gradle.kts` to read `VERSION_NAME` and `VERSION_CODE` from environment variables/properties with fallback to defaults, and implemented GitHub Actions workflows for continuous validation (`ci.yml`) and automated release publishing (`release.yml`).
+- **Rationale:** Allows semantic git tags (e.g. `v1.0.1`) and GitHub Actions build numbers to drive clean, monotonic version codes and automated release packaging without hardcoding version numbers in files.
+
+
 

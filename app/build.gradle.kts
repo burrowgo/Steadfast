@@ -9,16 +9,39 @@ android {
     namespace = "com.example.steadfast"
     compileSdk = 35
 
+    val vCode = providers.environmentVariable("VERSION_CODE")
+        .map { it.toInt() }
+        .orElse(providers.gradleProperty("versionCode").map { it.toInt() })
+        .getOrElse(1)
+
+    val vName = providers.environmentVariable("VERSION_NAME")
+        .orElse(providers.gradleProperty("versionName"))
+        .getOrElse("1.0.0")
+
     defaultConfig {
         applicationId = "com.example.steadfast"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = vCode
+        versionName = vName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("KEYSTORE_FILE")
+            if (!keystorePath.isNullOrBlank() && file(keystorePath).exists()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            } else {
+                initWith(getByName("debug"))
+            }
         }
     }
 
@@ -30,7 +53,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug") // fallback if release keystore not provided
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"

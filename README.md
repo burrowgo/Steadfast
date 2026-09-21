@@ -53,7 +53,46 @@
 The generated APKs will be located at:
 - Debug: `app/build/outputs/apk/debug/app-debug.apk`
 - Release: `app/build/outputs/apk/release/app-release.apk`
+- App Bundle: `app/build/outputs/bundle/release/app-release.aab`
 
+---
+
+## Automated CI/CD & Releases (GitHub Actions)
+
+Steadfast includes automated GitHub Actions workflows:
+
+### 1. Pull Request & Commit Verification (`.github/workflows/ci.yml`)
+- Automatically runs on every push and pull request to `master`/`main`.
+- Validates code style and rules with `./gradlew lintDebug`.
+- Executes all unit tests with `./gradlew testDebugUnitTest`.
+- Builds and uploads the debug APK as an artifact for quick testing.
+
+### 2. Automated Semantic Releases (`.github/workflows/release.yml`)
+Releases are triggered automatically by pushing a semantic version git tag:
+
+```bash
+# Example: Tagging and releasing version 1.0.1
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+Or manually triggered in GitHub: **Actions → Release → Run workflow** (enter version name, e.g. `1.0.1`).
+
+**What the pipeline does:**
+1. Dynamically injects `VERSION_NAME` (`1.0.1`) and monotonic `VERSION_CODE` (`github.run_number`).
+2. Runs all unit tests and lint checks.
+3. Builds minified Release APK (`assembleRelease`) and Google Play App Bundle (`bundleRelease`).
+4. Signs with release keystore (if GitHub Secrets are configured) or debug fallback signature.
+5. Calculates SHA-256 checksums.
+6. Automatically publishes a GitHub Release with changelog and downloads attached.
+
+#### Optional: Setting up Production Release Signing Secrets
+In your GitHub Repository **Settings → Secrets and variables → Actions**, add:
+- `KEYSTORE_BASE64`: `base64 -w 0 your-release-key.jks`
+- `KEYSTORE_PASSWORD`: Keystore password
+- `KEY_ALIAS`: Key alias
+- `KEY_PASSWORD`: Key password
+*(If omitted, builds safely fallback to debug signing).*
 ---
 
 ## Customization Guide
