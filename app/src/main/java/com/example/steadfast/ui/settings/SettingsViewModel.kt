@@ -11,6 +11,12 @@ import com.example.steadfast.data.prefs.UserSettings
 import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.notifications.NotificationHelper
 import com.example.steadfast.widget.WidgetUpdater
+import com.example.steadfast.data.updater.DefaultUpdateChecker
+import com.example.steadfast.data.updater.UpdateCheckResult
+import com.example.steadfast.data.updater.UpdateChecker
+import com.example.steadfast.domain.ChangelogRelease
+import com.example.steadfast.domain.ChangelogRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -28,19 +34,30 @@ data class SettingsUiState(
     val useDynamicColor: Boolean = true,
     val reminderEnabled: Boolean = false,
     val reminderTime: String = "20:00",
-    val widgetShape: WidgetShape = WidgetShape.ROUNDED
+    val widgetShape: WidgetShape = WidgetShape.ROUNDED,
+    val isCheckingForUpdate: Boolean = false,
+    val updateResult: UpdateCheckResult? = null,
+    val showWhatsNew: ChangelogRelease? = null
 )
 
 class SettingsViewModel(
     private val streakRepository: StreakRepository,
     private val settingsRepository: SettingsRepository,
-    private val context: Context
+    private val context: Context,
+    private val updateChecker: UpdateChecker = DefaultUpdateChecker()
 ) : ViewModel() {
+
+    private val isCheckingForUpdate = MutableStateFlow(false)
+    private val updateResult = MutableStateFlow<UpdateCheckResult?>(null)
+    private val showWhatsNew = MutableStateFlow<ChangelogRelease?>(null)
 
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.settingsFlow,
-        streakRepository.activeStreak
-    ) { settings, active ->
+        streakRepository.activeStreak,
+        isCheckingForUpdate,
+        updateResult,
+        showWhatsNew
+    ) { settings, active, checking, updateRes, whatsNew ->
         val effectiveName = active?.habitName ?: settings.habitName
         val startDate = active?.let { LocalDate.ofEpochDay(it.startDate) }
         SettingsUiState(
@@ -51,7 +68,10 @@ class SettingsViewModel(
             useDynamicColor = settings.useDynamicColor,
             reminderEnabled = settings.reminderEnabled,
             reminderTime = settings.reminderTime,
-            widgetShape = settings.widgetShape
+            widgetShape = settings.widgetShape,
+            isCheckingForUpdate = checking,
+            updateResult = updateRes,
+            showWhatsNew = whatsNew
         )
     }.stateIn(
         scope = viewModelScope,
@@ -222,15 +242,42 @@ class SettingsViewModel(
         }
     }
 
+    fun checkForUpdates() {
+        viewModelScope.launch {
+            isCheckingForUpdate.value = true
+            val currentVersion = try {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
+            } catch (e: Exception) {
+                "0.2.0"
+            }
+            val result = updateChecker.checkForUpdate(currentVersion)
+            isCheckingForUpdate.value = false
+            updateResult.value = result
+        }
+    }
+
+    fun dismissUpdateResult() {
+        updateResult.value = null
+    }
+
+    fun showWhatsNew(version: String) {
+        showWhatsNew.value = ChangelogRepository.getRelease(version)
+    }
+
+    fun dismissWhatsNew() {
+        showWhatsNew.value = null
+    }
+
     companion object {
         fun provideFactory(
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
-            context: Context
+            context: Context,
+            updateChecker: UpdateChecker = DefaultUpdateChecker()
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SettingsViewModel(streakRepository, settingsRepository, context) as T
+                return SettingsViewModel(streakRepository, settingsRepository, context, updateChecker) as T
             }
         }
     }

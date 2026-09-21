@@ -50,6 +50,7 @@ import com.example.steadfast.ui.components.QuoteDisplay
 import com.example.steadfast.ui.components.RankBadge
 import com.example.steadfast.ui.components.RankUpDialog
 import com.example.steadfast.ui.components.ResetSheet
+import com.example.steadfast.ui.components.WhatsNewDialog
 import com.example.steadfast.ui.theme.LocalRankColors
 import kotlinx.coroutines.flow.collectLatest
 
@@ -72,6 +73,7 @@ fun HomeScreen(
     )
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val whatsNew by viewModel.whatsNewRelease.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val resetSnackbarMsg = stringResource(R.string.reset_snackbar_message)
     val undoMsg = stringResource(R.string.reset_snackbar_undo)
@@ -167,6 +169,13 @@ fun HomeScreen(
                         )
                     }
                 }
+            }
+
+            if (whatsNew != null) {
+                WhatsNewDialog(
+                    release = whatsNew!!,
+                    onDismiss = { viewModel.dismissWhatsNew() }
+                )
             }
         }
     }

@@ -40,7 +40,15 @@ This file records architecture and tooling choices not explicitly settled by `AG
 
 ## 10. Automated CI/CD & Dynamic Version Injection
 - **Decision:** Configured `app/build.gradle.kts` to read `VERSION_NAME` and `VERSION_CODE` from environment variables/properties with fallback to defaults, and implemented GitHub Actions workflows for continuous validation (`ci.yml`) and automated release publishing (`release.yml`).
-- **Rationale:** Allows semantic git tags (e.g. `v1.0.1`) and GitHub Actions build numbers to drive clean, monotonic version codes and automated release packaging without hardcoding version numbers in files.
+- **Rationale:** Allows semantic git tags and GitHub Actions build numbers to drive clean, monotonic version codes and automated release packaging without hardcoding version numbers in files.
+
+## 11. Zero-Dependency In-App Update Checker
+- **Decision:** Implemented `DefaultUpdateChecker` using standard `HttpsURLConnection` querying `https://api.github.com/repos/burrowgo/Steadfast/releases/latest` and checking for `.apk` asset URLs with semantic version comparison.
+- **Rationale:** Avoids adding bulky third-party update/networking libraries, keeps APK size small, and provides instant notification and download links when new releases are published on GitHub.
+
+## 12. Post-Update Changelog Presentation
+- **Decision:** Tracked `last_seen_version` in `SettingsRepository`. On app launch, if `last_seen_version` is older than current version, display `WhatsNewDialog` presenting the version's release highlights from `ChangelogRepository`.
+- **Rationale:** Keeps users informed about new features and improvements immediately upon updating without interrupting brand-new first-run users. Also allows manual review anytime via Settings.
 
 
 

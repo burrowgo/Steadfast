@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.steadfast.data.StreakRepository
 import com.example.steadfast.data.db.StreakEntity
 import com.example.steadfast.data.prefs.SettingsRepository
+import com.example.steadfast.domain.ChangelogRelease
+import com.example.steadfast.domain.ChangelogRepository
 import com.example.steadfast.domain.Quote
 import com.example.steadfast.domain.QuoteRepository
 import com.example.steadfast.domain.Rank
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
@@ -65,8 +68,28 @@ class HomeViewModel(
     private val isResetSheetOpen = MutableStateFlow(false)
     private val rankToCelebrate = MutableStateFlow<Rank?>(null)
     private val quoteOffset = MutableStateFlow(0)
+    private val _whatsNewRelease = MutableStateFlow<ChangelogRelease?>(null)
+    val whatsNewRelease: StateFlow<ChangelogRelease?> = _whatsNewRelease.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            val lastSeen = settingsRepository.lastSeenVersionFlow.first()
+            val currentVersion = try {
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
+            } catch (e: Exception) {
+                "0.2.0"
+            }
+            if (lastSeen == null) {
+                settingsRepository.setLastSeenVersion(currentVersion)
+            } else if (lastSeen != currentVersion) {
+                val release = ChangelogRepository.getRelease(currentVersion)
+                if (release != null) {
+                    _whatsNewRelease.value = release
+                }
+                settingsRepository.setLastSeenVersion(currentVersion)
+            }
+        }
+
         val streakDataFlow = combine(
             streakRepository.activeStreak,
             streakRepository.history
@@ -166,6 +189,10 @@ class HomeViewModel(
 
     fun dismissCelebration() {
         rankToCelebrate.value = null
+    }
+
+    fun dismissWhatsNew() {
+        _whatsNewRelease.value = null
     }
 
     companion object {

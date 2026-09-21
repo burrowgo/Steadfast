@@ -3,6 +3,8 @@ package com.example.steadfast.ui.settings
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -23,6 +26,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,6 +62,9 @@ import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.WidgetShape
+import com.example.steadfast.data.updater.UpdateCheckResult
+import com.example.steadfast.ui.components.UpdateAvailableDialog
+import com.example.steadfast.ui.components.WhatsNewDialog
 import com.example.steadfast.ui.theme.CardShape
 import kotlinx.coroutines.launch
 import java.io.InputStreamReader
@@ -479,17 +486,66 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    val versionName = try {
-                        context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
-                    } catch (e: Exception) {
-                        "0.2.0"
+                    val versionName = remember {
+                        try {
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.2.0"
+                        } catch (e: Exception) {
+                            "0.2.0"
+                        }
                     }
                     Text(
                         text = stringResource(R.string.settings_version, versionName),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                    // Check for updates row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = !uiState.isCheckingForUpdate) {
+                                viewModel.checkForUpdates()
+                            },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(R.string.settings_check_updates),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = if (uiState.isCheckingForUpdate) {
+                                    stringResource(R.string.settings_checking_updates)
+                                } else {
+                                    "GitHub Releases"
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        if (uiState.isCheckingForUpdate) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                    TextButton(
+                        onClick = { viewModel.showWhatsNew(versionName) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.settings_whats_new))
+                    }
+
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
                     TextButton(
                         onClick = { showLicensesDialog = true },
                         modifier = Modifier.fillMaxWidth()
@@ -568,6 +624,68 @@ fun SettingsScreen(
             LicensesDialog(
                 context = context,
                 onDismiss = { showLicensesDialog = false }
+            )
+        }
+
+        // What's New Dialog
+        if (uiState.showWhatsNew != null) {
+            WhatsNewDialog(
+                release = uiState.showWhatsNew!!,
+                onDismiss = { viewModel.dismissWhatsNew() }
+            )
+        }
+
+        // Update Available Dialog
+        if (uiState.updateResult is UpdateCheckResult.UpdateAvailable) {
+            val update = uiState.updateResult as UpdateCheckResult.UpdateAvailable
+            UpdateAvailableDialog(
+                update = update,
+                onUpdate = { url ->
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    context.startActivity(intent)
+                    viewModel.dismissUpdateResult()
+                },
+                onDismiss = { viewModel.dismissUpdateResult() }
+            )
+        }
+
+        // Up to date Notification
+        if (uiState.updateResult is UpdateCheckResult.UpToDate) {
+            val res = uiState.updateResult as UpdateCheckResult.UpToDate
+            val upToDateMsg = stringResource(R.string.settings_up_to_date, res.currentVersion)
+            androidx.compose.runtime.LaunchedEffect(res) {
+                snackbarHostState.showSnackbar(upToDateMsg)
+                viewModel.dismissUpdateResult()
+            }
+        }
+
+        // Update Error Dialog
+        if (uiState.updateResult is UpdateCheckResult.Error) {
+            val err = uiState.updateResult as UpdateCheckResult.Error
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissUpdateResult() },
+                title = { Text(stringResource(R.string.settings_check_updates)) },
+                text = { Text(stringResource(R.string.settings_update_error, err.message)) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(err.releasePageUrl)).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                            viewModel.dismissUpdateResult()
+                        }
+                    ) {
+                        Text(stringResource(R.string.settings_view_releases))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissUpdateResult() }) {
+                        Text(stringResource(R.string.edit_reason_cancel))
+                    }
+                }
             )
         }
     }

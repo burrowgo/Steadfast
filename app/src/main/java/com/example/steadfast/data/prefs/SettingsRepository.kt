@@ -59,6 +59,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_REMINDER_TIME = stringPreferencesKey("reminder_time")
         val KEY_LAST_CELEBRATED_RANK = intPreferencesKey("last_celebrated_rank_index")
         val KEY_WIDGET_SHAPE = stringPreferencesKey("widget_shape")
+        val KEY_LAST_SEEN_VERSION = stringPreferencesKey("last_seen_version")
     }
 
     val settingsFlow: Flow<UserSettings> = dataStore.data.map { preferences ->
@@ -112,6 +113,16 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setWidgetShape(shape: WidgetShape) {
         dataStore.edit { preferences ->
             preferences[KEY_WIDGET_SHAPE] = shape.name.lowercase()
+        }
+    }
+
+    val lastSeenVersionFlow: Flow<String?> = dataStore.data.map { preferences ->
+        preferences[KEY_LAST_SEEN_VERSION]
+    }
+
+    suspend fun setLastSeenVersion(version: String) {
+        dataStore.edit { preferences ->
+            preferences[KEY_LAST_SEEN_VERSION] = version
         }
     }
 

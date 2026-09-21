@@ -149,4 +149,17 @@
     <string name="import_failed">Failed to import CSV. Please check the file format.</string>
     <string name="share_button">Share</string>
     <string name="share_achievement_text">I stayed steadfast for %1$d days and unlocked the rank of %2$s! 🎖️ #Steadfast</string>
+
+    <!-- Update Checker & Changelog -->
+    <string name="settings_check_updates">Check for updates</string>
+    <string name="settings_checking_updates">Checking for updates…</string>
+    <string name="settings_up_to_date">You’re up to date. Version %1$s is the latest available version.</string>
+    <string name="settings_update_available">Update Available</string>
+    <string name="settings_update_available_desc">A new version (%1$s) is available. Would you like to update now?</string>
+    <string name="settings_update_now">Update</string>
+    <string name="settings_update_later">Later</string>
+    <string name="settings_view_releases">View Releases</string>
+    <string name="settings_update_error">Unable to check for updates: %1$s</string>
+    <string name="settings_whats_new">What’s New</string>
+    <string name="whats_new_continue">Got it</string>
 </resources>
