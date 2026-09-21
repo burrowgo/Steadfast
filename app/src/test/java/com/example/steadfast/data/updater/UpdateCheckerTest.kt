@@ -25,6 +25,7 @@ class UpdateCheckerTest {
 
     @Test
     fun isNewerVersion_higherPatch_returnsTrue() {
+        assertTrue(DefaultUpdateChecker.isNewerVersion("0.7.4", "0.7.3"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.7.3", "0.7.2"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.7.2", "0.7.1"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("0.7.1", "0.7.0"))
@@ -35,6 +36,7 @@ class UpdateCheckerTest {
 
     @Test
     fun isNewerVersion_higherMajor_returnsTrue() {
+        assertTrue(DefaultUpdateChecker.isNewerVersion("1.0.0", "0.7.3"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("1.0.0", "0.7.2"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("1.0.0", "0.7.1"))
         assertTrue(DefaultUpdateChecker.isNewerVersion("1.0.0", "0.7.0"))
@@ -42,6 +44,8 @@ class UpdateCheckerTest {
 
     @Test
     fun isNewerVersion_sameVersion_returnsFalse() {
+        assertFalse(DefaultUpdateChecker.isNewerVersion("0.7.3", "0.7.3"))
+        assertFalse(DefaultUpdateChecker.isNewerVersion("v0.7.3", "0.7.3"))
         assertFalse(DefaultUpdateChecker.isNewerVersion("0.7.2", "0.7.2"))
         assertFalse(DefaultUpdateChecker.isNewerVersion("v0.7.2", "0.7.2"))
         assertFalse(DefaultUpdateChecker.isNewerVersion("0.7.1", "0.7.1"))

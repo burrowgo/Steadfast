@@ -4,6 +4,13 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2026-09-21
+
+### Fixed
+- **Widget Opacity Preset Button Layout:** Fixed a visual bug in Widget Customization settings where the "100% (Solid)" opacity preset button was compressed into a long vertical button due to horizontal layout constraints. Switched preset chips to a responsive `FlowRow` with single-line text constraints so buttons remain correctly proportioned horizontal pills across all screen sizes.
+
+---
+
 ## [0.7.2] - 2026-09-21
 
 ### Fixed

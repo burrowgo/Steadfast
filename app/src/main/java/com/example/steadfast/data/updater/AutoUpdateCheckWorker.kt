@@ -23,9 +23,9 @@ class AutoUpdateCheckWorker(
         }
 
         val currentVersion = try {
-            applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0).versionName ?: "0.7.2"
+            applicationContext.packageManager.getPackageInfo(applicationContext.packageName, 0).versionName ?: "0.7.3"
         } catch (e: Exception) {
-            "0.7.2"
+            "0.7.3"
         }
 
         val checker = app.container.updateChecker

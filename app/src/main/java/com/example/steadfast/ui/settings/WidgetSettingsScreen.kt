@@ -274,9 +274,12 @@ fun WidgetSettingsScreen(
                         steps = 19
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         val presets = listOf(0, 25, 50, 75, 100)
                         presets.forEach { preset ->
@@ -288,8 +291,14 @@ fun WidgetSettingsScreen(
                             FilterChip(
                                 selected = uiState.widgetBackgroundOpacity == preset,
                                 onClick = { viewModel.setWidgetBackgroundOpacity(preset) },
-                                label = { Text(label, style = MaterialTheme.typography.bodySmall) },
-                                modifier = Modifier.padding(horizontal = 2.dp)
+                                label = {
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
                             )
                         }
                     }

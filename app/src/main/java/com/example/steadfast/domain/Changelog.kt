@@ -9,6 +9,14 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.3",
+            title = "What’s New in v0.7.3",
+            highlights = listOf(
+                "Widget Customization Preset Fix: Fixed an issue where the '100% (Solid)' opacity preset button was compressed and displayed as a long vertical button.",
+                "Responsive Chip Flow: Preset buttons now wrap cleanly as horizontal pills across all display densities and screen sizes."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.2",
             title = "What’s New in v0.7.2",
             highlights = listOf(
