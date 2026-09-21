@@ -14,6 +14,7 @@ import androidx.glance.LocalSize
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.LinearProgressIndicator
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.appWidgetBackground
@@ -44,6 +45,7 @@ import com.example.steadfast.data.db.AppDatabase
 import com.example.steadfast.data.db.StreakEntity
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.WidgetBgTheme
+import com.example.steadfast.data.prefs.WidgetConfigurationRepository
 import com.example.steadfast.data.prefs.WidgetFontColor
 import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.data.prefs.dataStore
@@ -77,14 +79,45 @@ open class SteadfastWidget(
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val database = AppDatabase.getInstance(context)
-        val active = database.streakDao().getActiveStreak()
+        val appWidgetId = try {
+            GlanceAppWidgetManager(context).getAppWidgetId(id)
+        } catch (e: Exception) {
+            -1
+        }
+
+        val widgetConfigRepo = WidgetConfigurationRepository(context)
+        val configuredHabitId = if (appWidgetId > 0) widgetConfigRepo.getHabitIdForWidget(appWidgetId) else null
+
+        val (habit, active) = if (configuredHabitId != null) {
+            val h = database.habitDao().getHabitById(configuredHabitId)
+            val s = database.streakDao().getActiveStreak(configuredHabitId)
+            if (h != null) Pair(h, s) else {
+                val fallbackH = database.habitDao().getActiveHabits().firstOrNull()
+                val fallbackS = fallbackH?.let { database.streakDao().getActiveStreak(it.id) }
+                Pair(fallbackH, fallbackS)
+            }
+        } else {
+            val firstH = database.habitDao().getActiveHabits().firstOrNull()
+            val s = firstH?.let { database.streakDao().getActiveStreak(it.id) } ?: database.streakDao().getActiveStreak()
+            if (appWidgetId > 0 && firstH != null) {
+                widgetConfigRepo.setHabitIdForWidget(appWidgetId, firstH.id)
+            }
+            Pair(firstH, s)
+        }
+
+        val resolvedStreak = if (habit != null && active != null && habit.name.isNotBlank()) {
+            active.copy(habitName = habit.name)
+        } else {
+            active
+        }
+
         val settings = SettingsRepository(context.dataStore).settingsFlow.first()
         val isCircle = forceCircle || (settings.widgetShape == WidgetShape.CIRCLE)
 
         provideContent {
             GlanceTheme {
                 WidgetRoot(
-                    activeStreak = active,
+                    activeStreak = resolvedStreak,
                     isCircle = isCircle,
                     opacity = settings.widgetBackgroundOpacity,
                     fontColor = settings.widgetFontColor,
