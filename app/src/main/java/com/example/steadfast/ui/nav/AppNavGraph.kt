@@ -21,11 +21,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.steadfast.R
+import com.example.steadfast.ui.detail.HabitDetailScreen
 import com.example.steadfast.ui.history.HistoryScreen
 import com.example.steadfast.ui.home.HomeScreen
 import com.example.steadfast.ui.ranks.RanksScreen
@@ -38,6 +41,9 @@ sealed class Screen(val route: String) {
     data object History : Screen("history")
     data object Settings : Screen("settings")
     data object WidgetSettings : Screen("widget_settings")
+    data object HabitDetail : Screen("habit_detail/{habitId}") {
+        fun createRoute(habitId: Long) = "habit_detail/$habitId"
+    }
 }
 
 data class BottomNavItem(
@@ -109,7 +115,10 @@ fun MainApp(
                 ) {
                     composable(Screen.Home.route) {
                         HomeScreen(
-                            onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
+                            onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                            onNavigateToHabitDetail = { habitId ->
+                                navController.navigate(Screen.HabitDetail.createRoute(habitId))
+                            }
                         )
                     }
                     composable(Screen.Ranks.route) {
@@ -117,6 +126,17 @@ fun MainApp(
                     }
                     composable(Screen.History.route) {
                         HistoryScreen()
+                    }
+                    composable(
+                        route = Screen.HabitDetail.route,
+                        arguments = listOf(navArgument("habitId") { type = NavType.LongType })
+                    ) { backStackEntry ->
+                        val habitId = backStackEntry.arguments?.getLong("habitId") ?: 1L
+                        HabitDetailScreen(
+                            habitId = habitId,
+                            onNavigateBack = { navController.popBackStack() },
+                            onNavigateToRanks = { navController.navigate(Screen.Ranks.route) }
+                        )
                     }
                     composable(Screen.Settings.route) {
                         SettingsScreen(

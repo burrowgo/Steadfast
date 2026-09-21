@@ -4,8 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.steadfast.data.StreakRepository
-import com.example.steadfast.data.db.StreakEntity
+import com.example.steadfast.data.HabitRepository
 import com.example.steadfast.data.prefs.AutoUpdateFrequency
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.updater.DefaultUpdateChecker
@@ -15,48 +14,35 @@ import com.example.steadfast.domain.ChangelogRelease
 import com.example.steadfast.domain.ChangelogRepository
 import com.example.steadfast.domain.Quote
 import com.example.steadfast.domain.QuoteRepository
-import com.example.steadfast.domain.Rank
-import com.example.steadfast.domain.RankLadder
-import com.example.steadfast.domain.RankProgress
-import com.example.steadfast.domain.StreakCalculator
+import com.example.steadfast.domain.model.HabitWithStreak
 import com.example.steadfast.widget.WidgetUpdater
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
 
-sealed interface HomeUiState {
-    data object Loading : HomeUiState
-    data object FirstRun : HomeUiState
-    data class Active(
-        val streak: StreakEntity,
-        val habitName: String,
-        val days: Int,
-        val rankProgress: RankProgress,
-        val quote: Quote,
-        val isResetSheetOpen: Boolean = false,
-        val rankUpToCelebrate: Rank? = null
-    ) : HomeUiState
+enum class HabitTab {
+    ACTIVE,
+    ARCHIVED
 }
 
-sealed interface HomeEvent {
-    data object ShowResetSuccessSnackbar : HomeEvent
-}
-
-private data class StreakData(
-    val active: StreakEntity?,
-    val history: List<StreakEntity>
+data class HomeUiState(
+    val isLoading: Boolean = true,
+    val activeHabits: List<HabitWithStreak> = emptyList(),
+    val archivedHabits: List<HabitWithStreak> = emptyList(),
+    val selectedTab: HabitTab = HabitTab.ACTIVE,
+    val isAddHabitDialogOpen: Boolean = false,
+    val quote: Quote? = null
 )
 
 class HomeViewModel(
-    private val streakRepository: StreakRepository,
+    private val habitRepository: HabitRepository,
     private val settingsRepository: SettingsRepository,
     private val quoteRepository: QuoteRepository,
     private val context: Context,
@@ -64,15 +50,10 @@ class HomeViewModel(
     private val updateChecker: UpdateChecker = DefaultUpdateChecker()
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-
-    private val _events = MutableSharedFlow<HomeEvent>()
-    val events: SharedFlow<HomeEvent> = _events.asSharedFlow()
-
-    private val isResetSheetOpen = MutableStateFlow(false)
-    private val rankToCelebrate = MutableStateFlow<Rank?>(null)
+    private val selectedTab = MutableStateFlow(HabitTab.ACTIVE)
+    private val isAddHabitDialogOpen = MutableStateFlow(false)
     private val quoteOffset = MutableStateFlow(0)
+
     private val _whatsNewRelease = MutableStateFlow<ChangelogRelease?>(null)
     val whatsNewRelease: StateFlow<ChangelogRelease?> = _whatsNewRelease.asStateFlow()
 
@@ -80,6 +61,85 @@ class HomeViewModel(
     val updateAvailable: StateFlow<UpdateCheckResult.UpdateAvailable?> = _updateAvailable.asStateFlow()
 
     init {
+        checkVersionAndUpdates()
+    }
+
+    val uiState: StateFlow<HomeUiState> = combine(
+        habitRepository.activeHabitsWithStreaks,
+        habitRepository.archivedHabits,
+        selectedTab,
+        isAddHabitDialogOpen,
+        quoteOffset
+    ) { activeList, archivedList, tab, isDialogOpen, offset ->
+        val quote = quoteRepository.getCurrentQuote(isComeback = false, userOffset = offset)
+        val archivedWithStreaks = archivedList.map { habit ->
+            HabitWithStreak(
+                habit = habit,
+                activeStreak = null,
+                currentStreakDays = 0,
+                rankProgress = com.example.steadfast.domain.RankLadder.getRankProgress(0),
+                highestRankAchieved = com.example.steadfast.domain.RankLadder.ranks.first(),
+                totalAttempts = 0
+            )
+        }
+
+        HomeUiState(
+            isLoading = false,
+            activeHabits = activeList,
+            archivedHabits = archivedWithStreaks,
+            selectedTab = tab,
+            isAddHabitDialogOpen = isDialogOpen,
+            quote = quote
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = HomeUiState()
+    )
+
+    fun selectTab(tab: HabitTab) {
+        selectedTab.value = tab
+    }
+
+    fun openAddHabitDialog() {
+        isAddHabitDialogOpen.value = true
+    }
+
+    fun closeAddHabitDialog() {
+        isAddHabitDialogOpen.value = false
+    }
+
+    fun createHabit(
+        name: String,
+        icon: String,
+        color: Long,
+        startDate: LocalDate
+    ) {
+        viewModelScope.launch {
+            habitRepository.createHabit(
+                name = name,
+                icon = icon,
+                color = color,
+                startDate = startDate
+            )
+            isAddHabitDialogOpen.value = false
+            WidgetUpdater.updateAll(context)
+        }
+    }
+
+    fun nextQuote() {
+        quoteOffset.value += 1
+    }
+
+    fun dismissWhatsNew() {
+        _whatsNewRelease.value = null
+    }
+
+    fun dismissUpdateDialog() {
+        _updateAvailable.value = null
+    }
+
+    private fun checkVersionAndUpdates() {
         viewModelScope.launch {
             val lastSeen = settingsRepository.lastSeenVersionFlow.first()
             val currentVersion = try {
@@ -88,10 +148,8 @@ class HomeViewModel(
                 "0.7.4"
             }
             if (lastSeen == null) {
-                // Check if user is upgrading from a previous version without last_seen_version set
-                val hasExistingHabit = streakRepository.activeStreak.first() != null ||
-                        streakRepository.history.first().isNotEmpty()
-                if (hasExistingHabit) {
+                val habits = habitRepository.allHabits.first()
+                if (habits.isNotEmpty()) {
                     val release = ChangelogRepository.getRelease(currentVersion)
                     if (release != null) {
                         _whatsNewRelease.value = release
@@ -106,7 +164,6 @@ class HomeViewModel(
                 settingsRepository.setLastSeenVersion(currentVersion)
             }
 
-            // Periodic / background update checking
             try {
                 val pending = settingsRepository.pendingUpdateFlow.first()
                 if (pending != null) {
@@ -135,134 +192,30 @@ class HomeViewModel(
                     }
                 }
             } catch (e: Exception) {
-                // Silent fail for background check on launch
+                // Silent fail
             }
-        }
-
-        val streakDataFlow = combine(
-            streakRepository.activeStreak,
-            streakRepository.history
-        ) { active, history -> StreakData(active, history) }
-
-        viewModelScope.launch {
-            combine(
-                streakDataFlow,
-                settingsRepository.settingsFlow,
-                isResetSheetOpen,
-                rankToCelebrate,
-                quoteOffset
-            ) { data, settings, isSheetOpen, celebrationRank, offset ->
-                val active = data.active
-                if (active == null) {
-                    HomeUiState.FirstRun
-                } else {
-                    val today = StreakCalculator.today(clock)
-                    val days = StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
-                    val progress = RankLadder.getRankProgress(days)
-
-                    // Rank-up celebration trigger
-                    if (progress.currentRank.level > settings.lastCelebratedRankIndex && celebrationRank == null) {
-                        viewModelScope.launch {
-                            rankToCelebrate.value = progress.currentRank
-                            settingsRepository.setLastCelebratedRankIndex(progress.currentRank.level)
-                        }
-                    }
-
-                    // Check if a reset occurred within the last 24 hours
-                    val latestEnded = data.history.firstOrNull()
-                    val nowMillis = clock.millis()
-                    val isWithin24HoursOfReset = latestEnded?.endedAt?.let {
-                        (nowMillis - it) < (24 * 60 * 60 * 1000L)
-                    } ?: false
-
-                    val quote = quoteRepository.getPeriodicQuote(
-                        isComeback = isWithin24HoursOfReset,
-                        nowMillis = nowMillis,
-                        userOffset = offset
-                    )
-
-                    HomeUiState.Active(
-                        streak = active,
-                        habitName = active.habitName,
-                        days = days,
-                        rankProgress = progress,
-                        quote = quote,
-                        isResetSheetOpen = isSheetOpen,
-                        rankUpToCelebrate = celebrationRank
-                    )
-                }
-            }.collect { state ->
-                _uiState.value = state
-            }
-        }
-    }
-
-    fun startHabit(name: String, startDate: LocalDate = LocalDate.now(clock)) {
-        viewModelScope.launch {
-            streakRepository.startHabit(name, startDate)
-            settingsRepository.setHabitName(name)
-            settingsRepository.setLastCelebratedRankIndex(0)
-            WidgetUpdater.updateAll(context)
-        }
-    }
-
-    fun openResetSheet() {
-        isResetSheetOpen.value = true
-    }
-
-    fun closeResetSheet() {
-        isResetSheetOpen.value = false
-    }
-
-    fun confirmReset(reason: String?) {
-        viewModelScope.launch {
-            isResetSheetOpen.value = false
-            streakRepository.resetStreak(reason)
-            settingsRepository.setLastCelebratedRankIndex(0)
-            quoteOffset.value = 0
-            WidgetUpdater.updateAll(context)
-            _events.emit(HomeEvent.ShowResetSuccessSnackbar)
-        }
-    }
-
-    fun undoReset() {
-        viewModelScope.launch {
-            streakRepository.undoLastReset()
-            WidgetUpdater.updateAll(context)
-        }
-    }
-
-    fun nextQuote() {
-        quoteOffset.value += 1
-    }
-
-    fun dismissCelebration() {
-        rankToCelebrate.value = null
-    }
-
-    fun dismissWhatsNew() {
-        _whatsNewRelease.value = null
-    }
-
-    fun dismissUpdateDialog() {
-        _updateAvailable.value = null
-        viewModelScope.launch {
-            settingsRepository.setPendingUpdate(null)
         }
     }
 
     companion object {
         fun provideFactory(
-            streakRepository: StreakRepository,
+            habitRepository: HabitRepository,
             settingsRepository: SettingsRepository,
             quoteRepository: QuoteRepository,
             context: Context,
-            clock: Clock = Clock.systemDefaultZone(),
-            updateChecker: UpdateChecker = DefaultUpdateChecker()
+            clock: Clock,
+            updateChecker: UpdateChecker
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return HomeViewModel(streakRepository, settingsRepository, quoteRepository, context, clock, updateChecker) as T
+                return HomeViewModel(
+                    habitRepository,
+                    settingsRepository,
+                    quoteRepository,
+                    context,
+                    clock,
+                    updateChecker
+                ) as T
             }
         }
     }

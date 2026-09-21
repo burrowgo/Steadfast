@@ -1,8 +1,11 @@
 package com.example.steadfast.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,72 +13,54 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
-import com.example.steadfast.ui.components.DayCounter
-import com.example.steadfast.ui.components.EmptyState
+import com.example.steadfast.ui.components.AddEditHabitDialog
+import com.example.steadfast.ui.components.HabitCard
 import com.example.steadfast.ui.components.QuoteCard
 import com.example.steadfast.ui.components.QuoteDisplay
-import android.content.Intent
-import android.net.Uri
-import com.example.steadfast.ui.components.RankBadge
-import com.example.steadfast.ui.components.RankUpDialog
-import com.example.steadfast.ui.components.ResetSheet
 import com.example.steadfast.ui.components.UpdateAvailableDialog
 import com.example.steadfast.ui.components.WhatsNewDialog
-import com.example.steadfast.ui.theme.CardShape
-import com.example.steadfast.ui.theme.LocalRankColors
-import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToSettings: () -> Unit,
+    onNavigateToHabitDetail: (habitId: Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current.applicationContext as SteadfastApp
     val container = context.container
     val viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.provideFactory(
-            streakRepository = container.streakRepository,
+            habitRepository = container.habitRepository,
             settingsRepository = container.settingsRepository,
             quoteRepository = container.quoteRepository,
             context = context,
@@ -87,50 +72,39 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val whatsNew by viewModel.whatsNewRelease.collectAsStateWithLifecycle()
     val updateAvailable by viewModel.updateAvailable.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val resetSnackbarMsg = stringResource(R.string.reset_snackbar_message)
-    val undoMsg = stringResource(R.string.reset_snackbar_undo)
-
-    LaunchedEffect(Unit) {
-        viewModel.events.collectLatest { event ->
-            when (event) {
-                is HomeEvent.ShowResetSuccessSnackbar -> {
-                    val result = snackbarHostState.showSnackbar(
-                        message = resetSnackbarMsg,
-                        actionLabel = undoMsg,
-                        duration = SnackbarDuration.Long
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.undoReset()
-                    }
-                }
-            }
-        }
-    }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            if (uiState is HomeUiState.Active) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    actions = {
-                        IconButton(onClick = onNavigateToSettings) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_settings),
-                                contentDescription = stringResource(R.string.action_settings)
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+            TopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
                     )
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_settings),
+                            contentDescription = stringResource(R.string.action_settings)
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { viewModel.openAddHabitDialog() },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_add),
+                    contentDescription = stringResource(R.string.add_habit_title)
                 )
             }
         }
@@ -140,47 +114,92 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (val state = uiState) {
-                is HomeUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+            when {
+                uiState.isLoading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
 
-                is HomeUiState.FirstRun -> {
-                    EmptyState(
-                        onStartHabit = { name, date -> viewModel.startHabit(name, date) }
+                uiState.activeHabits.isEmpty() && uiState.archivedHabits.isEmpty() -> {
+                    HomeEmptyState(
+                        onAddHabit = { viewModel.openAddHabitDialog() }
                     )
                 }
 
-                is HomeUiState.Active -> {
-                    ActiveHomeContent(
-                        state = state,
-                        onOpenResetSheet = { viewModel.openResetSheet() },
-                        onNextQuote = { viewModel.nextQuote() }
-                    )
-
-                    if (state.isResetSheetOpen) {
-                        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-                        ResetSheet(
-                            sheetState = sheetState,
-                            days = state.days,
-                            currentRank = state.rankProgress.currentRank,
-                            onConfirmReset = { reason -> viewModel.confirmReset(reason) },
-                            onDismiss = { viewModel.closeResetSheet() }
-                        )
+                else -> {
+                    val displayedHabits = if (uiState.selectedTab == HabitTab.ACTIVE) {
+                        uiState.activeHabits
+                    } else {
+                        uiState.archivedHabits
                     }
 
-                    if (state.rankUpToCelebrate != null) {
-                        RankUpDialog(
-                            rank = state.rankUpToCelebrate,
-                            onDismiss = { viewModel.dismissCelebration() }
-                        )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Optional Active/Archived Filter Chips
+                        if (uiState.archivedHabits.isNotEmpty()) {
+                            item {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.padding(bottom = 4.dp)
+                                ) {
+                                    FilterChip(
+                                        selected = uiState.selectedTab == HabitTab.ACTIVE,
+                                        onClick = { viewModel.selectTab(HabitTab.ACTIVE) },
+                                        label = {
+                                            Text("${stringResource(R.string.habit_tab_active)} (${uiState.activeHabits.size})")
+                                        }
+                                    )
+                                    FilterChip(
+                                        selected = uiState.selectedTab == HabitTab.ARCHIVED,
+                                        onClick = { viewModel.selectTab(HabitTab.ARCHIVED) },
+                                        label = {
+                                            Text("${stringResource(R.string.habit_tab_archived)} (${uiState.archivedHabits.size})")
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        // Habits list
+                        items(
+                            items = displayedHabits,
+                            key = { it.habit.id }
+                        ) { habitItem ->
+                            HabitCard(
+                                item = habitItem,
+                                onClick = { onNavigateToHabitDetail(habitItem.habit.id) }
+                            )
+                        }
+
+                        // Quote Card anchored at the bottom of the content
+                        if (uiState.quote != null) {
+                            item {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                QuoteCard(
+                                    quote = QuoteDisplay(
+                                        text = uiState.quote!!.text,
+                                        author = uiState.quote!!.author
+                                    ),
+                                    onNextQuote = { viewModel.nextQuote() },
+                                    modifier = Modifier.padding(bottom = 60.dp)
+                                )
+                            }
+                        }
                     }
                 }
+            }
+
+            if (uiState.isAddHabitDialogOpen) {
+                AddEditHabitDialog(
+                    onDismiss = { viewModel.closeAddHabitDialog() },
+                    onConfirm = { name, icon, color, startDate ->
+                        viewModel.createHabit(name, icon, color, startDate)
+                    }
+                )
             }
 
             if (whatsNew != null) {
@@ -201,155 +220,63 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ActiveHomeContent(
-    state: HomeUiState.Active,
-    onOpenResetSheet: () -> Unit,
-    onNextQuote: () -> Unit,
+private fun HomeEmptyState(
+    onAddHabit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scrollState = rememberScrollState()
-
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
-            .verticalScroll(scrollState),
+            .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+        Box(
+            modifier = Modifier
+                .size(96.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer, shape = CircleShape),
+            contentAlignment = Alignment.Center
         ) {
-            // Habit Name Heading
-            Text(
-                text = state.habitName,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 16.dp)
+            Icon(
+                painter = painterResource(id = R.drawable.ic_habit_shield),
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.primary
             )
-
-            // 1. Day Counter Hero
-            DayCounter(
-                days = state.days,
-                progressToNext = state.rankProgress.progressToNext,
-                startedAtMillis = state.streak.startedAt
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 2. Rank & Progression Card
-            val currentRank = state.rankProgress.currentRank
-            val nextRank = state.rankProgress.nextRank
-            val rankSubtitle = if (nextRank != null) {
-                stringResource(
-                    R.string.days_to_next_rank,
-                    state.rankProgress.daysToNextRank,
-                    stringResource(nextRank.nameRes)
-                )
-            } else {
-                stringResource(R.string.highest_rank_reached)
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        RankBadge(
-                            rank = currentRank,
-                            size = 40.dp,
-                            tint = LocalRankColors.current.accent
-                        )
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(currentRank.nameRes),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = rankSubtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-
-                    if (nextRank != null) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        LinearProgressIndicator(
-                            progress = { state.rankProgress.progressToNext },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            color = LocalRankColors.current.accent,
-                            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 3. Reset Button (Tonal / Outlined, unobtrusive)
-            OutlinedButton(
-                onClick = onOpenResetSheet,
-                shape = RoundedCornerShape(16.dp),
-                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f)
-                )
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_nav_history),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.reset_button),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
         }
 
-        // 4. Quote Card at bottom
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp, top = 24.dp)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(R.string.habit_empty_title),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = stringResource(R.string.habit_empty_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(28.dp))
+
+        Button(
+            onClick = onAddHabit,
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
         ) {
-            QuoteCard(
-                quote = QuoteDisplay(
-                    text = state.quote.text,
-                    author = state.quote.author
-                ),
-                onNextQuote = onNextQuote
+            Icon(
+                painter = painterResource(id = R.drawable.ic_add),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
             )
+            Spacer(modifier = Modifier.size(8.dp))
+            Text(text = stringResource(R.string.habit_empty_button))
         }
     }
 }
