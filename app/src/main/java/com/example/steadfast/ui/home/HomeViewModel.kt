@@ -75,9 +75,9 @@ class HomeViewModel(
         viewModelScope.launch {
             val lastSeen = settingsRepository.lastSeenVersionFlow.first()
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.3.0"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.4.0"
             } catch (e: Exception) {
-                "0.3.0"
+                "0.4.0"
             }
             if (lastSeen == null) {
                 // Check if user is upgrading from a previous version without last_seen_version set

@@ -140,7 +140,6 @@ open class SteadfastWidget(
             val today = LocalDate.now()
             val start = LocalDate.ofEpochDay(activeStreak.startDate)
             val days = StreakCalculator.streakDays(start, today)
-            val elapsedHours = ((System.currentTimeMillis() - activeStreak.startedAt) / (1000 * 3600)).coerceAtLeast(0L)
             val rankProgress = RankLadder.getRankProgress(days)
             val rankName = context.getString(rankProgress.currentRank.nameRes)
             val talkBackDesc = "Steadfast: $days days, rank $rankName"
@@ -150,13 +149,12 @@ open class SteadfastWidget(
             ) {
                 when {
                     isTiny -> {
-                        TinyWidgetContent(days = days, elapsedHours = elapsedHours)
+                        TinyWidgetContent(days = days)
                     }
                     isWide -> {
                         WideWidgetContent(
                             habitName = activeStreak.habitName,
                             days = days,
-                            elapsedHours = elapsedHours,
                             rankName = rankName,
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
                             daysToNext = rankProgress.daysToNextRank,
@@ -166,8 +164,7 @@ open class SteadfastWidget(
                     else -> {
                         SmallWidgetContent(
                             habitName = activeStreak.habitName,
-                            days = days,
-                            elapsedHours = elapsedHours
+                            days = days
                         )
                     }
                 }
@@ -176,24 +173,20 @@ open class SteadfastWidget(
     }
 
     @Composable
-    private fun TinyWidgetContent(days: Int, elapsedHours: Long) {
+    private fun TinyWidgetContent(days: Int) {
         val context = LocalContext.current
-        val isDayZero = days == 0
-        val displayText = if (isDayZero) "${elapsedHours}h" else days.toString()
-        val displayLabel = if (isDayZero) "DAY 0" else context.getString(R.string.days_label).uppercase()
-
         Column(
             modifier = GlanceModifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
         ) {
             val fontSize = when {
-                displayText.length >= 4 -> 18.sp
-                displayText.length >= 3 -> 22.sp
+                days >= 1000 -> 20.sp
+                days >= 100 -> 24.sp
                 else -> 28.sp
             }
             Text(
-                text = displayText,
+                text = days.toString(),
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurface,
                     fontSize = fontSize,
@@ -202,7 +195,7 @@ open class SteadfastWidget(
                 )
             )
             Text(
-                text = displayLabel,
+                text = context.getString(R.string.days_label).uppercase(),
                 style = TextStyle(
                     color = GlanceTheme.colors.primary,
                     fontSize = 9.sp,
@@ -216,14 +209,9 @@ open class SteadfastWidget(
     @Composable
     private fun SmallWidgetContent(
         habitName: String,
-        days: Int,
-        elapsedHours: Long
+        days: Int
     ) {
         val context = LocalContext.current
-        val isDayZero = days == 0
-        val displayText = if (isDayZero) "${elapsedHours}h" else days.toString()
-        val displayLabel = if (isDayZero) "Day 0 Streak" else context.getString(R.string.days_label)
-
         Column(
             modifier = GlanceModifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -240,16 +228,16 @@ open class SteadfastWidget(
                 )
             )
             Text(
-                text = displayText,
+                text = days.toString(),
                 style = TextStyle(
                     color = GlanceTheme.colors.onSurface,
-                    fontSize = if (displayText.length >= 4) 34.sp else 44.sp,
+                    fontSize = if (days >= 1000) 36.sp else 44.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 )
             )
             Text(
-                text = displayLabel,
+                text = context.getString(R.string.days_label),
                 style = TextStyle(
                     color = GlanceTheme.colors.primary,
                     fontSize = 12.sp,
@@ -264,7 +252,6 @@ open class SteadfastWidget(
     private fun WideWidgetContent(
         habitName: String,
         days: Int,
-        elapsedHours: Long,
         rankName: String,
         nextRankName: String?,
         daysToNext: Int,
@@ -291,21 +278,17 @@ open class SteadfastWidget(
                         textAlign = TextAlign.Center
                     )
                 )
-                val isDayZero = days == 0
-                val displayText = if (isDayZero) "${elapsedHours}h" else days.toString()
-                val displayLabel = if (isDayZero) "Day 0 Streak" else context.getString(R.string.days_label)
-
                 Text(
-                    text = displayText,
+                    text = days.toString(),
                     style = TextStyle(
                         color = GlanceTheme.colors.onSurface,
-                        fontSize = if (displayText.length >= 4) 30.sp else 38.sp,
+                        fontSize = if (days >= 1000) 32.sp else 38.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center
                     )
                 )
                 Text(
-                    text = displayLabel,
+                    text = context.getString(R.string.days_label),
                     style = TextStyle(
                         color = GlanceTheme.colors.primary,
                         fontSize = 11.sp,

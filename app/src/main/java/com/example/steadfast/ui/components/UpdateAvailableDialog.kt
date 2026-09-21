@@ -103,8 +103,8 @@ private fun UpdateAvailableDialogPreview() {
     com.example.steadfast.ui.theme.SteadfastTheme {
         UpdateAvailableDialog(
             update = UpdateCheckResult.UpdateAvailable(
-                version = "0.3.0",
-                releaseNotes = "• In-App Update Checker\n• What's New Dialog",
+                version = "0.4.0",
+                releaseNotes = "• Simplified home screen widgets\n• Clean day counter presentation",
                 downloadUrl = "",
                 releasePageUrl = ""
             ),
