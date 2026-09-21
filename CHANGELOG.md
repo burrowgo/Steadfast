@@ -4,6 +4,14 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-09-21
+
+### Fixed
+- **Quote Card Touch Overlay Radius:** Fixed an issue where tapping the quote card to refresh quotes rendered a sharp rectangular click/ripple overlay instead of matching the card's 24dp rounded border radius. Clipped the overlay to `CardShape` and integrated `Card(onClick)` for clean, shape-bounded touch feedback.
+- **Consistent Card Ripple:** Ensured history streak cards and interactive cards consistently apply corner-clipped ripple effects.
+
+---
+
 ## [0.7.1] - 2026-09-21
 
 ### Fixed

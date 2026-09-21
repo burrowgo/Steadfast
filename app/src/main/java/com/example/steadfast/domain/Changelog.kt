@@ -9,6 +9,14 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.2",
+            title = "What’s New in v0.7.2",
+            highlights = listOf(
+                "Rounded Quote Touch Overlay: Fixed the click overlay on the home screen quote card to follow the card's 24dp rounded corners instead of appearing as a sharp rectangle.",
+                "Polished Touch Feedback: Consistent shape-bounded ripple animations across quote and history cards."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.1",
             title = "What’s New in v0.7.1",
             highlights = listOf(

@@ -281,9 +281,9 @@ class SettingsViewModel(
         viewModelScope.launch {
             isCheckingForUpdate.value = true
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.1"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.2"
             } catch (e: Exception) {
-                "0.7.1"
+                "0.7.2"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
             settingsRepository.setLastUpdateCheckTime(System.currentTimeMillis())
