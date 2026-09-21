@@ -40,6 +40,7 @@ class SettingsRepositoryTest {
         assertEquals(100, settings.widgetBackgroundOpacity)
         assertEquals(WidgetFontColor.DEFAULT, settings.widgetFontColor)
         assertEquals(WidgetBgTheme.DEFAULT, settings.widgetBgTheme)
+        assertEquals(true, settings.widgetShowHabitName)
     }
 
     @Test
@@ -94,5 +95,16 @@ class SettingsRepositoryTest {
 
         repository.setWidgetShape(WidgetShape.ROUNDED)
         assertEquals(WidgetShape.ROUNDED, repository.settingsFlow.first().widgetShape)
+    }
+
+    @Test
+    fun `setting widget show habit name persists`() = runTest {
+        assertEquals(true, repository.settingsFlow.first().widgetShowHabitName)
+
+        repository.setWidgetShowHabitName(false)
+        assertEquals(false, repository.settingsFlow.first().widgetShowHabitName)
+
+        repository.setWidgetShowHabitName(true)
+        assertEquals(true, repository.settingsFlow.first().widgetShowHabitName)
     }
 }

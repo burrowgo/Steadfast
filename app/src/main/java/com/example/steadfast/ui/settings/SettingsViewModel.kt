@@ -42,6 +42,7 @@ data class SettingsUiState(
     val widgetBackgroundOpacity: Int = 100,
     val widgetFontColor: WidgetFontColor = WidgetFontColor.DEFAULT,
     val widgetBgTheme: WidgetBgTheme = WidgetBgTheme.DEFAULT,
+    val widgetShowHabitName: Boolean = true,
     val autoUpdateFrequency: AutoUpdateFrequency = AutoUpdateFrequency.WEEKLY,
     val lastUpdateCheckTime: Long = 0L,
     val isCheckingForUpdate: Boolean = false,
@@ -81,6 +82,7 @@ class SettingsViewModel(
             widgetBackgroundOpacity = settings.widgetBackgroundOpacity,
             widgetFontColor = settings.widgetFontColor,
             widgetBgTheme = settings.widgetBgTheme,
+            widgetShowHabitName = settings.widgetShowHabitName,
             autoUpdateFrequency = settings.autoUpdateFrequency,
             lastUpdateCheckTime = settings.lastUpdateCheckTime,
             isCheckingForUpdate = checking,
@@ -147,6 +149,13 @@ class SettingsViewModel(
     fun setWidgetBgTheme(theme: WidgetBgTheme) {
         viewModelScope.launch {
             settingsRepository.setWidgetBgTheme(theme)
+            WidgetUpdater.updateAll(context)
+        }
+    }
+
+    fun setWidgetShowHabitName(show: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setWidgetShowHabitName(show)
             WidgetUpdater.updateAll(context)
         }
     }

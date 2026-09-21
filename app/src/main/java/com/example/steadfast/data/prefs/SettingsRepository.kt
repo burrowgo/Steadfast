@@ -98,6 +98,7 @@ data class UserSettings(
     val widgetBackgroundOpacity: Int = 100,
     val widgetFontColor: WidgetFontColor = WidgetFontColor.DEFAULT,
     val widgetBgTheme: WidgetBgTheme = WidgetBgTheme.DEFAULT,
+    val widgetShowHabitName: Boolean = true,
     val autoUpdateFrequency: AutoUpdateFrequency = AutoUpdateFrequency.WEEKLY,
     val lastUpdateCheckTime: Long = 0L
 )
@@ -115,6 +116,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val KEY_WIDGET_OPACITY = intPreferencesKey("widget_background_opacity")
         val KEY_WIDGET_FONT_COLOR = stringPreferencesKey("widget_font_color")
         val KEY_WIDGET_BG_THEME = stringPreferencesKey("widget_bg_theme")
+        val KEY_WIDGET_SHOW_HABIT_NAME = booleanPreferencesKey("widget_show_habit_name")
         val KEY_LAST_SEEN_VERSION = stringPreferencesKey("last_seen_version")
         val KEY_AUTO_UPDATE_FREQUENCY = stringPreferencesKey("auto_update_frequency")
         val KEY_LAST_UPDATE_CHECK_TIME = longPreferencesKey("last_update_check_time")
@@ -136,6 +138,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
             widgetBackgroundOpacity = (preferences[KEY_WIDGET_OPACITY] ?: 100).coerceIn(0, 100),
             widgetFontColor = WidgetFontColor.fromString(preferences[KEY_WIDGET_FONT_COLOR]),
             widgetBgTheme = WidgetBgTheme.fromString(preferences[KEY_WIDGET_BG_THEME]),
+            widgetShowHabitName = preferences[KEY_WIDGET_SHOW_HABIT_NAME] ?: true,
             autoUpdateFrequency = AutoUpdateFrequency.fromString(preferences[KEY_AUTO_UPDATE_FREQUENCY]),
             lastUpdateCheckTime = preferences[KEY_LAST_UPDATE_CHECK_TIME] ?: 0L
         )
@@ -198,6 +201,12 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     suspend fun setWidgetBgTheme(theme: WidgetBgTheme) {
         dataStore.edit { preferences ->
             preferences[KEY_WIDGET_BG_THEME] = theme.name.lowercase()
+        }
+    }
+
+    suspend fun setWidgetShowHabitName(show: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[KEY_WIDGET_SHOW_HABIT_NAME] = show
         }
     }
 

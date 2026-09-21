@@ -86,6 +86,7 @@ Steadfast provides three native Android widgets powered by Jetpack Glance:
 Customize all widgets directly in **Settings → Widget Customization**:
 - **Background Opacity:** Continuous slider or quick presets: `0% (Glass)`, `25%`, `50%`, `75%`, `100% (Solid)`.
 - **Text & Accent Colors:** Choose from *Theme Default*, *Pure White*, *Pure Black*, or *Brand Olive*.
+- **Privacy & Stealth Tracking:** Toggle *Show Habit Title* off to hide your habit's name on your home screen for discreet habit building.
 - **Live Wallpaper Preview:** Test your widget styling against *AMOLED Black*, *Charcoal*, *Material Surface*, and *Pure White* backgrounds.
 
 ---

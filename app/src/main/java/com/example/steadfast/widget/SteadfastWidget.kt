@@ -88,7 +88,8 @@ open class SteadfastWidget(
                     isCircle = isCircle,
                     opacity = settings.widgetBackgroundOpacity,
                     fontColor = settings.widgetFontColor,
-                    bgTheme = settings.widgetBgTheme
+                    bgTheme = settings.widgetBgTheme,
+                    showHabitName = settings.widgetShowHabitName
                 )
             }
         }
@@ -169,7 +170,8 @@ open class SteadfastWidget(
         isCircle: Boolean,
         opacity: Int,
         fontColor: WidgetFontColor,
-        bgTheme: WidgetBgTheme
+        bgTheme: WidgetBgTheme,
+        showHabitName: Boolean = true
     ) {
         val context = LocalContext.current
         val size = LocalSize.current
@@ -295,7 +297,8 @@ open class SteadfastWidget(
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
                             daysToNext = rankProgress.daysToNextRank,
                             progressToNext = rankProgress.progressToNext,
-                            colors = colors
+                            colors = colors,
+                            showHabitName = showHabitName
                         )
                     }
                     isWideTall -> {
@@ -306,14 +309,16 @@ open class SteadfastWidget(
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
                             daysToNext = rankProgress.daysToNextRank,
                             progressToNext = rankProgress.progressToNext,
-                            colors = colors
+                            colors = colors,
+                            showHabitName = showHabitName
                         )
                     }
                     else -> {
                         SmallWidgetContent(
                             habitName = activeStreak.habitName,
                             days = days,
-                            colors = colors
+                            colors = colors,
+                            showHabitName = showHabitName
                         )
                     }
                 }
@@ -361,7 +366,8 @@ open class SteadfastWidget(
     private fun SmallWidgetContent(
         habitName: String,
         days: Int,
-        colors: WidgetThemeColors
+        colors: WidgetThemeColors,
+        showHabitName: Boolean = true
     ) {
         val context = LocalContext.current
         Column(
@@ -369,16 +375,18 @@ open class SteadfastWidget(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = habitName,
-                maxLines = 1,
-                style = TextStyle(
-                    color = colors.secondaryText,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
+            if (showHabitName && habitName.isNotBlank()) {
+                Text(
+                    text = habitName,
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = colors.secondaryText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
+                    )
                 )
-            )
+            }
             val fontSize = when {
                 days >= 1000 -> 24.sp
                 days >= 100 -> 28.sp
@@ -415,7 +423,8 @@ open class SteadfastWidget(
         nextRankName: String?,
         daysToNext: Int,
         progressToNext: Float,
-        colors: WidgetThemeColors
+        colors: WidgetThemeColors,
+        showHabitName: Boolean = true
     ) {
         val context = LocalContext.current
         Row(
@@ -428,15 +437,17 @@ open class SteadfastWidget(
                 horizontalAlignment = Alignment.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = habitName,
-                    maxLines = 1,
-                    style = TextStyle(
-                        color = colors.secondaryText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
+                if (showHabitName && habitName.isNotBlank()) {
+                    Text(
+                        text = habitName,
+                        maxLines = 1,
+                        style = TextStyle(
+                            color = colors.secondaryText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
                     )
-                )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -521,7 +532,8 @@ open class SteadfastWidget(
         nextRankName: String?,
         daysToNext: Int,
         progressToNext: Float,
-        colors: WidgetThemeColors
+        colors: WidgetThemeColors,
+        showHabitName: Boolean = true
     ) {
         val context = LocalContext.current
         Row(
@@ -534,16 +546,18 @@ open class SteadfastWidget(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = habitName,
-                    maxLines = 1,
-                    style = TextStyle(
-                        color = colors.secondaryText,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center
+                if (showHabitName && habitName.isNotBlank()) {
+                    Text(
+                        text = habitName,
+                        maxLines = 1,
+                        style = TextStyle(
+                            color = colors.secondaryText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center
+                        )
                     )
-                )
+                }
                 val fontSize = when {
                     days >= 1000 -> 26.sp
                     days >= 100 -> 28.sp

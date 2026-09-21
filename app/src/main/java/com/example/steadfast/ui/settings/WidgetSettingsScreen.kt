@@ -32,6 +32,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -205,6 +206,7 @@ fun WidgetSettingsScreen(
                             fontColor = uiState.widgetFontColor,
                             bgTheme = uiState.widgetBgTheme,
                             habitName = habitName,
+                            showHabitName = uiState.widgetShowHabitName,
                             days = activeDays,
                             rankName = rankName,
                             nextRankName = rankProgress.nextRank?.let { stringResource(id = it.nameRes) },
@@ -403,6 +405,37 @@ fun WidgetSettingsScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 5. Habit Title Visibility (Privacy) Section
+            Card(shape = CardShape, modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                        Text(
+                            text = stringResource(R.string.widget_show_habit_name_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.widget_show_habit_name_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = uiState.widgetShowHabitName,
+                        onCheckedChange = { viewModel.setWidgetShowHabitName(it) }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -416,6 +449,7 @@ private fun WidgetMockView(
     fontColor: WidgetFontColor,
     bgTheme: WidgetBgTheme,
     habitName: String,
+    showHabitName: Boolean = true,
     days: Int,
     rankName: String,
     nextRankName: String?,
@@ -489,14 +523,16 @@ private fun WidgetMockView(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = habitName,
-                        maxLines = 1,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = secondaryTextColor,
-                        textAlign = TextAlign.Center
-                    )
+                    if (showHabitName && habitName.isNotBlank()) {
+                        Text(
+                            text = habitName,
+                            maxLines = 1,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = secondaryTextColor,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                     Text(
                         text = days.toString(),
                         fontSize = 32.sp,
@@ -530,13 +566,15 @@ private fun WidgetMockView(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = habitName,
-                            maxLines = 1,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = secondaryTextColor
-                        )
+                        if (showHabitName && habitName.isNotBlank()) {
+                            Text(
+                                text = habitName,
+                                maxLines = 1,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = secondaryTextColor
+                            )
+                        }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = days.toString(),

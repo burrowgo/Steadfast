@@ -221,4 +221,6 @@
     <string name="widget_wallpaper_dark">Dark</string>
     <string name="widget_wallpaper_light">Light</string>
     <string name="widget_wallpaper_pattern">Pattern</string>
+    <string name="widget_show_habit_name_title">Show Habit Title</string>
+    <string name="widget_show_habit_name_desc">Display your habit name on the widget. Turn off to keep your habit private from anyone glancing at your screen.</string>
 </resources>
