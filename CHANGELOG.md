@@ -4,6 +4,20 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-alpha.1] - 2026-09-22
+
+### Added
+- **Multi-Habit Support:** Track multiple habits simultaneously with independent streaks, ranks, history logs, and reset reasons.
+- **Habit Customization:** Choose from 10 category icons (Shield, Flame, Fitness, Book, Water, Moon, Star, Heart, Smile, Block) and distinct Material 3 color themes for each habit.
+- **Habit Detail Screen:** Dedicated view per habit featuring circular day streak counters, rank progression milestones, reset bottom sheets, and past reset reason editing.
+- **Multi-Habit Home Screen:** View all your active and archived habits in one place with current streaks and rank badges. Includes quick-add FAB and motivational quotes.
+- **History & Ranks Filtering:** Filter streak history and rank ladders by specific habits or view aggregate progress across all habits.
+- **Multi-Habit Widgets:** Glance home-screen widgets can be configured to display any specific habit. Supports multiple widgets on the home screen tracking different habits simultaneously.
+- **Side-by-Side Alpha Installation:** Installs as `Steadfast Alpha` with a distinct package ID (`com.example.steadfast.alpha`) and amber shield icon, allowing concurrent installation alongside the stable release without overwriting user data.
+- **Room Migration 1 ➔ 2:** Seamlessly upgrades existing single-habit data into Habit #1 with 100% data preservation.
+
+---
+
 ## [0.7.4] - 2026-09-22
 
 ### Added
