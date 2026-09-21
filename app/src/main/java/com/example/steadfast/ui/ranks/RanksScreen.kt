@@ -15,12 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -35,8 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,6 +50,8 @@ import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
 import com.example.steadfast.domain.Rank
 import com.example.steadfast.domain.RankLadder
+import com.example.steadfast.domain.model.Habit
+import com.example.steadfast.domain.model.HabitVisuals
 import com.example.steadfast.ui.components.RankBadge
 import com.example.steadfast.ui.theme.CardShape
 import com.example.steadfast.ui.theme.LocalRankColors
@@ -58,6 +66,7 @@ fun RanksScreen(
     val viewModel: RanksViewModel = viewModel(
         factory = RanksViewModel.provideFactory(
             streakRepository = container.streakRepository,
+            habitRepository = container.habitRepository,
             clock = container.clock
         )
     )
@@ -65,7 +74,7 @@ fun RanksScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
-    // Auto-scroll to current rank on open
+    // Auto-scroll to current rank on change
     LaunchedEffect(uiState.currentRank) {
         val targetIndex = uiState.currentRank.level
         if (targetIndex >= 0) {
@@ -94,44 +103,106 @@ fun RanksScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Header summary card: Current Rank + Highest Rank
-            HeaderRankCard(
-                currentRank = uiState.currentRank,
-                highestRank = uiState.highestRankAchieved,
-                currentDays = uiState.currentStreakDays,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
-            )
-
-            // Ladder list
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                itemsIndexed(RankLadder.ranks) { index, rank ->
-                    val isEarned = rank.minDays <= uiState.currentStreakDays
-                    val isCurrent = rank.level == uiState.currentRank.level
-                    val isNext = rank.level == (uiState.currentRank.level + 1)
-
-                    RankLadderItem(
-                        rank = rank,
-                        isEarned = isEarned,
-                        isCurrent = isCurrent,
-                        isNext = isNext,
-                        progressToNext = if (isNext) uiState.rankProgress.progressToNext else 0f,
-                        daysToNext = if (isNext) uiState.rankProgress.daysToNextRank else 0
+            if (uiState.habits.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.history_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
                     )
+                }
+            } else {
+                // Habit selector chips when more than 1 habit exists
+                if (uiState.habits.size > 1) {
+                    HabitSelectorRow(
+                        habits = uiState.habits,
+                        selectedHabitId = uiState.selectedHabit?.id,
+                        onSelectHabit = { viewModel.selectHabit(it) },
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+                }
+
+                // Header summary card: Current Rank + Highest Rank for selected habit
+                HeaderRankCard(
+                    habit = uiState.selectedHabit,
+                    currentRank = uiState.currentRank,
+                    highestRank = uiState.highestRankAchieved,
+                    currentDays = uiState.currentStreakDays,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 6.dp)
+                )
+
+                // Ladder list
+                LazyColumn(
+                    state = listState,
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    itemsIndexed(RankLadder.ranks) { _, rank ->
+                        val isEarned = rank.minDays <= uiState.currentStreakDays
+                        val isCurrent = rank.level == uiState.currentRank.level
+                        val isNext = rank.level == (uiState.currentRank.level + 1)
+
+                        RankLadderItem(
+                            rank = rank,
+                            isEarned = isEarned,
+                            isCurrent = isCurrent,
+                            isNext = isNext,
+                            progressToNext = if (isNext) uiState.rankProgress.progressToNext else 0f,
+                            daysToNext = if (isNext) uiState.rankProgress.daysToNextRank else 0
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitSelectorRow(
+    habits: List<Habit>,
+    selectedHabitId: Long?,
+    onSelectHabit: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        items(habits, key = { it.id }) { habit ->
+            val isSelected = habit.id == selectedHabitId
+            val iconRes = HabitVisuals.getIconResource(habit.icon)
+            val iconTint = androidx.compose.ui.graphics.Color(habit.color)
+            FilterChip(
+                selected = isSelected,
+                onClick = { onSelectHabit(habit.id) },
+                label = { Text(habit.name) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            )
+        }
+    }
+}
+
 @Composable
 private fun HeaderRankCard(
+    habit: Habit?,
     currentRank: Rank,
     highestRank: Rank,
     currentDays: Int,
@@ -144,75 +215,100 @@ private fun HeaderRankCard(
         ),
         modifier = modifier
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(18.dp)
         ) {
-            // Left: Current Rank
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.current_rank_header),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RankBadge(
-                        rank = currentRank,
-                        size = 36.dp,
-                        tint = LocalRankColors.current.accent
+            if (habit != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = HabitVisuals.getIconResource(habit.icon)),
+                        contentDescription = null,
+                        tint = androidx.compose.ui.graphics.Color(habit.color),
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = stringResource(currentRank.nameRes),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Text(
-                            text = "$currentDays days",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = habit.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 }
             }
 
-            // Right: Highest Achieved
-            Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(R.string.highest_rank_header),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = stringResource(highestRank.nameRes),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                // Left: Current Rank
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.current_rank_header),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RankBadge(
+                            rank = currentRank,
+                            size = 36.dp,
+                            tint = LocalRankColors.current.accent
                         )
-                        Text(
-                            text = "${highestRank.minDays} days record",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = stringResource(currentRank.nameRes),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "$currentDays days",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
+
+                // Right: Highest Achieved
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = stringResource(R.string.highest_rank_header),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = stringResource(highestRank.nameRes),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = "${highestRank.minDays} days record",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        RankBadge(
+                            rank = highestRank,
+                            size = 32.dp,
+                            tint = LocalRankColors.current.accent
                         )
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    RankBadge(
-                        rank = highestRank,
-                        size = 32.dp,
-                        tint = LocalRankColors.current.accent
-                    )
                 }
             }
         }

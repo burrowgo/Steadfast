@@ -25,8 +25,14 @@ class StreakRepository(
     val history: Flow<List<StreakEntity>> = streakDao.observeHistory()
     val allHistory: Flow<List<StreakEntity>> = streakDao.observeAllHistory()
 
+    val allActiveStreaks: Flow<List<StreakEntity>> = streakDao.observeAllActiveStreaks()
+
     val statsFlow: Flow<StreakHistoryStats> = combine(activeStreak, history) { active, historyList ->
         computeStats(active, historyList)
+    }
+
+    val allStatsFlow: Flow<StreakHistoryStats> = combine(allActiveStreaks, allHistory) { activeList, historyList ->
+        computeAllStats(activeList, historyList)
     }
 
     fun observeActiveStreak(habitId: Long): Flow<StreakEntity?> =
@@ -40,7 +46,7 @@ class StreakRepository(
             computeStats(active, historyList)
         }
 
-    private fun computeStats(active: StreakEntity?, historyList: List<StreakEntity>): StreakHistoryStats {
+    fun computeStats(active: StreakEntity?, historyList: List<StreakEntity>): StreakHistoryStats {
         val today = StreakCalculator.today(clock)
         val activeLength = if (active != null) {
             StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
@@ -65,6 +71,32 @@ class StreakRepository(
             longestStreakDays = longest,
             totalAttempts = totalAttempts,
             currentAttemptNumber = currentAttemptNumber,
+            highestRankAchieved = highestRank
+        )
+    }
+
+    fun computeAllStats(activeList: List<StreakEntity>, historyList: List<StreakEntity>): StreakHistoryStats {
+        val today = StreakCalculator.today(clock)
+        val activeLengths = activeList.map {
+            StreakCalculator.streakDays(LocalDate.ofEpochDay(it.startDate), today)
+        }
+
+        val pastLengths = historyList.map {
+            it.lengthDays ?: StreakCalculator.streakDays(
+                LocalDate.ofEpochDay(it.startDate),
+                LocalDate.ofEpochDay(it.endDate ?: it.startDate)
+            )
+        }
+
+        val allLengths = activeLengths + pastLengths
+        val longest = allLengths.maxOrNull() ?: 0
+        val totalAttempts = historyList.size + activeList.size
+        val highestRank = RankLadder.getRankForDays(longest)
+
+        return StreakHistoryStats(
+            longestStreakDays = longest,
+            totalAttempts = totalAttempts,
+            currentAttemptNumber = 0,
             highestRankAchieved = highestRank
         )
     }

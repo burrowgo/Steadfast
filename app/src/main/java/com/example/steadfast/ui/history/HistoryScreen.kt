@@ -14,13 +14,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -39,6 +43,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
+import com.example.steadfast.domain.model.Habit
+import com.example.steadfast.domain.model.HabitVisuals
 import com.example.steadfast.ui.components.RankBadge
 import com.example.steadfast.ui.theme.CardShape
 import com.example.steadfast.ui.theme.LocalRankColors
@@ -53,6 +59,7 @@ fun HistoryScreen(
     val viewModel: HistoryViewModel = viewModel(
         factory = HistoryViewModel.provideFactory(
             streakRepository = container.streakRepository,
+            habitRepository = container.habitRepository,
             clock = container.clock
         )
     )
@@ -80,6 +87,16 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // Habit Filter Chips (shown when user has more than 1 habit)
+            if (uiState.habits.size > 1) {
+                HabitFilterRow(
+                    habits = uiState.habits,
+                    selectedHabitId = uiState.selectedHabitId,
+                    onSelectHabit = { viewModel.selectHabit(it) },
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+            }
+
             // Top Summary Card
             SummaryStatsCard(
                 longest = uiState.stats.longestStreakDays,
@@ -87,7 +104,7 @@ fun HistoryScreen(
                 currentAttempt = uiState.stats.currentAttemptNumber,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp, vertical = 6.dp)
             )
 
             if (uiState.items.isEmpty()) {
@@ -105,14 +122,17 @@ fun HistoryScreen(
                     )
                 }
             } else {
+                val showHabitTag = uiState.selectedHabitId == null && uiState.habits.size > 1
+
                 LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(uiState.items, key = { it.entity.id }) { item ->
                         HistoryItemCard(
                             item = item,
+                            showHabitTag = showHabitTag,
                             onClick = { viewModel.openEditReason(item.entity) }
                         )
                     }
@@ -126,6 +146,46 @@ fun HistoryScreen(
                 initialReason = entity.reason,
                 onSave = { newReason -> viewModel.saveReason(entity.id, newReason) },
                 onDismiss = { viewModel.dismissEditReason() }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HabitFilterRow(
+    habits: List<Habit>,
+    selectedHabitId: Long?,
+    onSelectHabit: (Long?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        item {
+            FilterChip(
+                selected = selectedHabitId == null,
+                onClick = { onSelectHabit(null) },
+                label = { Text(stringResource(R.string.habit_all_habits)) }
+            )
+        }
+        items(habits, key = { it.id }) { habit ->
+            val iconRes = HabitVisuals.getIconResource(habit.icon)
+            val iconTint = androidx.compose.ui.graphics.Color(habit.color)
+            FilterChip(
+                selected = selectedHabitId == habit.id,
+                onClick = { onSelectHabit(habit.id) },
+                label = { Text(habit.name) },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             )
         }
     }
@@ -202,6 +262,7 @@ private fun StatDivider() {
 @Composable
 private fun HistoryItemCard(
     item: HistoryItem,
+    showHabitTag: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -219,6 +280,35 @@ private fun HistoryItemCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            if (showHabitTag && item.habitName.isNotBlank()) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        item.habitIcon?.let { iconName ->
+                            val iconColor = item.habitColor?.let { androidx.compose.ui.graphics.Color(it) } ?: MaterialTheme.colorScheme.primary
+                            Icon(
+                                painter = painterResource(id = HabitVisuals.getIconResource(iconName)),
+                                contentDescription = null,
+                                tint = iconColor,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        Text(
+                            text = item.habitName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,

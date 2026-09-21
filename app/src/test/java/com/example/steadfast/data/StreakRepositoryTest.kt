@@ -176,4 +176,18 @@ class StreakRepositoryTest {
         assertEquals(2, stats.totalAttempts)
         assertEquals(2, stats.currentAttemptNumber)
     }
+
+    @Test
+    fun `allStatsFlow computes aggregate stats across multiple habits`() = runTest {
+        repository.startHabit(habitId = 1L, habitName = "Habit 1")
+        repository.startHabit(habitId = 2L, habitName = "Habit 2")
+        testClock.advanceDays(10)
+
+        repository.resetStreak(habitId = 1L, reason = "Tired")
+        testClock.advanceDays(5)
+
+        val allStats = repository.allStatsFlow.first()
+        assertEquals(15, allStats.longestStreakDays)
+        assertEquals(3, allStats.totalAttempts)
+    }
 }
