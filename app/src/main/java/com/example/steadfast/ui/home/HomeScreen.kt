@@ -163,7 +163,8 @@ fun HomeScreen(
                         state = state,
                         onOpenResetSheet = { viewModel.openResetSheet() },
                         onNextQuote = { viewModel.nextQuote() },
-                        onFirstDayOfWeekChange = { viewModel.setFirstDayOfWeek(it) }
+                        onFirstDayOfWeekChange = { viewModel.setFirstDayOfWeek(it) },
+                        clock = container.clock
                     )
 
                     if (state.isResetSheetOpen) {
@@ -209,7 +210,8 @@ private fun ActiveHomeContent(
     onOpenResetSheet: () -> Unit,
     onNextQuote: () -> Unit,
     onFirstDayOfWeekChange: (FirstDayOfWeek) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    clock: java.time.Clock = java.time.Clock.systemDefaultZone()
 ) {
     val scrollState = rememberScrollState()
 
@@ -320,7 +322,8 @@ private fun ActiveHomeContent(
                 history = state.history,
                 activeStreak = state.streak,
                 firstDayOfWeek = state.firstDayOfWeek,
-                onFirstDayOfWeekChange = onFirstDayOfWeekChange
+                onFirstDayOfWeekChange = onFirstDayOfWeekChange,
+                clock = clock
             )
 
             Spacer(modifier = Modifier.height(20.dp))

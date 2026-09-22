@@ -9,6 +9,24 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.6",
+            title = "What’s New in v0.7.6",
+            highlights = listOf(
+                "24-Hour Day Cycle Counting: Streak days now complete and increment only after 24 full hours elapse from your start time, rather than jumping at midnight.",
+                "In-Progress Habit Day: Incomplete days are marked as in-progress in the consistency graph until 24 hours complete, keeping your stats honest.",
+                "Accurate Streak Length: Streak resets and history reflect exact 24-hour completed cycles."
+            )
+        ),
+        ChangelogRelease(
+            version = "0.7.5",
+            title = "What’s New in v0.7.5",
+            highlights = listOf(
+                "GitHub-Styled Consistency Graph: Track your daily progress with an activity heatmap on the home screen.",
+                "First Day of Week Setting: Customize whether your week starts on Monday or Sunday.",
+                "Interactive Cell Details: Tap any day in the heatmap to see streak status and reset reasons."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.4",
             title = "What’s New in v0.7.4",
             highlights = listOf(

@@ -100,8 +100,10 @@ fun WidgetSettingsScreen(
     var previewSize by remember { mutableStateOf(PreviewSize.STANDARD_2X2) }
     var wallpaper by remember { mutableStateOf(WallpaperPreview.DARK) }
 
-    val activeDays = remember(uiState.activeStartDate) {
-        if (uiState.activeStartDate != null) {
+    val activeDays = remember(uiState.activeStartedAt, uiState.activeStartDate) {
+        if (uiState.activeStartedAt > 0L) {
+            StreakCalculator.streakDays(uiState.activeStartedAt, System.currentTimeMillis())
+        } else if (uiState.activeStartDate != null) {
             StreakCalculator.streakDays(uiState.activeStartDate!!, LocalDate.now())
         } else {
             14

@@ -137,7 +137,7 @@
     <string name="widget_circle_description">Steadfast circular streak counter badge</string>
 
     <string name="shuffle_quote">Shuffle quote</string>
-    <string name="day_zero_ticker_hint">Day 1 unlocks at midnight • Every second counts</string>
+    <string name="day_zero_ticker_hint">Day 1 unlocks at 24 hours • Every second counts</string>
 
     <!-- Start date & Import & Share -->
     <string name="start_date_label">Start date</string>
@@ -229,6 +229,7 @@
     <string name="commit_graph_legend_reset">Reset / Inactive</string>
     <string name="commit_graph_legend_maintained">Maintained</string>
     <string name="commit_graph_maintained">Maintained · Day %1$d</string>
+    <string name="commit_graph_in_progress">In progress · Day %1$d</string>
     <string name="commit_graph_reset">Reset</string>
     <string name="commit_graph_reset_with_reason">Reset: %1$s</string>
     <string name="commit_graph_inactive">No active streak</string>

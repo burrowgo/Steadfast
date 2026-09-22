@@ -25,17 +25,27 @@ class StreakRepository(
     val history: Flow<List<StreakEntity>> = streakDao.observeHistory()
 
     val statsFlow: Flow<StreakHistoryStats> = combine(activeStreak, history) { active, historyList ->
-        val today = StreakCalculator.today(clock)
+        val nowMillis = clock.millis()
         val activeLength = if (active != null) {
-            StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
+            if (active.startedAt > 0L) {
+                StreakCalculator.streakDays(active.startedAt, nowMillis)
+            } else {
+                StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), StreakCalculator.today(clock))
+            }
         } else {
             0
         }
 
         val pastLengths = historyList.map {
-            it.lengthDays ?: StreakCalculator.streakDays(
-                LocalDate.ofEpochDay(it.startDate),
-                LocalDate.ofEpochDay(it.endDate ?: it.startDate)
+            it.lengthDays ?: (
+                if (it.startedAt > 0L && (it.endedAt ?: 0L) > 0L) {
+                    StreakCalculator.streakDays(it.startedAt, it.endedAt!!)
+                } else {
+                    StreakCalculator.streakDays(
+                        LocalDate.ofEpochDay(it.startDate),
+                        LocalDate.ofEpochDay(it.endDate ?: it.startDate)
+                    )
+                }
             )
         }
 
@@ -60,15 +70,29 @@ class StreakRepository(
         startDate: LocalDate = StreakCalculator.today(clock)
     ): Long {
         val nowMillis = clock.millis()
+        val today = StreakCalculator.today(clock)
+        val startedAtMillis = if (startDate == today) {
+            nowMillis
+        } else {
+            startDate.atStartOfDay(clock.zone).toInstant().toEpochMilli()
+        }
         return streakDao.startNewRun(
             habitName = habitName.trim(),
             startDateEpochDay = startDate.toEpochDay(),
-            startedAtMillis = nowMillis
+            startedAtMillis = startedAtMillis
         )
     }
 
     suspend fun updateActiveStartDate(newStartDate: LocalDate) {
-        streakDao.updateActiveStartDate(newStartDate.toEpochDay())
+        val active = streakDao.getActiveStreak()
+        val newStartedAtMillis = if (active != null && active.startedAt > 0L) {
+            val zone = clock.zone
+            val previousLocalTime = java.time.Instant.ofEpochMilli(active.startedAt).atZone(zone).toLocalTime()
+            newStartDate.atTime(previousLocalTime).atZone(zone).toInstant().toEpochMilli()
+        } else {
+            newStartDate.atStartOfDay(clock.zone).toInstant().toEpochMilli()
+        }
+        streakDao.updateActiveStartDate(newStartDate.toEpochDay(), newStartedAtMillis)
     }
 
     suspend fun resetStreak(reason: String?): Long? {

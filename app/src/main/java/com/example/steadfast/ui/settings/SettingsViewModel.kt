@@ -34,6 +34,7 @@ data class SettingsUiState(
     val habitName: String = "",
     val activeHabitExists: Boolean = false,
     val activeStartDate: LocalDate? = null,
+    val activeStartedAt: Long = 0L,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val useDynamicColor: Boolean = true,
     val reminderEnabled: Boolean = false,
@@ -71,10 +72,12 @@ class SettingsViewModel(
     ) { settings, active, checking, updateRes, whatsNew ->
         val effectiveName = active?.habitName ?: settings.habitName
         val startDate = active?.let { LocalDate.ofEpochDay(it.startDate) }
+        val startedAt = active?.startedAt ?: 0L
         SettingsUiState(
             habitName = effectiveName,
             activeHabitExists = active != null,
             activeStartDate = startDate,
+            activeStartedAt = startedAt,
             themeMode = settings.themeMode,
             useDynamicColor = settings.useDynamicColor,
             reminderEnabled = settings.reminderEnabled,
@@ -298,9 +301,9 @@ class SettingsViewModel(
         viewModelScope.launch {
             isCheckingForUpdate.value = true
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.4"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.6"
             } catch (e: Exception) {
-                "0.7.4"
+                "0.7.6"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
             settingsRepository.setLastUpdateCheckTime(System.currentTimeMillis())

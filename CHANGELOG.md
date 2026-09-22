@@ -4,6 +4,28 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.6] - 2026-09-22
+
+### Added
+- **24-Hour Day Cycle Counting:** Habit streaks now count elapsed days based on exact 24-hour cycles from the start timestamp (`startedAt`), rather than incrementing at midnight. Day 0 persists for the full 24 hours until Day 1 is earned.
+- **In-Progress Day State in Consistency Graph:** Any day currently in progress before its full 24 hours elapse is marked with an unfilled accent-outlined cell (`IN_PROGRESS`). Tapping shows `● In progress · Day X`.
+- **Accurate 24-Hour Reset Length:** Resets now calculate completed streak length using exact 24-hour periods so streaks reflect genuine days maintained.
+
+### Changed
+- **Consistency Graph Completion:** Days in the consistency heatmap are only marked completed/maintained (green) once their 24-hour cycle completes.
+- **Start Date Synchronization:** Updating start date in Settings now synchronizes the `startedAt` timestamp while preserving the original time of day.
+
+---
+
+## [0.7.5] - 2026-09-22
+
+### Added
+- **GitHub-Styled Consistency Graph:** Interactive 24-week activity heatmap on the home screen displaying maintained habit days, resets, and inactivity.
+- **First Day of Week Preference:** Option in Settings and Consistency Graph header to configure the first day of the week as Monday or Sunday.
+- **Interactive Day Details:** Tap any cell in the consistency graph to view detailed status, streak day number, or reset reason.
+
+---
+
 ## [0.7.4] - 2026-09-22
 
 ### Added

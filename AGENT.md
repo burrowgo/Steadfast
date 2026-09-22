@@ -91,20 +91,21 @@ README.md   DECISIONS.md
 
 ## 5. Domain rules (get these exactly right)
 
-### 5.1 Counting days — never store a counter
-Store only the **start date**. Compute the count whenever you render. Nothing needs to "tick" in the background, so the app and widget can never drift.
+### 5.1 Counting days — 24-hour completion rule
+Store the **started timestamp** (`startedAt`). Compute completed days whenever you render based on completed 24-hour cycles. A day passes when 24 hours complete from the start time, rather than incrementing at midnight.
 
 ```kotlin
-// StreakCalculator.kt (pure, unit-tested, Clock injected)
-fun streakDays(startDate: LocalDate, today: LocalDate): Int =
-    max(0, ChronoUnit.DAYS.between(startDate, today).toInt())
+// StreakCalculator.kt (pure, unit-tested)
+fun streakDays(startedAtMillis: Long, nowMillis: Long): Int {
+    if (startedAtMillis <= 0L || nowMillis <= startedAtMillis) return 0
+    return ((nowMillis - startedAtMillis) / (24 * 60 * 60 * 1000L)).toInt()
+}
 ```
 
-- Use `LocalDate` in the device's current time zone. A day passes at local midnight.
+- A day only increments and marks as maintained/completed when full 24 hours have elapsed.
 - Starting today shows **0 days**. Show a friendly subtitle on day 0: "Day one. Make it to tomorrow."
-- After a full week the count reads 7, which is when the first rank (Private) is earned.
-- If the start date is somehow in the future (clock/timezone changes), clamp to 0. Never crash or show negatives.
-- Length of a finished run = `streakDays(startDate, resetDate)`.
+- In the consistency graph, the current/uncompleted 24-hour period is marked `IN_PROGRESS` (unfilled) and not marked done (`MAINTAINED`) until 24 hours have completed.
+- Length of a finished run = `streakDays(startedAt, endedAt)`.
 
 ### 5.2 Rank ladder (data-driven, in `RankLadder.kt`)
 Rank = highest row where `minDays <= currentStreakDays`. Ranks follow the current streak, so a reset drops the rank back to Recruit. The app separately remembers the **highest rank ever achieved** (derived from the longest streak across current + history).

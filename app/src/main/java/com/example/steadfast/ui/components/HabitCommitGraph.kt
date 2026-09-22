@@ -75,13 +75,15 @@ fun HabitCommitGraph(
     clock: Clock = Clock.systemDefaultZone()
 ) {
     val today = remember(clock) { LocalDate.now(clock) }
-    val graphData = remember(history, activeStreak, today, firstDayOfWeek) {
+    val nowMillis = remember(clock, activeStreak) { clock.millis() }
+    val graphData = remember(history, activeStreak, today, nowMillis, firstDayOfWeek) {
         CommitGraphCalculator.calculateGrid(
             history = history,
             activeStreak = activeStreak,
             today = today,
             firstDayOfWeek = firstDayOfWeek,
-            numWeeks = 24
+            numWeeks = 24,
+            nowMillis = nowMillis
         )
     }
 
@@ -305,7 +307,8 @@ private fun CommitCell(
     val cellColor = when (dayInfo.status) {
         DayCommitStatus.FUTURE -> Color.Transparent
         DayCommitStatus.NOT_STARTED,
-        DayCommitStatus.INACTIVE -> if (isDark) GitHubDarkEmpty else GitHubLightEmpty
+        DayCommitStatus.INACTIVE,
+        DayCommitStatus.IN_PROGRESS -> if (isDark) GitHubDarkEmpty else GitHubLightEmpty
         DayCommitStatus.RESET -> if (isDark) GitHubDarkReset else GitHubLightReset
         DayCommitStatus.MAINTAINED -> when (dayInfo.intensityLevel) {
             1 -> if (isDark) GitHubDarkGreenLvl1 else GitHubLightGreenLvl1
@@ -324,6 +327,11 @@ private fun CommitCell(
         dayInfo.status == DayCommitStatus.RESET -> Modifier.border(
             width = 0.8.dp,
             color = if (isDark) Color(0xFF505660) else Color(0xFFA0A6B0),
+            shape = RoundedCornerShape(3.dp)
+        )
+        dayInfo.status == DayCommitStatus.IN_PROGRESS -> Modifier.border(
+            width = 0.8.dp,
+            color = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
             shape = RoundedCornerShape(3.dp)
         )
         else -> Modifier
@@ -376,12 +384,17 @@ private fun CommitGraphDetailBox(
                     val statusColor = when (selectedDay.status) {
                         DayCommitStatus.MAINTAINED -> if (isDark) GitHubDarkGreenLvl4 else GitHubLightGreenLvl3
                         DayCommitStatus.RESET -> MaterialTheme.colorScheme.error
+                        DayCommitStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primary
                         else -> MaterialTheme.colorScheme.outline
                     }
 
                     val statusText = when (selectedDay.status) {
                         DayCommitStatus.MAINTAINED -> stringResource(
                             R.string.commit_graph_maintained,
+                            selectedDay.streakDayNumber ?: 1
+                        )
+                        DayCommitStatus.IN_PROGRESS -> stringResource(
+                            R.string.commit_graph_in_progress,
                             selectedDay.streakDayNumber ?: 1
                         )
                         DayCommitStatus.RESET -> {

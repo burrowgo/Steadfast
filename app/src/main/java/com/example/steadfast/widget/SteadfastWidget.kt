@@ -275,9 +275,14 @@ open class SteadfastWidget(
                 }
             }
         } else {
-            val today = LocalDate.now()
-            val start = LocalDate.ofEpochDay(activeStreak.startDate)
-            val days = StreakCalculator.streakDays(start, today)
+            val nowMillis = System.currentTimeMillis()
+            val days = if (activeStreak.startedAt > 0L) {
+                StreakCalculator.streakDays(activeStreak.startedAt, nowMillis)
+            } else {
+                val today = LocalDate.now()
+                val start = LocalDate.ofEpochDay(activeStreak.startDate)
+                StreakCalculator.streakDays(start, today)
+            }
             val rankProgress = RankLadder.getRankProgress(days)
             val rankName = context.getString(rankProgress.currentRank.nameRes)
             val talkBackDesc = "Steadfast: $days days, rank $rankName"

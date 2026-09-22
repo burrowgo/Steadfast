@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.example.steadfast.domain.StreakCalculator
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -53,7 +54,11 @@ interface StreakDao {
         // Enforce at most one active streak: close any existing active streak
         val currentActive = getActiveStreak()
         if (currentActive != null) {
-            val length = (startDateEpochDay - currentActive.startDate).coerceAtLeast(0).toInt()
+            val length = if (currentActive.startedAt > 0L) {
+                StreakCalculator.streakDays(currentActive.startedAt, startedAtMillis)
+            } else {
+                (startDateEpochDay - currentActive.startDate).coerceAtLeast(0).toInt()
+            }
             update(
                 currentActive.copy(
                     endedAt = startedAtMillis,
@@ -79,7 +84,11 @@ interface StreakDao {
         nowMillis: Long
     ): Long? {
         val active = getActiveStreak() ?: return null
-        val length = (todayEpochDay - active.startDate).coerceAtLeast(0).toInt()
+        val length = if (active.startedAt > 0L) {
+            StreakCalculator.streakDays(active.startedAt, nowMillis)
+        } else {
+            (todayEpochDay - active.startDate).coerceAtLeast(0).toInt()
+        }
         val cleanedReason = reason?.trim()?.ifBlank { null }?.take(200)
 
         // Close active streak
@@ -128,8 +137,8 @@ interface StreakDao {
     @Query("UPDATE streak SET habitName = :habitName WHERE endedAt IS NULL")
     suspend fun updateActiveHabitName(habitName: String)
 
-    @Query("UPDATE streak SET startDate = :newStartDateEpochDay WHERE endedAt IS NULL")
-    suspend fun updateActiveStartDate(newStartDateEpochDay: Long)
+    @Query("UPDATE streak SET startDate = :newStartDateEpochDay, startedAt = :newStartedAtMillis WHERE endedAt IS NULL")
+    suspend fun updateActiveStartDate(newStartDateEpochDay: Long, newStartedAtMillis: Long)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(streaks: List<StreakEntity>)

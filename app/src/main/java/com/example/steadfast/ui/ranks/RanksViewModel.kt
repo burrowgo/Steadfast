@@ -31,9 +31,13 @@ class RanksViewModel(
         streakRepository.activeStreak,
         streakRepository.statsFlow
     ) { active, stats ->
-        val today = StreakCalculator.today(clock)
+        val nowMillis = clock.millis()
         val days = if (active != null) {
-            StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
+            if (active.startedAt > 0L) {
+                StreakCalculator.streakDays(active.startedAt, nowMillis)
+            } else {
+                StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), StreakCalculator.today(clock))
+            }
         } else {
             0
         }

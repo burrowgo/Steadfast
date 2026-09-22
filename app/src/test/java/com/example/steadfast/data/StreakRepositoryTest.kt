@@ -176,4 +176,18 @@ class StreakRepositoryTest {
         assertEquals(2, stats.totalAttempts)
         assertEquals(2, stats.currentAttemptNumber)
     }
+
+    @Test
+    fun `updateActiveStartDate updates both startDate and startedAt`() = runTest {
+        repository.startHabit("Cycling")
+        val activeInitial = repository.getActiveStreak()!!
+        val newStartDate = LocalDate.ofEpochDay(activeInitial.startDate).minusDays(3)
+
+        repository.updateActiveStartDate(newStartDate)
+
+        val activeUpdated = repository.getActiveStreak()!!
+        assertEquals(newStartDate.toEpochDay(), activeUpdated.startDate)
+        val expectedStartedAt = activeInitial.startedAt - (3 * 24 * 3600 * 1000L)
+        assertEquals(expectedStartedAt, activeUpdated.startedAt)
+    }
 }

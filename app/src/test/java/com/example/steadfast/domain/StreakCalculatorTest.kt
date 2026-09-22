@@ -82,4 +82,37 @@ class StreakCalculatorTest {
         val days = StreakCalculator.streakDays(startZoned, todayZoned)
         assertEquals(0, days) // clamped if negative, or proper difference
     }
+
+    @Test
+    fun `24-hour counting - less than 24 hours returns 0`() {
+        val startMillis = 1_000_000L
+        val hour23 = startMillis + (23 * 3600 * 1000L) + (59 * 60 * 1000L)
+        assertEquals(0, StreakCalculator.streakDays(startMillis, hour23))
+    }
+
+    @Test
+    fun `24-hour counting - exactly 24 hours returns 1`() {
+        val startMillis = 1_000_000L
+        val exactly24Hours = startMillis + (24 * 3600 * 1000L)
+        assertEquals(1, StreakCalculator.streakDays(startMillis, exactly24Hours))
+    }
+
+    @Test
+    fun `24-hour counting - 47 hours returns 1 and 48 hours returns 2`() {
+        val startMillis = 1_000_000L
+        val hour47 = startMillis + (47 * 3600 * 1000L)
+        assertEquals(1, StreakCalculator.streakDays(startMillis, hour47))
+
+        val exactly48Hours = startMillis + (48 * 3600 * 1000L)
+        assertEquals(2, StreakCalculator.streakDays(startMillis, exactly48Hours))
+    }
+
+    @Test
+    fun `24-hour counting - future or invalid start time returns 0`() {
+        val startMillis = 5_000_000L
+        val pastNow = 2_000_000L
+        assertEquals(0, StreakCalculator.streakDays(startMillis, pastNow))
+        assertEquals(0, StreakCalculator.streakDays(0L, pastNow))
+        assertEquals(0, StreakCalculator.streakDays(-100L, pastNow))
+    }
 }

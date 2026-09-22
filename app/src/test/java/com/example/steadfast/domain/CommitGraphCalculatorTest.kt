@@ -64,14 +64,18 @@ class CommitGraphCalculatorTest {
     }
 
     @Test
-    fun `maintained days are marked correctly with intensity`() {
-        // Active streak started 5 days ago (Sep 17)
+    fun `maintained days are marked correctly with intensity and in-progress day is not marked done`() {
+        // Active streak started 5 days ago (Sep 17) at startedAt
         val startEpoch = today.minusDays(5).toEpochDay()
+        val startedAt = 1_000_000L
+        // Exactly 5 full 24-hour cycles have completed: Sep 17, 18, 19, 20, 21 completed.
+        // Today (Sep 22) has not completed its 24 hours yet.
+        val nowMillis = startedAt + (5 * 24 * 3600 * 1000L) + (10 * 3600 * 1000L) // 5 days 10 hours in
         val active = StreakEntity(
             id = 1,
             habitName = "Fitness",
             startDate = startEpoch,
-            startedAt = 1000L
+            startedAt = startedAt
         )
 
         val grid = CommitGraphCalculator.calculateGrid(
@@ -79,17 +83,55 @@ class CommitGraphCalculatorTest {
             activeStreak = active,
             today = today,
             firstDayOfWeek = FirstDayOfWeek.MONDAY,
-            numWeeks = 4
+            numWeeks = 4,
+            nowMillis = nowMillis
         )
 
-        // Count maintained days
-        assertEquals(6, grid.totalActiveDays) // Sep 17, 18, 19, 20, 21, 22 = 6 days
+        // Count maintained days: exactly 5 completed days, today is in-progress
+        assertEquals(5, grid.totalActiveDays) // Sep 17, 18, 19, 20, 21 = 5 days
         assertEquals(0, grid.totalResetDays)
 
-        val todayInfo = CommitGraphCalculator.calculateDayStatus(today, today, emptyList(), active)
-        assertEquals(DayCommitStatus.MAINTAINED, todayInfo.status)
+        // Yesterday (Sep 21, day 5) is MAINTAINED
+        val yesterdayInfo = CommitGraphCalculator.calculateDayStatus(today.minusDays(1), today, nowMillis, emptyList(), active)
+        assertEquals(DayCommitStatus.MAINTAINED, yesterdayInfo.status)
+        assertEquals(5, yesterdayInfo.streakDayNumber)
+        assertEquals(1, yesterdayInfo.intensityLevel) // 1..6 -> 1
+
+        // Today (Sep 22, day 6 in progress) is IN_PROGRESS, not MAINTAINED
+        val todayInfo = CommitGraphCalculator.calculateDayStatus(today, today, nowMillis, emptyList(), active)
+        assertEquals(DayCommitStatus.IN_PROGRESS, todayInfo.status)
         assertEquals(6, todayInfo.streakDayNumber)
-        assertEquals(1, todayInfo.intensityLevel) // 1..6 -> 1
+        assertEquals(0, todayInfo.intensityLevel)
+
+        // When 24 hours complete for day 6 (6 full days completed)
+        val completed6DaysMillis = startedAt + (6 * 24 * 3600 * 1000L)
+        val todayCompletedInfo = CommitGraphCalculator.calculateDayStatus(today, today, completed6DaysMillis, emptyList(), active)
+        assertEquals(DayCommitStatus.MAINTAINED, todayCompletedInfo.status)
+        assertEquals(6, todayCompletedInfo.streakDayNumber)
+    }
+
+    @Test
+    fun `day zero is marked as IN_PROGRESS until 24 hours complete`() {
+        val startEpoch = today.toEpochDay()
+        val startedAt = 10_000_000L
+        val active = StreakEntity(
+            id = 1,
+            habitName = "Meditation",
+            startDate = startEpoch,
+            startedAt = startedAt
+        )
+
+        // 5 hours after start
+        val fiveHoursIn = startedAt + (5 * 3600 * 1000L)
+        val infoBefore24h = CommitGraphCalculator.calculateDayStatus(today, today, fiveHoursIn, emptyList(), active)
+        assertEquals(DayCommitStatus.IN_PROGRESS, infoBefore24h.status)
+        assertEquals(1, infoBefore24h.streakDayNumber)
+
+        // 24 hours after start
+        val exactly24h = startedAt + (24 * 3600 * 1000L)
+        val infoAt24h = CommitGraphCalculator.calculateDayStatus(today, today, exactly24h, emptyList(), active)
+        assertEquals(DayCommitStatus.MAINTAINED, infoAt24h.status)
+        assertEquals(1, infoAt24h.streakDayNumber)
     }
 
     @Test
@@ -98,24 +140,27 @@ class CommitGraphCalculatorTest {
         val streak1Start = today.minusDays(10).toEpochDay()
         val resetDate = today.minusDays(3)
         val resetEpoch = resetDate.toEpochDay()
+        val streak1StartedAt = 1000L
+        val resetMillis = streak1StartedAt + (7 * 24 * 3600 * 1000L) // 7 full 24h days completed
 
         val endedStreak = StreakEntity(
             id = 1,
             habitName = "Reading",
             startDate = streak1Start,
-            startedAt = 1000L,
+            startedAt = streak1StartedAt,
             endDate = resetEpoch,
-            endedAt = 2000L,
+            endedAt = resetMillis,
             lengthDays = 7,
             reason = "Late flight"
         )
 
-        // New streak started on reset day
+        // New streak started on reset day, now 2 full 24h days completed
+        val nowMillis = resetMillis + (2 * 24 * 3600 * 1000L) + (1 * 3600 * 1000L)
         val activeStreak = StreakEntity(
             id = 2,
             habitName = "Reading",
             startDate = resetEpoch,
-            startedAt = 2000L
+            startedAt = resetMillis
         )
 
         val grid = CommitGraphCalculator.calculateGrid(
@@ -123,25 +168,26 @@ class CommitGraphCalculatorTest {
             activeStreak = activeStreak,
             today = today,
             firstDayOfWeek = FirstDayOfWeek.MONDAY,
-            numWeeks = 4
+            numWeeks = 4,
+            nowMillis = nowMillis
         )
 
         assertEquals(1, grid.totalResetDays)
 
         // Verify the reset date specifically
-        val resetDayInfo = CommitGraphCalculator.calculateDayStatus(resetDate, today, listOf(endedStreak), activeStreak)
+        val resetDayInfo = CommitGraphCalculator.calculateDayStatus(resetDate, today, nowMillis, listOf(endedStreak), activeStreak)
         assertEquals(DayCommitStatus.RESET, resetDayInfo.status)
         assertEquals("Late flight", resetDayInfo.resetReason)
         assertEquals(0, resetDayInfo.intensityLevel)
 
         // Day before reset should be MAINTAINED
         val dayBeforeReset = resetDate.minusDays(1)
-        val dayBeforeInfo = CommitGraphCalculator.calculateDayStatus(dayBeforeReset, today, listOf(endedStreak), activeStreak)
+        val dayBeforeInfo = CommitGraphCalculator.calculateDayStatus(dayBeforeReset, today, nowMillis, listOf(endedStreak), activeStreak)
         assertEquals(DayCommitStatus.MAINTAINED, dayBeforeInfo.status)
 
         // Day after reset should be MAINTAINED
         val dayAfterReset = resetDate.plusDays(1)
-        val dayAfterInfo = CommitGraphCalculator.calculateDayStatus(dayAfterReset, today, listOf(endedStreak), activeStreak)
+        val dayAfterInfo = CommitGraphCalculator.calculateDayStatus(dayAfterReset, today, nowMillis, listOf(endedStreak), activeStreak)
         assertEquals(DayCommitStatus.MAINTAINED, dayAfterInfo.status)
     }
 

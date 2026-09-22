@@ -87,9 +87,9 @@ class HomeViewModel(
         viewModelScope.launch {
             val lastSeen = settingsRepository.lastSeenVersionFlow.first()
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.4"
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.6"
             } catch (e: Exception) {
-                "0.7.4"
+                "0.7.6"
             }
             if (lastSeen == null) {
                 // Check if user is upgrading from a previous version without last_seen_version set
@@ -160,8 +160,12 @@ class HomeViewModel(
                 if (active == null) {
                     HomeUiState.FirstRun
                 } else {
-                    val today = StreakCalculator.today(clock)
-                    val days = StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
+                    val nowMillis = clock.millis()
+                    val days = if (active.startedAt > 0L) {
+                        StreakCalculator.streakDays(active.startedAt, nowMillis)
+                    } else {
+                        StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), StreakCalculator.today(clock))
+                    }
                     val progress = RankLadder.getRankProgress(days)
 
                     // Rank-up celebration trigger
@@ -174,7 +178,6 @@ class HomeViewModel(
 
                     // Check if a reset occurred within the last 24 hours
                     val latestEnded = data.history.firstOrNull()
-                    val nowMillis = clock.millis()
                     val isWithin24HoursOfReset = latestEnded?.endedAt?.let {
                         (nowMillis - it) < (24 * 60 * 60 * 1000L)
                     } ?: false
