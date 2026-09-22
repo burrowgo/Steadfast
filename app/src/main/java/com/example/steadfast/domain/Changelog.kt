@@ -9,6 +9,16 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.9",
+            title = "What’s New in v0.7.9",
+            highlights = listOf(
+                "Space-Between Home Screen: Dynamic space distribution ensures all items fill your screen gracefully without feeling crumbled up.",
+                "Adaptive Single-Screen Fit: Fits seamlessly in one view without scrolling on standard screens, with smooth scrolling on compact devices.",
+                "Refined Habit Pill Badge: Sleek framed pill badge for the active habit name paired underneath the counter.",
+                "Unified Alignment: Harmonized card padding and spacing across Rank, Consistency Heatmap, and Quote cards."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.8",
             title = "What’s New in v0.7.8",
             highlights = listOf(

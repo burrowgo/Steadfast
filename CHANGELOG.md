@@ -4,6 +4,16 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.9] - 2026-09-22
+
+### Changed
+- **Space-Between Home Screen Layout:** Replaced rigid, cramped spacers with dynamic vertical space distribution (`distributedVerticalArrangement`). All dashboard elements gracefully expand to fit standard screen viewports without scrolling, eliminating both cramped cards and awkward bottom blank space.
+- **Adaptive Screen Clamping:** Guaranteed safe minimum spacing (10dp) with smooth vertical scrolling on compact screens or large display scales, and capped spacing (38dp) with balanced centering on extra-tall devices.
+- **Pill Badge for Active Habit:** Encased the habit name in a refined, low-profile pill chip with soft surface tinting and subtle border, pairing cleanly with the circular day counter.
+- **Unified Card Alignments:** Standardized horizontal padding to 14dp across the Rank Card, Consistency Heatmap, and Quote Card for crisp visual alignment.
+
+---
+
 ## [0.7.8] - 2026-09-22
 
 ### Changed

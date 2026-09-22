@@ -110,7 +110,7 @@ fun HabitCommitGraph(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
             // Header: Title & Total Active Days
             Row(
@@ -132,7 +132,7 @@ fun HabitCommitGraph(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Main Heatmap Area
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -179,7 +179,7 @@ fun HabitCommitGraph(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Interactive Day Details or Tap Hint
             CommitGraphDetailBox(
@@ -187,7 +187,7 @@ fun HabitCommitGraph(
                 isDark = isDark
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             // Legend
             CommitGraphLegend(isDark = isDark)
@@ -314,7 +314,7 @@ private fun CommitGraphDetailBox(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 5.dp),
+                .padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
