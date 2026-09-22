@@ -4,6 +4,19 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.8] - 2026-09-22
+
+### Changed
+- **Single-Screen Viewport Fit:** Optimized component heights, cell sizes, and vertical spacing across the home screen so the entire dashboard fits within a single viewport without requiring scrolling on standard devices.
+- **Habit Name Below Counter:** Positioned the active habit title directly underneath the circular day counter hero, establishing an intuitive visual connection between the streak count and the habit.
+- **Redesigned Badge & Rank Progression:** Elevated the rank badge with a framed circular emblem featuring subtle accent tinting and border, paired with clear milestone typography and a sleek linear progress indicator.
+- **Refined Component Styling:** Unified cards (Rank Card, Consistency Heatmap, and Quote Card) with 16dp rounded corners and subtle 1dp outline borders for a cohesive, modern aesthetic.
+
+### Fixed
+- **Removed Redundant Reset Button:** Removed the duplicate Reset Streak button below the counter; streak resets remain conveniently and quickly accessible via the history icon in the top app bar.
+
+---
+
 ## [0.7.7] - 2026-09-22
 
 ### Changed

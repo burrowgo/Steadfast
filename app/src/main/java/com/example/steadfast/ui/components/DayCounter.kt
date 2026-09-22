@@ -57,7 +57,7 @@ fun DayCounter(
     progressToNext: Float,
     startedAtMillis: Long = 0L,
     modifier: Modifier = Modifier,
-    size: Dp = 180.dp
+    size: Dp = 160.dp
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progressToNext.coerceIn(0f, 1f),
@@ -79,7 +79,7 @@ fun DayCounter(
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-                val strokeWidth = 10.dp.toPx()
+                val strokeWidth = 8.dp.toPx()
                 val diameter = this.size.minDimension - strokeWidth
                 val topLeft = Offset(
                     (this.size.width - diameter) / 2f,
@@ -131,9 +131,9 @@ fun DayCounter(
                     label = "dayCountText"
                 ) { count ->
                     val countFontSize = when {
-                        count >= 1000 -> 44.sp
-                        count >= 100 -> 52.sp
-                        else -> 60.sp
+                        count >= 1000 -> 38.sp
+                        count >= 100 -> 46.sp
+                        else -> 54.sp
                     }
                     Text(
                         text = count.toString(),

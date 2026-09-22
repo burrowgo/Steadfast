@@ -1,5 +1,6 @@
 package com.example.steadfast.ui.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,22 +13,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -63,7 +65,6 @@ import com.example.steadfast.ui.components.UpdateAvailableDialog
 import com.example.steadfast.ui.components.WhatsNewDialog
 import com.example.steadfast.ui.components.HabitCommitGraph
 import com.example.steadfast.data.prefs.FirstDayOfWeek
-import com.example.steadfast.ui.theme.CardShape
 import com.example.steadfast.ui.theme.LocalRankColors
 import kotlinx.coroutines.flow.collectLatest
 
@@ -167,7 +168,6 @@ fun HomeScreen(
                 is HomeUiState.Active -> {
                     ActiveHomeContent(
                         state = state,
-                        onOpenResetSheet = { viewModel.openResetSheet() },
                         onNextQuote = { viewModel.nextQuote() },
                         clock = container.clock
                     )
@@ -212,7 +212,6 @@ fun HomeScreen(
 @Composable
 private fun ActiveHomeContent(
     state: HomeUiState.Active,
-    onOpenResetSheet: () -> Unit,
     onNextQuote: () -> Unit,
     modifier: Modifier = Modifier,
     clock: java.time.Clock = java.time.Clock.systemDefaultZone()
@@ -222,81 +221,102 @@ private fun ActiveHomeContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 18.dp)
             .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+        Spacer(modifier = Modifier.height(2.dp))
+
+        // 1. Day Counter Hero
+        DayCounter(
+            days = state.days,
+            progressToNext = state.rankProgress.progressToNext,
+            startedAtMillis = state.streak.startedAt,
+            size = 156.dp
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        // Habit Name directly below the counter
+        Text(
+            text = state.habitName,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 2. Redesigned Rank & Progression Card
+        val currentRank = state.rankProgress.currentRank
+        val nextRank = state.rankProgress.nextRank
+        val rankSubtitle = if (nextRank != null) {
+            stringResource(
+                R.string.days_to_next_rank,
+                state.rankProgress.daysToNextRank,
+                stringResource(nextRank.nameRes)
+            )
+        } else {
+            stringResource(R.string.highest_rank_reached)
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            ),
+            border = BorderStroke(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
+            )
         ) {
-            // Habit Name Heading
-            Text(
-                text = state.habitName,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 2.dp, bottom = 10.dp)
-            )
-
-            // 1. Day Counter Hero
-            DayCounter(
-                days = state.days,
-                progressToNext = state.rankProgress.progressToNext,
-                startedAtMillis = state.streak.startedAt,
-                size = 180.dp
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // 2. Rank & Progression Card
-            val currentRank = state.rankProgress.currentRank
-            val nextRank = state.rankProgress.nextRank
-            val rankSubtitle = if (nextRank != null) {
-                stringResource(
-                    R.string.days_to_next_rank,
-                    state.rankProgress.daysToNextRank,
-                    stringResource(nextRank.nameRes)
-                )
-            } else {
-                stringResource(R.string.highest_rank_reached)
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = CardShape,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                )
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                // Framed Badge Emblem
+                Surface(
+                    shape = CircleShape,
+                    color = LocalRankColors.current.accent.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, LocalRankColors.current.accent.copy(alpha = 0.25f)),
+                    modifier = Modifier.size(38.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Box(contentAlignment = Alignment.Center) {
                         RankBadge(
                             rank = currentRank,
-                            size = 26.dp,
+                            size = 22.dp,
                             tint = LocalRankColors.current.accent
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Rank Title, Subtitle, and Progress Bar
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = stringResource(currentRank.nameRes),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.weight(1f))
                         Text(
                             text = rankSubtitle,
                             style = MaterialTheme.typography.labelSmall,
@@ -305,7 +325,7 @@ private fun ActiveHomeContent(
                     }
 
                     if (nextRank != null) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         LinearProgressIndicator(
                             progress = { state.rankProgress.progressToNext },
                             modifier = Modifier
@@ -318,60 +338,29 @@ private fun ActiveHomeContent(
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 3. Reset Button (Directly reachable without scrolling!)
-            OutlinedButton(
-                onClick = onOpenResetSheet,
-                shape = RoundedCornerShape(12.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-                modifier = Modifier.height(34.dp),
-                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                )
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_nav_history),
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = stringResource(R.string.reset_button),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 4. Consistency Heatmap Graph
-            HabitCommitGraph(
-                history = state.history,
-                activeStreak = state.streak,
-                firstDayOfWeek = state.firstDayOfWeek,
-                clock = clock
-            )
         }
 
-        // 5. Quote Card at bottom
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp, top = 12.dp)
-        ) {
-            QuoteCard(
-                quote = QuoteDisplay(
-                    text = state.quote.text,
-                    author = state.quote.author
-                ),
-                onNextQuote = onNextQuote
-            )
-        }
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 3. Consistency Heatmap Graph
+        HabitCommitGraph(
+            history = state.history,
+            activeStreak = state.streak,
+            firstDayOfWeek = state.firstDayOfWeek,
+            clock = clock
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // 4. Quote Card at bottom
+        QuoteCard(
+            quote = QuoteDisplay(
+                text = state.quote.text,
+                author = state.quote.author
+            ),
+            onNextQuote = onNextQuote
+        )
+
+        Spacer(modifier = Modifier.height(14.dp))
     }
 }

@@ -45,7 +45,6 @@ import com.example.steadfast.domain.CommitGraphCalculator
 import com.example.steadfast.domain.CommitGraphData
 import com.example.steadfast.domain.DayCommitInfo
 import com.example.steadfast.domain.DayCommitStatus
-import com.example.steadfast.ui.theme.CardShape
 import java.time.Clock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -102,10 +101,11 @@ fun HabitCommitGraph(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = CardShape,
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
     ) {
         Column(
             modifier = Modifier
@@ -132,7 +132,7 @@ fun HabitCommitGraph(
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Main Heatmap Area
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -157,9 +157,9 @@ fun HabitCommitGraph(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         // Heatmap Grid: Columns of 7 days
-                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
                             graphData.columns.forEach { column ->
-                                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.5.dp)) {
                                     column.days.forEach { dayInfo ->
                                         CommitCell(
                                             dayInfo = dayInfo,
@@ -179,7 +179,7 @@ fun HabitCommitGraph(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Interactive Day Details or Tap Hint
             CommitGraphDetailBox(
@@ -187,7 +187,7 @@ fun HabitCommitGraph(
                 isDark = isDark
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             // Legend
             CommitGraphLegend(isDark = isDark)
@@ -198,7 +198,7 @@ fun HabitCommitGraph(
 @Composable
 private fun WeekdayLabelsColumn(firstDayOfWeek: FirstDayOfWeek) {
     Column {
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(17.dp))
         val labels = when (firstDayOfWeek) {
             FirstDayOfWeek.MONDAY -> listOf("Mon", "", "Wed", "", "Fri", "", "")
             FirstDayOfWeek.SUNDAY -> listOf("Sun", "", "Tue", "", "Thu", "", "")
@@ -206,7 +206,7 @@ private fun WeekdayLabelsColumn(firstDayOfWeek: FirstDayOfWeek) {
         labels.forEach { label ->
             Box(
                 modifier = Modifier
-                    .size(width = 24.dp, height = 13.dp),
+                    .size(width = 22.dp, height = 11.5.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (label.isNotEmpty()) {
@@ -217,7 +217,7 @@ private fun WeekdayLabelsColumn(firstDayOfWeek: FirstDayOfWeek) {
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(3.dp))
+            Spacer(modifier = Modifier.height(2.5.dp))
         }
     }
 }
@@ -229,14 +229,14 @@ private fun MonthHeadersRow(
 ) {
     Box(
         modifier = Modifier
-            .height(14.dp)
-            .width((numColumns * 16).dp)
+            .height(13.dp)
+            .width((numColumns * 14).dp)
     ) {
         monthHeaders.forEach { header ->
-            val offsetDp = (header.columnIndex * 16).dp
+            val offsetDp = (header.columnIndex * 14).dp
             Text(
                 text = header.monthName,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.5.sp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(start = offsetDp)
@@ -270,25 +270,25 @@ private fun CommitCell(
         isSelected -> Modifier.border(
             width = 1.5.dp,
             color = MaterialTheme.colorScheme.primary,
-            shape = RoundedCornerShape(3.dp)
+            shape = RoundedCornerShape(2.5.dp)
         )
         dayInfo.status == DayCommitStatus.RESET -> Modifier.border(
             width = 0.8.dp,
             color = if (isDark) Color(0xFF505660) else Color(0xFFA0A6B0),
-            shape = RoundedCornerShape(3.dp)
+            shape = RoundedCornerShape(2.5.dp)
         )
         dayInfo.status == DayCommitStatus.IN_PROGRESS -> Modifier.border(
             width = 0.8.dp,
             color = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-            shape = RoundedCornerShape(3.dp)
+            shape = RoundedCornerShape(2.5.dp)
         )
         else -> Modifier
     }
 
     Box(
         modifier = Modifier
-            .size(13.dp)
-            .clip(RoundedCornerShape(3.dp))
+            .size(11.5.dp)
+            .clip(RoundedCornerShape(2.5.dp))
             .background(cellColor)
             .then(borderModifier)
             .clickable(
@@ -307,14 +307,14 @@ private fun CommitGraphDetailBox(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 6.dp),
+                .padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {

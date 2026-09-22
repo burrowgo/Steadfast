@@ -9,6 +9,16 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.8",
+            title = "What’s New in v0.7.8",
+            highlights = listOf(
+                "Single-Screen Home Viewport: The entire homepage fits within a single screen without scrolling on standard devices.",
+                "Habit Title Below Counter: Positioned your habit title directly underneath the counter ring for an intuitive hero hierarchy.",
+                "Elevated Rank Insignia: Redesigned the rank badge inside a framed circular emblem with subtle accent tinting and border.",
+                "Uncluttered Layout: Removed the redundant reset button below the counter—reset is always accessible from the top bar."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.7",
             title = "What’s New in v0.7.7",
             highlights = listOf(
