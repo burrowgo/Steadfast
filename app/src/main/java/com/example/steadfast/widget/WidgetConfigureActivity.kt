@@ -48,6 +48,8 @@ import com.example.steadfast.data.prefs.UserSettings
 import com.example.steadfast.domain.model.HabitWithStreak
 import com.example.steadfast.ui.components.HabitCard
 import com.example.steadfast.ui.theme.SteadfastTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class WidgetConfigureActivity : ComponentActivity() {
@@ -117,33 +119,35 @@ class WidgetConfigureActivity : ComponentActivity() {
                         onHabitSelected = { item ->
                             val selectedHabitId = item.habit.id
                             container.widgetConfigurationRepository.setHabitIdForWidget(appWidgetId, selectedHabitId)
-                            lifecycleScope.launch {
+
+                            val resultValue = Intent().apply {
+                                putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                            }
+                            setResult(Activity.RESULT_OK, resultValue)
+
+                            val appContext = applicationContext
+                            CoroutineScope(Dispatchers.IO).launch {
                                 val glanceId = getGlanceId(appWidgetId)
                                 try {
-                                    updateAppWidgetState(this@WidgetConfigureActivity, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                                    updateAppWidgetState(appContext, PreferencesGlanceStateDefinition, glanceId) { prefs ->
                                         prefs.toMutablePreferences().apply {
                                             this[SteadfastWidget.KEY_HABIT_ID] = selectedHabitId
                                         }
                                     }
-                                    val appWidgetManager = AppWidgetManager.getInstance(this@WidgetConfigureActivity)
+                                    val appWidgetManager = AppWidgetManager.getInstance(appContext)
                                     val info = appWidgetManager.getAppWidgetInfo(appWidgetId)
                                     val isCircle = info?.provider?.className?.contains("Circle", ignoreCase = true) == true
                                     if (isCircle) {
-                                        SteadfastCircleWidget().update(this@WidgetConfigureActivity, glanceId)
+                                        SteadfastCircleWidget().update(appContext, glanceId)
                                     } else {
-                                        SteadfastWidget().update(this@WidgetConfigureActivity, glanceId)
+                                        SteadfastWidget().update(appContext, glanceId)
                                     }
-                                } catch (e: Exception) {
+                                } catch (e: Throwable) {
                                     // Widget ID might not be mapped yet by launcher
                                 }
-
-                                WidgetUpdater.updateAll(this@WidgetConfigureActivity)
-                                val resultValue = Intent().apply {
-                                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
-                                }
-                                setResult(Activity.RESULT_OK, resultValue)
-                                finish()
                             }
+
+                            finish()
                         },
                         modifier = Modifier
                             .fillMaxSize()
@@ -157,8 +161,8 @@ class WidgetConfigureActivity : ComponentActivity() {
     @SuppressLint("RestrictedApi")
     private fun getGlanceId(appWidgetId: Int): GlanceId {
         return try {
-            GlanceAppWidgetManager(this).getGlanceIdBy(appWidgetId)
-        } catch (e: Exception) {
+            GlanceAppWidgetManager(applicationContext).getGlanceIdBy(appWidgetId)
+        } catch (e: Throwable) {
             androidx.glance.appwidget.AppWidgetId(appWidgetId)
         }
     }

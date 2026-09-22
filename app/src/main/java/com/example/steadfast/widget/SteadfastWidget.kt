@@ -1,5 +1,6 @@
 package com.example.steadfast.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
@@ -49,6 +50,7 @@ import androidx.glance.unit.ColorProvider
 import com.example.steadfast.MainActivity
 import com.example.steadfast.R
 import com.example.steadfast.data.db.AppDatabase
+import com.example.steadfast.data.db.HabitEntity
 import com.example.steadfast.data.db.StreakEntity
 import com.example.steadfast.data.prefs.SettingsRepository
 import com.example.steadfast.data.prefs.WidgetBgTheme
@@ -81,10 +83,14 @@ open class SteadfastWidget(
         val WIDE_SHORT_SIZE = DpSize(220.dp, 40.dp) // 4x1, 3x1
         val WIDE_SIZE = DpSize(240.dp, 90.dp) // 4x2
 
+        @SuppressLint("RestrictedApi")
         fun extractAppWidgetId(context: Context, id: GlanceId): Int {
+            if (id is androidx.glance.appwidget.AppWidgetId) {
+                return id.appWidgetId
+            }
             return try {
                 GlanceAppWidgetManager(context).getAppWidgetId(id)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 val match = Regex("""appWidgetId=(\d+)""").find(id.toString())
                 match?.groupValues?.get(1)?.toIntOrNull() ?: -1
             }
@@ -105,13 +111,16 @@ open class SteadfastWidget(
         }
     }
 
-    override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val database = AppDatabase.getInstance(context)
+    internal suspend fun resolveHabitAndStreak(
+        context: Context,
+        id: GlanceId,
+        database: AppDatabase = AppDatabase.getInstance(context)
+    ): Pair<HabitEntity?, StreakEntity?> {
         val appWidgetId = extractAppWidgetId(context, id)
 
         val glancePrefs = try {
             getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             null
         }
 
@@ -119,30 +128,19 @@ open class SteadfastWidget(
         val widgetConfigRepo = WidgetConfigurationRepository(context)
         val repoHabitId = if (appWidgetId > 0) widgetConfigRepo.getHabitIdForWidget(appWidgetId) else null
 
-        // Configure habit ID: persist in SharedPreferences and Glance preferences
+        // Configure habit ID: persist in SharedPreferences if only present in Glance preferences
         val configuredHabitId = repoHabitId ?: stateHabitId
 
-        if (appWidgetId > 0 && configuredHabitId != null) {
-            if (repoHabitId != configuredHabitId) {
-                widgetConfigRepo.setHabitIdForWidget(appWidgetId, configuredHabitId)
-            }
-            if (stateHabitId != configuredHabitId) {
-                try {
-                    updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { prefs ->
-                        prefs.toMutablePreferences().apply {
-                            this[KEY_HABIT_ID] = configuredHabitId
-                        }
-                    }
-                } catch (e: Exception) {
-                    // ignore
-                }
-            }
+        if (appWidgetId > 0 && configuredHabitId != null && repoHabitId != configuredHabitId) {
+            widgetConfigRepo.setHabitIdForWidget(appWidgetId, configuredHabitId)
         }
 
         val (habit, active) = if (configuredHabitId != null) {
             val h = database.habitDao().getHabitById(configuredHabitId)
             val s = database.streakDao().getActiveStreak(configuredHabitId)
-            if (h != null) Pair(h, s) else {
+            if (h != null) {
+                Pair(h, s)
+            } else {
                 val fallbackH = database.habitDao().getActiveHabits().firstOrNull()
                 val fallbackS = fallbackH?.let { database.streakDao().getActiveStreak(it.id) }
                 Pair(fallbackH, fallbackS)
@@ -159,6 +157,12 @@ open class SteadfastWidget(
             active
         }
 
+        return Pair(habit, resolvedStreak)
+    }
+
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        val (habit, resolvedStreak) = resolveHabitAndStreak(context, id)
+
         val settings = SettingsRepository(context.dataStore).settingsFlow.first()
         val isCircle = forceCircle || (settings.widgetShape == WidgetShape.CIRCLE)
 
@@ -166,6 +170,7 @@ open class SteadfastWidget(
             GlanceTheme {
                 WidgetRoot(
                     activeStreak = resolvedStreak,
+                    habit = habit,
                     isCircle = isCircle,
                     opacity = settings.widgetBackgroundOpacity,
                     fontColor = settings.widgetFontColor,
@@ -248,6 +253,7 @@ open class SteadfastWidget(
     @Composable
     private fun WidgetRoot(
         activeStreak: StreakEntity?,
+        habit: HabitEntity? = null,
         isCircle: Boolean,
         opacity: Int,
         fontColor: WidgetFontColor,
@@ -274,7 +280,7 @@ open class SteadfastWidget(
         val clickIntent = Intent(context, MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            val habitId = activeStreak?.habitId ?: -1L
+            val habitId = activeStreak?.habitId ?: habit?.id ?: -1L
             if (habitId > 0) {
                 putExtra(EXTRA_HABIT_ID, habitId)
             }
@@ -290,9 +296,16 @@ open class SteadfastWidget(
 
         if (activeStreak == null) {
             // Empty state
+            val habitTitle = habit?.name?.takeIf { it.isNotBlank() && showHabitName } ?: context.getString(R.string.app_name)
+            val desc = if (habit != null && habit.name.isNotBlank()) {
+                "${habit.name}: ${context.getString(R.string.widget_tap_to_start)}"
+            } else {
+                context.getString(R.string.widget_tap_to_start)
+            }
+
             Box(
                 modifier = backgroundModifier.semantics {
-                    contentDescription = context.getString(R.string.widget_tap_to_start)
+                    contentDescription = desc
                 },
                 contentAlignment = Alignment.Center
             ) {
@@ -314,7 +327,7 @@ open class SteadfastWidget(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = context.getString(R.string.app_name),
+                                text = habitTitle,
                                 maxLines = 1,
                                 style = TextStyle(
                                     color = colors.primaryText,
@@ -340,7 +353,7 @@ open class SteadfastWidget(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = context.getString(R.string.app_name),
+                                text = habitTitle,
                                 maxLines = 1,
                                 style = TextStyle(
                                     color = colors.primaryText,

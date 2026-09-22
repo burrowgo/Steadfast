@@ -9,6 +9,16 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.8.0-alpha.5",
+            title = "What’s New in v0.8.0-alpha.5",
+            highlights = listOf(
+                "Widget Habit Selection Fix: Fixed errors when configuring secondary habits and resolved fallback to habit 1.",
+                "Glance Stability: Eliminated composition-time state mutation to prevent widget error screens.",
+                "Atomic Widget Setup: Synchronous persistence and background state synchronization for immediate reliability.",
+                "Direct Widget Navigation: Tapping an unstarted habit widget opens the app directly focused on that habit."
+            )
+        ),
+        ChangelogRelease(
             version = "0.8.0-alpha.4",
             title = "What’s New in v0.8.0-alpha.4",
             highlights = listOf(

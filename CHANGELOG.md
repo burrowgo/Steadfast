@@ -4,6 +4,17 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-alpha.5] - 2026-09-22
+
+### Fixed
+- **Widget Habit Selection & Error Resolution:** Resolved critical issues where selecting secondary habits caused Glance error screens and selecting subsequent habits incorrectly defaulted to the first habit.
+- **Glance Composition Lifecycle Safety:** Eliminated DataStore state mutations from within `provideGlance`, ensuring composition is strictly read-only and preventing session cancellation crashes.
+- **Direct Widget ID Extraction:** Upgraded `extractAppWidgetId` with direct `AppWidgetId` instance resolution to prevent launcher ID mapping exceptions.
+- **Atomic Configuration & Race Prevention:** Overhauled `WidgetConfigureActivity` to synchronously persist widget mappings, update Glance state via application context, and avoid concurrent multi-widget update collisions during placement.
+- **Widget-Specific Navigation:** Tapping an empty or reset widget now opens the app directly focused on that specific habit.
+
+---
+
 ## [0.8.0-alpha.4] - 2026-09-22
 
 ### Fixed
