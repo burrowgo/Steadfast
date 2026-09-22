@@ -76,31 +76,31 @@ class SteadfastWidgetTest {
         assertEquals(h3, widgetConfigRepo.getHabitIdForWidget(103))
 
         // Verify resolution for Widget 1 (Habit 1)
-        val (habit1, streak1) = widget.resolveHabitAndStreak(context, AppWidgetId(101), database)
+        val habitId1 = widgetConfigRepo.getHabitIdForWidget(101)
+        val (habit1, streak1) = SteadfastWidget.resolveForHabitId(database, habitId1)
         assertNotNull(habit1)
         assertEquals(h1, habit1?.id)
         assertEquals("Habit 1", habit1?.name)
         assertNotNull(streak1)
         assertEquals(h1, streak1?.habitId)
-        assertEquals("Habit 1", streak1?.habitName)
 
         // Verify resolution for Widget 2 (Habit 2) - must resolve Habit 2 without error
-        val (habit2, streak2) = widget.resolveHabitAndStreak(context, AppWidgetId(102), database)
+        val habitId2 = widgetConfigRepo.getHabitIdForWidget(102)
+        val (habit2, streak2) = SteadfastWidget.resolveForHabitId(database, habitId2)
         assertNotNull(habit2)
         assertEquals(h2, habit2?.id)
         assertEquals("Habit 2", habit2?.name)
         assertNotNull(streak2)
         assertEquals(h2, streak2?.habitId)
-        assertEquals("Habit 2", streak2?.habitName)
 
         // Verify resolution for Widget 3 (Habit 3) - must resolve Habit 3, NOT Habit 1
-        val (habit3, streak3) = widget.resolveHabitAndStreak(context, AppWidgetId(103), database)
+        val habitId3 = widgetConfigRepo.getHabitIdForWidget(103)
+        val (habit3, streak3) = SteadfastWidget.resolveForHabitId(database, habitId3)
         assertNotNull(habit3)
         assertEquals(h3, habit3?.id)
         assertEquals("Habit 3", habit3?.name)
         assertNotNull(streak3)
         assertEquals(h3, streak3?.habitId)
-        assertEquals("Habit 3", streak3?.habitName)
     }
 
     @Test
@@ -112,7 +112,8 @@ class SteadfastWidgetTest {
         // Delete Habit 2
         habitRepo.deleteHabit(h2)
 
-        val (habit, streak) = widget.resolveHabitAndStreak(context, AppWidgetId(102), database)
+        val habitId = widgetConfigRepo.getHabitIdForWidget(102)
+        val (habit, streak) = SteadfastWidget.resolveForHabitId(database, habitId)
         assertNotNull(habit)
         assertEquals(h1, habit?.id)
         assertEquals("Habit 1", habit?.name)
@@ -124,7 +125,9 @@ class SteadfastWidgetTest {
     fun testUnconfiguredWidgetFallsBackToFirstActiveHabit() = runTest {
         val h1 = habitRepo.createHabit("Habit 1", startDate = LocalDate.now().minusDays(10))
 
-        val (habit, streak) = widget.resolveHabitAndStreak(context, AppWidgetId(999), database)
+        // No widget configuration exists for widget 999
+        val habitId = widgetConfigRepo.getHabitIdForWidget(999)
+        val (habit, streak) = SteadfastWidget.resolveForHabitId(database, habitId)
         assertNotNull(habit)
         assertEquals(h1, habit?.id)
         assertEquals("Habit 1", habit?.name)

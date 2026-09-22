@@ -4,6 +4,15 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-alpha.6] - 2026-09-22
+
+### Fixed
+- **Reactive Per-Widget Glance Architecture:** Resolved persistent bug where selecting secondary or tertiary habits in home-screen widgets incorrectly displayed data from the first habit. Moved data consumption directly inside `provideContent` using Glance's reactive `currentState<Preferences>()`.
+- **Per-Instance State Synchronization in `WidgetUpdater`:** `WidgetUpdater.updateAll()` now iterates over every active standard and circle widget instance, resolves its configured habit from Room, and writes full display state directly into each widget's isolated DataStore before triggering recomposition.
+- **Atomic Configuration & Immediate State Propagation:** `WidgetConfigureActivity` writes complete display data (habit ID, habit name, streak status, visual settings) to the widget's Glance DataStore upon selection before finishing, ensuring immediate, correct rendering upon placement.
+
+---
+
 ## [0.8.0-alpha.5] - 2026-09-22
 
 ### Fixed

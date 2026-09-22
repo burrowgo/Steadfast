@@ -9,6 +9,15 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.8.0-alpha.6",
+            title = "What’s New in v0.8.0-alpha.6",
+            highlights = listOf(
+                "Widget Habit Selection Solved: Fixed persistent issue where selecting second or third habits displayed data from the first habit.",
+                "Reactive Glance State: Moved widget rendering to reactive Glance DataStore state so each widget independently retains and displays its own habit.",
+                "Atomic State Updates: Full habit and streak data is synchronized per-widget across all update and configuration lifecycles."
+            )
+        ),
+        ChangelogRelease(
             version = "0.8.0-alpha.5",
             title = "What’s New in v0.8.0-alpha.5",
             highlights = listOf(

@@ -29,7 +29,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -39,17 +38,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.state.updateAppWidgetState
-import androidx.glance.state.PreferencesGlanceStateDefinition
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
+import com.example.steadfast.data.db.AppDatabase
 import com.example.steadfast.data.prefs.ThemeMode
 import com.example.steadfast.data.prefs.UserSettings
+import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.domain.model.HabitWithStreak
 import com.example.steadfast.ui.components.HabitCard
 import com.example.steadfast.ui.theme.SteadfastTheme
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class WidgetConfigureActivity : ComponentActivity() {
@@ -92,7 +91,6 @@ class WidgetConfigureActivity : ComponentActivity() {
                 initialValue = emptyList()
             )
 
-            val scope = rememberCoroutineScope()
 
             SteadfastTheme(
                 darkTheme = darkTheme,
@@ -126,23 +124,33 @@ class WidgetConfigureActivity : ComponentActivity() {
                             setResult(Activity.RESULT_OK, resultValue)
 
                             val appContext = applicationContext
-                            CoroutineScope(Dispatchers.IO).launch {
-                                val glanceId = getGlanceId(appWidgetId)
+                            lifecycleScope.launch(Dispatchers.IO) {
                                 try {
-                                    updateAppWidgetState(appContext, PreferencesGlanceStateDefinition, glanceId) { prefs ->
-                                        prefs.toMutablePreferences().apply {
-                                            this[SteadfastWidget.KEY_HABIT_ID] = selectedHabitId
-                                        }
-                                    }
+                                    val glanceId = getGlanceId(appWidgetId)
+                                    val database = AppDatabase.getInstance(appContext)
+                                    val habit = database.habitDao().getHabitById(selectedHabitId)
+                                    val streak = database.streakDao().getActiveStreak(selectedHabitId)
+                                    val settings = container.settingsRepository.settingsFlow.first()
+
                                     val appWidgetManager = AppWidgetManager.getInstance(appContext)
                                     val info = appWidgetManager.getAppWidgetInfo(appWidgetId)
                                     val isCircle = info?.provider?.className?.contains("Circle", ignoreCase = true) == true
+
+                                    SteadfastWidget.writeWidgetState(
+                                        appContext, glanceId, habit, streak,
+                                        isCircle = isCircle || (settings.widgetShape == WidgetShape.CIRCLE),
+                                        opacity = settings.widgetBackgroundOpacity,
+                                        fontColor = settings.widgetFontColor,
+                                        bgTheme = settings.widgetBgTheme,
+                                        showHabitName = settings.widgetShowHabitName
+                                    )
+
                                     if (isCircle) {
                                         SteadfastCircleWidget().update(appContext, glanceId)
                                     } else {
                                         SteadfastWidget().update(appContext, glanceId)
                                     }
-                                } catch (e: Throwable) {
+                                } catch (_: Throwable) {
                                     // Widget ID might not be mapped yet by launcher
                                 }
                             }

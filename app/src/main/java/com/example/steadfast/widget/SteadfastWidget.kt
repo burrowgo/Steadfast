@@ -9,12 +9,16 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
+import androidx.glance.currentState
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -77,6 +81,14 @@ open class SteadfastWidget(
 
     companion object {
         val KEY_HABIT_ID = longPreferencesKey("widget_habit_id")
+        val KEY_HABIT_NAME = stringPreferencesKey("widget_habit_name")
+        val KEY_HAS_ACTIVE_STREAK = booleanPreferencesKey("widget_has_active_streak")
+        val KEY_STREAK_START_DATE = longPreferencesKey("widget_streak_start_date")
+        val KEY_IS_CIRCLE = booleanPreferencesKey("widget_is_circle")
+        val KEY_OPACITY = intPreferencesKey("widget_opacity")
+        val KEY_FONT_COLOR = stringPreferencesKey("widget_font_color")
+        val KEY_BG_THEME = stringPreferencesKey("widget_bg_theme")
+        val KEY_SHOW_HABIT_NAME = booleanPreferencesKey("widget_show_habit_name")
         const val EXTRA_HABIT_ID = "com.example.steadfast.extra.HABIT_ID"
         val TINY_SIZE = DpSize(40.dp, 40.dp) // 1x1
         val SMALL_SIZE = DpSize(100.dp, 100.dp) // 2x2
@@ -95,6 +107,71 @@ open class SteadfastWidget(
                 match?.groupValues?.get(1)?.toIntOrNull() ?: -1
             }
         }
+
+        /**
+         * Resolve habit and streak from DB given a configured habitId.
+         * Falls back to the first active habit if habitId is null or not found.
+         */
+        suspend fun resolveForHabitId(
+            database: AppDatabase,
+            habitId: Long?
+        ): Pair<HabitEntity?, StreakEntity?> {
+            return if (habitId != null && habitId > 0) {
+                val h = database.habitDao().getHabitById(habitId)
+                val s = database.streakDao().getActiveStreak(habitId)
+                if (h != null) {
+                    Pair(h, s)
+                } else {
+                    val fallbackH = database.habitDao().getActiveHabits().firstOrNull()
+                    val fallbackS = fallbackH?.let { database.streakDao().getActiveStreak(it.id) }
+                    Pair(fallbackH, fallbackS)
+                }
+            } else {
+                val firstH = database.habitDao().getActiveHabits().firstOrNull()
+                val s = firstH?.let { database.streakDao().getActiveStreak(it.id) }
+                Pair(firstH, s)
+            }
+        }
+
+        /**
+         * Write all display data for a widget into its per-instance Glance DataStore.
+         * This is the ONLY way widget data should be updated — provideContent reads reactively
+         * from this state via currentState<Preferences>().
+         */
+        suspend fun writeWidgetState(
+            context: Context,
+            glanceId: GlanceId,
+            habit: HabitEntity?,
+            streak: StreakEntity?,
+            isCircle: Boolean,
+            opacity: Int,
+            fontColor: WidgetFontColor,
+            bgTheme: WidgetBgTheme,
+            showHabitName: Boolean
+        ) {
+            val habitName = if (habit != null && habit.name.isNotBlank()) {
+                habit.name
+            } else {
+                ""
+            }
+            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                prefs.toMutablePreferences().apply {
+                    this[KEY_HABIT_ID] = habit?.id ?: -1L
+                    this[KEY_HABIT_NAME] = habitName
+                    this[KEY_HAS_ACTIVE_STREAK] = streak != null
+                    if (streak != null) {
+                        this[KEY_STREAK_START_DATE] = streak.startDate
+                    } else {
+                        remove(KEY_STREAK_START_DATE)
+                    }
+                    this[KEY_IS_CIRCLE] = isCircle
+                    this[KEY_OPACITY] = opacity
+                    this[KEY_FONT_COLOR] = fontColor.name
+                    this[KEY_BG_THEME] = bgTheme.name
+                    this[KEY_SHOW_HABIT_NAME] = showHabitName
+                }
+            }
+        }
     }
 
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
@@ -111,71 +188,83 @@ open class SteadfastWidget(
         }
     }
 
-    internal suspend fun resolveHabitAndStreak(
-        context: Context,
-        id: GlanceId,
-        database: AppDatabase = AppDatabase.getInstance(context)
-    ): Pair<HabitEntity?, StreakEntity?> {
-        val appWidgetId = extractAppWidgetId(context, id)
-
-        val glancePrefs = try {
+    /**
+     * Bootstrap the Glance state for a widget if it hasn't been populated yet.
+     * Called once during the first provideGlance; after that, state is maintained
+     * by WidgetUpdater.updateAll() and WidgetConfigureActivity.
+     */
+    private suspend fun ensureStatePopulated(context: Context, id: GlanceId) {
+        val prefs = try {
             getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         } catch (e: Throwable) {
-            null
+            return
         }
 
-        val stateHabitId = glancePrefs?.get(KEY_HABIT_ID)
+        // If state already has habit data, it's been populated — skip
+        if (prefs[KEY_HABIT_NAME] != null) return
+
+        // Bootstrap from SharedPreferences mapping + DB
+        val appWidgetId = extractAppWidgetId(context, id)
         val widgetConfigRepo = WidgetConfigurationRepository(context)
-        val repoHabitId = if (appWidgetId > 0) widgetConfigRepo.getHabitIdForWidget(appWidgetId) else null
-
-        // Configure habit ID: persist in SharedPreferences if only present in Glance preferences
-        val configuredHabitId = repoHabitId ?: stateHabitId
-
-        if (appWidgetId > 0 && configuredHabitId != null && repoHabitId != configuredHabitId) {
-            widgetConfigRepo.setHabitIdForWidget(appWidgetId, configuredHabitId)
-        }
-
-        val (habit, active) = if (configuredHabitId != null) {
-            val h = database.habitDao().getHabitById(configuredHabitId)
-            val s = database.streakDao().getActiveStreak(configuredHabitId)
-            if (h != null) {
-                Pair(h, s)
-            } else {
-                val fallbackH = database.habitDao().getActiveHabits().firstOrNull()
-                val fallbackS = fallbackH?.let { database.streakDao().getActiveStreak(it.id) }
-                Pair(fallbackH, fallbackS)
-            }
+        val habitId = if (appWidgetId > 0) {
+            widgetConfigRepo.getHabitIdForWidget(appWidgetId) ?: prefs[KEY_HABIT_ID]
         } else {
-            val firstH = database.habitDao().getActiveHabits().firstOrNull()
-            val s = firstH?.let { database.streakDao().getActiveStreak(it.id) } ?: database.streakDao().getActiveStreak()
-            Pair(firstH, s)
+            prefs[KEY_HABIT_ID]
         }
 
-        val resolvedStreak = if (habit != null && active != null && habit.name.isNotBlank()) {
-            active.copy(habitName = habit.name, habitId = habit.id)
-        } else {
-            active
-        }
+        val database = AppDatabase.getInstance(context)
+        val (habit, streak) = resolveForHabitId(database, habitId)
+        val settings = SettingsRepository(context.dataStore).settingsFlow.first()
 
-        return Pair(habit, resolvedStreak)
+        writeWidgetState(
+            context, id, habit, streak,
+            isCircle = forceCircle || (settings.widgetShape == WidgetShape.CIRCLE),
+            opacity = settings.widgetBackgroundOpacity,
+            fontColor = settings.widgetFontColor,
+            bgTheme = settings.widgetBgTheme,
+            showHabitName = settings.widgetShowHabitName
+        )
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val (habit, resolvedStreak) = resolveHabitAndStreak(context, id)
-
-        val settings = SettingsRepository(context.dataStore).settingsFlow.first()
-        val isCircle = forceCircle || (settings.widgetShape == WidgetShape.CIRCLE)
+        ensureStatePopulated(context, id)
 
         provideContent {
+            // Read ALL data reactively from per-widget Glance DataStore.
+            // This ensures each widget instance displays its own habit's data,
+            // even when provideGlance is not re-called on update().
+            val prefs = currentState<Preferences>()
+            val habitId = prefs[KEY_HABIT_ID] ?: -1L
+            val habitName = prefs[KEY_HABIT_NAME] ?: ""
+            val hasActiveStreak = prefs[KEY_HAS_ACTIVE_STREAK] ?: false
+            val startDateEpoch = prefs[KEY_STREAK_START_DATE]
+            val isCircle = forceCircle || (prefs[KEY_IS_CIRCLE] ?: false)
+            val opacity = prefs[KEY_OPACITY] ?: 100
+            val fontColor = prefs[KEY_FONT_COLOR]?.let {
+                try { WidgetFontColor.valueOf(it) } catch (_: Exception) { null }
+            } ?: WidgetFontColor.DEFAULT
+            val bgTheme = prefs[KEY_BG_THEME]?.let {
+                try { WidgetBgTheme.valueOf(it) } catch (_: Exception) { null }
+            } ?: WidgetBgTheme.DEFAULT
+            val showHabitName = prefs[KEY_SHOW_HABIT_NAME] ?: true
+
+            val days = if (hasActiveStreak && startDateEpoch != null) {
+                StreakCalculator.streakDays(LocalDate.ofEpochDay(startDateEpoch), LocalDate.now())
+            } else {
+                0
+            }
+
             GlanceTheme {
                 WidgetRoot(
-                    activeStreak = resolvedStreak,
-                    habit = habit,
+                    habitId = habitId,
+                    habitName = habitName,
+                    days = days,
+                    hasActiveStreak = hasActiveStreak,
                     isCircle = isCircle,
-                    opacity = settings.widgetBackgroundOpacity,
-                    fontColor = settings.widgetFontColor,
-                    bgTheme = settings.widgetBgTheme,
-                    showHabitName = settings.widgetShowHabitName
+                    opacity = opacity,
+                    fontColor = fontColor,
+                    bgTheme = bgTheme,
+                    showHabitName = showHabitName
                 )
             }
         }
@@ -252,8 +341,10 @@ open class SteadfastWidget(
 
     @Composable
     private fun WidgetRoot(
-        activeStreak: StreakEntity?,
-        habit: HabitEntity? = null,
+        habitId: Long,
+        habitName: String,
+        days: Int,
+        hasActiveStreak: Boolean,
         isCircle: Boolean,
         opacity: Int,
         fontColor: WidgetFontColor,
@@ -280,7 +371,6 @@ open class SteadfastWidget(
         val clickIntent = Intent(context, MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            val habitId = activeStreak?.habitId ?: habit?.id ?: -1L
             if (habitId > 0) {
                 putExtra(EXTRA_HABIT_ID, habitId)
             }
@@ -294,11 +384,11 @@ open class SteadfastWidget(
             .padding(padding)
             .clickable(actionStartActivity(clickIntent))
 
-        if (activeStreak == null) {
+        if (!hasActiveStreak) {
             // Empty state
-            val habitTitle = habit?.name?.takeIf { it.isNotBlank() && showHabitName } ?: context.getString(R.string.app_name)
-            val desc = if (habit != null && habit.name.isNotBlank()) {
-                "${habit.name}: ${context.getString(R.string.widget_tap_to_start)}"
+            val habitTitle = habitName.takeIf { it.isNotBlank() && showHabitName } ?: context.getString(R.string.app_name)
+            val desc = if (habitName.isNotBlank()) {
+                "$habitName: ${context.getString(R.string.widget_tap_to_start)}"
             } else {
                 context.getString(R.string.widget_tap_to_start)
             }
@@ -378,9 +468,6 @@ open class SteadfastWidget(
                 }
             }
         } else {
-            val today = LocalDate.now()
-            val start = LocalDate.ofEpochDay(activeStreak.startDate)
-            val days = StreakCalculator.streakDays(start, today)
             val rankProgress = RankLadder.getRankProgress(days)
             val rankName = context.getString(rankProgress.currentRank.nameRes)
             val talkBackDesc = "Steadfast: $days days, rank $rankName"
@@ -394,7 +481,7 @@ open class SteadfastWidget(
                     }
                     isWideShort -> {
                         WideShortWidgetContent(
-                            habitName = activeStreak.habitName,
+                            habitName = habitName,
                             days = days,
                             rankName = rankName,
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
@@ -406,7 +493,7 @@ open class SteadfastWidget(
                     }
                     isWideTall -> {
                         WideWidgetContent(
-                            habitName = activeStreak.habitName,
+                            habitName = habitName,
                             days = days,
                             rankName = rankName,
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
@@ -418,7 +505,7 @@ open class SteadfastWidget(
                     }
                     else -> {
                         SmallWidgetContent(
-                            habitName = activeStreak.habitName,
+                            habitName = habitName,
                             days = days,
                             rankName = rankName,
                             nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
