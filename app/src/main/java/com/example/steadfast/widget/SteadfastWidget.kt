@@ -189,31 +189,39 @@ open class SteadfastWidget(
     }
 
     /**
-     * Bootstrap the Glance state for a widget if it hasn't been populated yet.
-     * Called once during the first provideGlance; after that, state is maintained
-     * by WidgetUpdater.updateAll() and WidgetConfigureActivity.
+     * Bootstrap the Glance state for a widget if it hasn't been populated yet
+     * or if the configured habit has changed.
      */
-    private suspend fun ensureStatePopulated(context: Context, id: GlanceId) {
+    internal suspend fun ensureStatePopulated(
+        context: Context,
+        id: GlanceId,
+        database: AppDatabase = AppDatabase.getInstance(context)
+    ) {
         val prefs = try {
             getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
         } catch (e: Throwable) {
             return
         }
 
-        // If state already has habit data, it's been populated — skip
-        if (prefs[KEY_HABIT_NAME] != null) return
-
-        // Bootstrap from SharedPreferences mapping + DB
         val appWidgetId = extractAppWidgetId(context, id)
         val widgetConfigRepo = WidgetConfigurationRepository(context)
-        val habitId = if (appWidgetId > 0) {
-            widgetConfigRepo.getHabitIdForWidget(appWidgetId) ?: prefs[KEY_HABIT_ID]
+        val configuredHabitId = if (appWidgetId > 0) {
+            widgetConfigRepo.getHabitIdForWidget(appWidgetId)
         } else {
-            prefs[KEY_HABIT_ID]
+            null
         }
+        val currentHabitIdInPrefs = prefs[KEY_HABIT_ID]?.takeIf { it > 0 }
 
-        val database = AppDatabase.getInstance(context)
-        val (habit, streak) = resolveForHabitId(database, habitId)
+        // If state is already populated and matches the configured habit, skip
+        val isUpToDate = if (configuredHabitId != null) {
+            currentHabitIdInPrefs == configuredHabitId && prefs[KEY_HABIT_NAME] != null
+        } else {
+            prefs[KEY_HABIT_NAME] != null
+        }
+        if (isUpToDate) return
+
+        val targetHabitId = configuredHabitId ?: currentHabitIdInPrefs
+        val (habit, streak) = resolveForHabitId(database, targetHabitId)
         val settings = SettingsRepository(context.dataStore).settingsFlow.first()
 
         writeWidgetState(

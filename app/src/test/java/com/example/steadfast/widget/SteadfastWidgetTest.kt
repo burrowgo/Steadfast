@@ -3,6 +3,8 @@ package com.example.steadfast.widget
 import android.content.Context
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.AppWidgetId
+import androidx.glance.appwidget.state.getAppWidgetState
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.steadfast.data.HabitRepository
@@ -143,5 +145,92 @@ class SteadfastWidgetTest {
 
         widget.onDelete(context, AppWidgetId(101))
         assertNull(widgetConfigRepo.getHabitIdForWidget(101))
+    }
+
+    @Test
+    fun testEnsureStatePopulated_populatesStateForConfiguredWidget() = runTest {
+        val h1 = habitRepo.createHabit("Habit 1", startDate = LocalDate.now().minusDays(10))
+        val h2 = habitRepo.createHabit("Habit 2", startDate = LocalDate.now().minusDays(5))
+
+        val widgetId1 = AppWidgetId(201)
+        val widgetId2 = AppWidgetId(202)
+
+        widgetConfigRepo.setHabitIdForWidget(201, h1)
+        widgetConfigRepo.setHabitIdForWidget(202, h2)
+
+        // Run ensureStatePopulated for both widgets
+        widget.ensureStatePopulated(context, widgetId1, database)
+        widget.ensureStatePopulated(context, widgetId2, database)
+
+        // Verify widget 1's Glance state has Habit 1
+        val prefs1 = getAppWidgetState(context, PreferencesGlanceStateDefinition, widgetId1)
+        assertEquals(h1, prefs1[SteadfastWidget.KEY_HABIT_ID])
+        assertEquals("Habit 1", prefs1[SteadfastWidget.KEY_HABIT_NAME])
+        assertEquals(true, prefs1[SteadfastWidget.KEY_HAS_ACTIVE_STREAK])
+
+        // Verify widget 2's Glance state has Habit 2, NOT Habit 1!
+        val prefs2 = getAppWidgetState(context, PreferencesGlanceStateDefinition, widgetId2)
+        assertEquals(h2, prefs2[SteadfastWidget.KEY_HABIT_ID])
+        assertEquals("Habit 2", prefs2[SteadfastWidget.KEY_HABIT_NAME])
+        assertEquals(true, prefs2[SteadfastWidget.KEY_HAS_ACTIVE_STREAK])
+    }
+
+    @Test
+    fun testEnsureStatePopulated_updatesStateWhenConfiguredHabitChanges() = runTest {
+        val h1 = habitRepo.createHabit("Habit 1", startDate = LocalDate.now().minusDays(10))
+        val h2 = habitRepo.createHabit("Habit 2", startDate = LocalDate.now().minusDays(3))
+
+        val widgetId = AppWidgetId(301)
+
+        // Initially configured with Habit 1
+        widgetConfigRepo.setHabitIdForWidget(301, h1)
+        widget.ensureStatePopulated(context, widgetId, database)
+
+        val prefsBefore = getAppWidgetState(context, PreferencesGlanceStateDefinition, widgetId)
+        assertEquals(h1, prefsBefore[SteadfastWidget.KEY_HABIT_ID])
+        assertEquals("Habit 1", prefsBefore[SteadfastWidget.KEY_HABIT_NAME])
+
+        // User reconfigures to Habit 2
+        widgetConfigRepo.setHabitIdForWidget(301, h2)
+        widget.ensureStatePopulated(context, widgetId, database)
+
+        // Verify state is now updated to Habit 2
+        val prefsAfter = getAppWidgetState(context, PreferencesGlanceStateDefinition, widgetId)
+        assertEquals(h2, prefsAfter[SteadfastWidget.KEY_HABIT_ID])
+        assertEquals("Habit 2", prefsAfter[SteadfastWidget.KEY_HABIT_NAME])
+    }
+
+    @Test
+    fun testThreeWidgetsWithThreeHabits_eachHasIsolatedGlanceState() = runTest {
+        // Direct test for the user-reported issue:
+        // Widget 1 -> Habit 1, Widget 2 -> Habit 2, Widget 3 -> Habit 3
+        val h1 = habitRepo.createHabit("First Habit", startDate = LocalDate.now().minusDays(30))
+        val h2 = habitRepo.createHabit("Second Habit", startDate = LocalDate.now().minusDays(20))
+        val h3 = habitRepo.createHabit("Third Habit", startDate = LocalDate.now().minusDays(10))
+
+        val w1 = AppWidgetId(401)
+        val w2 = AppWidgetId(402)
+        val w3 = AppWidgetId(403)
+
+        widgetConfigRepo.setHabitIdForWidget(401, h1)
+        widgetConfigRepo.setHabitIdForWidget(402, h2)
+        widgetConfigRepo.setHabitIdForWidget(403, h3)
+
+        widget.ensureStatePopulated(context, w1, database)
+        widget.ensureStatePopulated(context, w2, database)
+        widget.ensureStatePopulated(context, w3, database)
+
+        val state1 = getAppWidgetState(context, PreferencesGlanceStateDefinition, w1)
+        val state2 = getAppWidgetState(context, PreferencesGlanceStateDefinition, w2)
+        val state3 = getAppWidgetState(context, PreferencesGlanceStateDefinition, w3)
+
+        assertEquals(h1, state1[SteadfastWidget.KEY_HABIT_ID])
+        assertEquals("First Habit", state1[SteadfastWidget.KEY_HABIT_NAME])
+
+        assertEquals(h2, state2[SteadfastWidget.KEY_HABIT_ID])
+        assertEquals("Second Habit", state2[SteadfastWidget.KEY_HABIT_NAME])
+
+        assertEquals(h3, state3[SteadfastWidget.KEY_HABIT_ID])
+        assertEquals("Third Habit", state3[SteadfastWidget.KEY_HABIT_NAME])
     }
 }

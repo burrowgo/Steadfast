@@ -36,7 +36,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
@@ -47,6 +46,7 @@ import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.domain.model.HabitWithStreak
 import com.example.steadfast.ui.components.HabitCard
 import com.example.steadfast.ui.theme.SteadfastTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -124,7 +124,7 @@ class WidgetConfigureActivity : ComponentActivity() {
                             setResult(Activity.RESULT_OK, resultValue)
 
                             val appContext = applicationContext
-                            lifecycleScope.launch(Dispatchers.IO) {
+                            CoroutineScope(Dispatchers.IO).launch {
                                 try {
                                     val glanceId = getGlanceId(appWidgetId)
                                     val database = AppDatabase.getInstance(appContext)
