@@ -4,6 +4,17 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.10] - 2026-09-22
+
+### Changed
+- **Tactical Precision Chronometer & Timer Redesign:** Redesigned the day counter into a precision tactical chronometer with optimized inner dial canvas padding, ensuring generous clearance (>18dp on all sides) so the elapsed timer pill never touches or overlaps the inner circle.
+- **Pulsing Live Indicator:** Integrated an animated real-time LED pulse dot (`●`) indicating active wall-clock streak progression.
+- **Interactive Tap-To-Toggle Display:** Tapping the chronometer pill provides tactile haptic feedback and toggles between compact digital clock format (`+04:23:12` / `04:23:12`) and unit format (`+ 04h 23m 12s` / `04h 23m 12s`).
+- **Gradient Progress Arc & Glowing Bead:** Enhanced the rank progress arc with a linear gradient transition into the rank accent color and an animated glowing pip bead at the leading tip of progress.
+- **Hairline Inner Bezel:** Rendered a subtle hairline guide circle inside the gauge for an authentic precision instrument aesthetic.
+
+---
+
 ## [0.7.9] - 2026-09-22
 
 ### Changed

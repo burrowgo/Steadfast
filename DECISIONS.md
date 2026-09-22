@@ -27,8 +27,8 @@ This file records architecture and tooling choices not explicitly settled by `AG
 - **Rationale:** Gives users flexibility to customize home-screen aesthetics between rounded square cards and circular dials across 1×1, 2×2, and 4×2 sizes while keeping the codebase unified via an inherited Glance widget implementation.
 
 ## 7. Live Elapsed Time Ticker & Day 0 Detail
-- **Decision:** Added an `ElapsedTicker` sub-composable inside `DayCounter` that runs a 1-second wall-clock aligned ticker for hours, minutes, and seconds from `startedAtMillis`. On Day 0, widgets also display elapsed hours rather than a bare 0.
-- **Rationale:** Day 0 is critical for motivation; displaying real-time hours, minutes, and seconds demonstrates immediate progress and eliminates the feeling of a static '0 days' counter.
+- **Decision:** Added an `ElapsedTicker` sub-composable inside `DayCounter` that runs a 1-second wall-clock aligned ticker for hours, minutes, and seconds from `startedAtMillis`. On Day 0, widgets also display elapsed hours rather than a bare 0. Redesigned the counter into a precision tactical chronometer: tightened inner dial canvas padding to ensure ample clearance (>15dp on all sides) so the ticker never intersects or touches the inner circle, added a pulsing live LED indicator, a sweep-aligned linear gradient progress arc with a glowing tip pip, and interactive tap-toggling between digital clock mode (`+04:23:12`) and expanded unit mode (`+ 04h 23m 12s`).
+- **Rationale:** Day 0 is critical for motivation; displaying real-time hours, minutes, and seconds demonstrates immediate progress and eliminates the feeling of a static '0 days' counter. Eliminating geometric collision against the progress ring and adding subtle live motion elevates the counter to match modern open-source habit tracking instruments.
 
 ## 8. Hourly Pseudo-Randomized Quote Rotation
 - **Decision:** Shifted quote selection from a single daily index (`dayOfYear % pool.size`) to an hourly pseudo-randomized slot (`(nowMillis / 1.hour)` seeded random index), plus added an explicit shuffle button on `QuoteCard`.

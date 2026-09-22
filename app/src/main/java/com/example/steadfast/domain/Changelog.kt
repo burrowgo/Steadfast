@@ -9,6 +9,16 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.10",
+            title = "What’s New in v0.7.10",
+            highlights = listOf(
+                "Tactical Precision Chronometer: Redesigned the day counter and timer with generous clearance so it never touches or overlaps the inner circle.",
+                "Pulsing Live Indicator: Integrated a real-time animated LED pulse dot showing your streak ticking forward second by second.",
+                "Tap-To-Toggle Format: Tap the timer to seamlessly toggle between digital clock (+04:23:12) and unit breakdown (+ 04h 23m 12s) with haptic feedback.",
+                "Glowing Arc & Inner Bezel: Subtle instrument guide bezel and radiant glowing tip at the leading edge of your rank progress arc."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.9",
             title = "What’s New in v0.7.9",
             highlights = listOf(

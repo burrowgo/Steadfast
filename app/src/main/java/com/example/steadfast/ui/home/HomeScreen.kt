@@ -246,7 +246,7 @@ private fun ActiveHomeContent(
                     days = state.days,
                     progressToNext = state.rankProgress.progressToNext,
                     startedAtMillis = state.streak.startedAt,
-                    size = 146.dp
+                    size = 152.dp
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
