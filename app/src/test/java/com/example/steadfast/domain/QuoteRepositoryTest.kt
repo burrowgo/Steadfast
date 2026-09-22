@@ -74,4 +74,15 @@ class QuoteRepositoryTest {
         assertNotEquals(q1, q2)
         assertEquals(q1, q3)
     }
+
+    @Test
+    fun `different seed modifiers generate different deterministic quotes`() {
+        val slotStartMillis = 3600000L * 500L
+        val qHabit1 = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis, seedModifier = 1L)
+        val qHabit2 = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis, seedModifier = 2L)
+        // Consistent across calls with same seedModifier
+        val qHabit1Repeat = repo.getPeriodicQuote(isComeback = false, nowMillis = slotStartMillis, seedModifier = 1L)
+        assertEquals(qHabit1, qHabit1Repeat)
+        assertNotEquals(qHabit1, qHabit2)
+    }
 }

@@ -12,7 +12,6 @@ import com.example.steadfast.data.updater.UpdateCheckResult
 import com.example.steadfast.data.updater.UpdateChecker
 import com.example.steadfast.domain.ChangelogRelease
 import com.example.steadfast.domain.ChangelogRepository
-import com.example.steadfast.domain.Quote
 import com.example.steadfast.domain.QuoteRepository
 import com.example.steadfast.domain.model.HabitWithStreak
 import com.example.steadfast.widget.WidgetUpdater
@@ -37,14 +36,13 @@ data class HomeUiState(
     val activeHabits: List<HabitWithStreak> = emptyList(),
     val archivedHabits: List<HabitWithStreak> = emptyList(),
     val selectedTab: HabitTab = HabitTab.ACTIVE,
-    val isAddHabitDialogOpen: Boolean = false,
-    val quote: Quote? = null
+    val isAddHabitDialogOpen: Boolean = false
 )
 
 class HomeViewModel(
     private val habitRepository: HabitRepository,
     private val settingsRepository: SettingsRepository,
-    private val quoteRepository: QuoteRepository,
+    private val quoteRepository: QuoteRepository? = null,
     private val context: Context,
     private val clock: Clock = Clock.systemDefaultZone(),
     private val updateChecker: UpdateChecker = DefaultUpdateChecker()
@@ -52,7 +50,6 @@ class HomeViewModel(
 
     private val selectedTab = MutableStateFlow(HabitTab.ACTIVE)
     private val isAddHabitDialogOpen = MutableStateFlow(false)
-    private val quoteOffset = MutableStateFlow(0)
 
     private val _whatsNewRelease = MutableStateFlow<ChangelogRelease?>(null)
     val whatsNewRelease: StateFlow<ChangelogRelease?> = _whatsNewRelease.asStateFlow()
@@ -68,10 +65,8 @@ class HomeViewModel(
         habitRepository.activeHabitsWithStreaks,
         habitRepository.archivedHabits,
         selectedTab,
-        isAddHabitDialogOpen,
-        quoteOffset
-    ) { activeList, archivedList, tab, isDialogOpen, offset ->
-        val quote = quoteRepository.getCurrentQuote(isComeback = false, userOffset = offset)
+        isAddHabitDialogOpen
+    ) { activeList, archivedList, tab, isDialogOpen ->
         val archivedWithStreaks = archivedList.map { habit ->
             HabitWithStreak(
                 habit = habit,
@@ -88,8 +83,7 @@ class HomeViewModel(
             activeHabits = activeList,
             archivedHabits = archivedWithStreaks,
             selectedTab = tab,
-            isAddHabitDialogOpen = isDialogOpen,
-            quote = quote
+            isAddHabitDialogOpen = isDialogOpen
         )
     }.stateIn(
         scope = viewModelScope,
@@ -125,10 +119,6 @@ class HomeViewModel(
             isAddHabitDialogOpen.value = false
             WidgetUpdater.updateAll(context)
         }
-    }
-
-    fun nextQuote() {
-        quoteOffset.value += 1
     }
 
     fun dismissWhatsNew() {
@@ -201,7 +191,7 @@ class HomeViewModel(
         fun provideFactory(
             habitRepository: HabitRepository,
             settingsRepository: SettingsRepository,
-            quoteRepository: QuoteRepository,
+            quoteRepository: QuoteRepository? = null,
             context: Context,
             clock: Clock,
             updateChecker: UpdateChecker

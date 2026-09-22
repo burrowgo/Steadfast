@@ -77,24 +77,29 @@ open class SteadfastWidget(
         val KEY_HABIT_ID = longPreferencesKey("widget_habit_id")
         const val EXTRA_HABIT_ID = "com.example.steadfast.extra.HABIT_ID"
         val TINY_SIZE = DpSize(40.dp, 40.dp) // 1x1
-        val WIDE_SHORT_SIZE = DpSize(180.dp, 40.dp) // 4x1, 3x1
-        val SMALL_SIZE = DpSize(100.dp, 75.dp) // 2x2
-        val WIDE_SIZE = DpSize(180.dp, 75.dp) // 4x2
+        val SMALL_SIZE = DpSize(100.dp, 100.dp) // 2x2
+        val WIDE_SHORT_SIZE = DpSize(220.dp, 40.dp) // 4x1, 3x1
+        val WIDE_SIZE = DpSize(240.dp, 90.dp) // 4x2
+
+        fun extractAppWidgetId(context: Context, id: GlanceId): Int {
+            return try {
+                GlanceAppWidgetManager(context).getAppWidgetId(id)
+            } catch (e: Exception) {
+                val match = Regex("""appWidgetId=(\d+)""").find(id.toString())
+                match?.groupValues?.get(1)?.toIntOrNull() ?: -1
+            }
+        }
     }
 
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
     override val sizeMode: SizeMode = SizeMode.Responsive(
-        setOf(TINY_SIZE, WIDE_SHORT_SIZE, SMALL_SIZE, WIDE_SIZE)
+        setOf(TINY_SIZE, SMALL_SIZE, WIDE_SHORT_SIZE, WIDE_SIZE)
     )
 
     override suspend fun onDelete(context: Context, id: GlanceId) {
         super.onDelete(context, id)
-        val appWidgetId = try {
-            GlanceAppWidgetManager(context).getAppWidgetId(id)
-        } catch (e: Exception) {
-            -1
-        }
+        val appWidgetId = extractAppWidgetId(context, id)
         if (appWidgetId > 0) {
             WidgetConfigurationRepository(context).removeWidget(appWidgetId)
         }
@@ -102,11 +107,7 @@ open class SteadfastWidget(
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val database = AppDatabase.getInstance(context)
-        val appWidgetId = try {
-            GlanceAppWidgetManager(context).getAppWidgetId(id)
-        } catch (e: Exception) {
-            -1
-        }
+        val appWidgetId = extractAppWidgetId(context, id)
 
         val glancePrefs = try {
             getAppWidgetState(context, PreferencesGlanceStateDefinition, id)
@@ -118,27 +119,23 @@ open class SteadfastWidget(
         val widgetConfigRepo = WidgetConfigurationRepository(context)
         val repoHabitId = if (appWidgetId > 0) widgetConfigRepo.getHabitIdForWidget(appWidgetId) else null
 
+        // Configure habit ID: persist in SharedPreferences and Glance preferences
         val configuredHabitId = repoHabitId ?: stateHabitId
 
-        if (repoHabitId != null && stateHabitId != repoHabitId) {
-            try {
-                updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { prefs ->
-                    prefs.toMutablePreferences().apply {
-                        this[KEY_HABIT_ID] = repoHabitId
-                    }
-                }
-            } catch (e: Exception) {
-                // ignore
+        if (appWidgetId > 0 && configuredHabitId != null) {
+            if (repoHabitId != configuredHabitId) {
+                widgetConfigRepo.setHabitIdForWidget(appWidgetId, configuredHabitId)
             }
-        } else if (repoHabitId == null && stateHabitId != null) {
-            try {
-                updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { prefs ->
-                    prefs.toMutablePreferences().apply {
-                        remove(KEY_HABIT_ID)
+            if (stateHabitId != configuredHabitId) {
+                try {
+                    updateAppWidgetState(context, PreferencesGlanceStateDefinition, id) { prefs ->
+                        prefs.toMutablePreferences().apply {
+                            this[KEY_HABIT_ID] = configuredHabitId
+                        }
                     }
+                } catch (e: Exception) {
+                    // ignore
                 }
-            } catch (e: Exception) {
-                // ignore
             }
         }
 
@@ -259,10 +256,10 @@ open class SteadfastWidget(
     ) {
         val context = LocalContext.current
         val size = LocalSize.current
-        val isWideShort = size.width >= 170.dp && size.height < 75.dp
-        val isWideTall = size.width >= 170.dp && size.height >= 75.dp
-        val isSmall = size.width < 170.dp && size.height >= 75.dp
-        val isTiny = !isWideShort && !isWideTall && !isSmall
+        val isTiny = size.width < 90.dp && size.height < 90.dp
+        val isWideShort = size.width >= 180.dp && size.height < 80.dp
+        val isWideTall = size.width >= 230.dp && size.height >= 80.dp && (size.width / size.height >= 1.35f)
+        val isSmall = !isTiny && !isWideShort && !isWideTall
 
         val cornerRadius = if (isCircle) 500.dp else 24.dp
         val padding = when {
@@ -410,6 +407,10 @@ open class SteadfastWidget(
                         SmallWidgetContent(
                             habitName = activeStreak.habitName,
                             days = days,
+                            rankName = rankName,
+                            nextRankName = rankProgress.nextRank?.let { context.getString(it.nameRes) },
+                            daysToNext = rankProgress.daysToNextRank,
+                            progressToNext = rankProgress.progressToNext,
                             colors = colors,
                             showHabitName = showHabitName
                         )
@@ -459,10 +460,17 @@ open class SteadfastWidget(
     private fun SmallWidgetContent(
         habitName: String,
         days: Int,
+        rankName: String,
+        nextRankName: String?,
+        daysToNext: Int,
+        progressToNext: Float,
         colors: WidgetThemeColors,
         showHabitName: Boolean = true
     ) {
         val context = LocalContext.current
+        val size = LocalSize.current
+        val showRankDetails = size.height >= 95.dp
+
         Column(
             modifier = GlanceModifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -474,37 +482,109 @@ open class SteadfastWidget(
                     maxLines = 1,
                     style = TextStyle(
                         color = colors.secondaryText,
-                        fontSize = 11.sp,
+                        fontSize = if (showRankDetails) 12.sp else 11.sp,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center
                     )
                 )
+                Spacer(modifier = GlanceModifier.height(2.dp))
             }
-            val fontSize = when {
-                days >= 1000 -> 24.sp
-                days >= 100 -> 28.sp
-                else -> 32.sp
-            }
-            Text(
-                text = days.toString(),
-                maxLines = 1,
-                style = TextStyle(
-                    color = colors.primaryText,
-                    fontSize = fontSize,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+
+            if (showRankDetails) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val fontSize = when {
+                        days >= 1000 -> 26.sp
+                        days >= 100 -> 30.sp
+                        else -> 36.sp
+                    }
+                    Text(
+                        text = days.toString(),
+                        maxLines = 1,
+                        style = TextStyle(
+                            color = colors.primaryText,
+                            fontSize = fontSize,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                    Spacer(modifier = GlanceModifier.width(4.dp))
+                    Text(
+                        text = context.getString(R.string.days_label).uppercase(),
+                        maxLines = 1,
+                        style = TextStyle(
+                            color = colors.accentText,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    )
+                }
+
+                Spacer(modifier = GlanceModifier.height(4.dp))
+                Text(
+                    text = rankName,
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = colors.primaryText,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
                 )
-            )
-            Text(
-                text = context.getString(R.string.days_label),
-                maxLines = 1,
-                style = TextStyle(
+
+                Spacer(modifier = GlanceModifier.height(4.dp))
+                LinearProgressIndicator(
+                    progress = progressToNext,
+                    modifier = GlanceModifier.fillMaxWidth().height(4.dp).padding(horizontal = 8.dp),
                     color = colors.accentText,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    backgroundColor = colors.progressTrack
                 )
-            )
+
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                val subtitle = if (nextRankName != null) {
+                    "$daysToNext d to $nextRankName"
+                } else {
+                    context.getString(R.string.highest_rank_reached)
+                }
+                Text(
+                    text = subtitle,
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = colors.secondaryText,
+                        fontSize = 10.sp,
+                        textAlign = TextAlign.Center
+                    )
+                )
+            } else {
+                val fontSize = when {
+                    days >= 1000 -> 22.sp
+                    days >= 100 -> 26.sp
+                    else -> 30.sp
+                }
+                Text(
+                    text = days.toString(),
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = colors.primaryText,
+                        fontSize = fontSize,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                )
+                Text(
+                    text = context.getString(R.string.days_label),
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = colors.accentText,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                )
+            }
         }
     }
 

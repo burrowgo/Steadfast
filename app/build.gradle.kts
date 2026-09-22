@@ -12,11 +12,11 @@ android {
     val vCode = providers.environmentVariable("VERSION_CODE")
         .map { it.toInt() }
         .orElse(providers.gradleProperty("versionCode").map { it.toInt() })
-        .getOrElse(14)
+        .getOrElse(15)
 
     val vName = providers.environmentVariable("VERSION_NAME")
         .orElse(providers.gradleProperty("versionName"))
-        .getOrElse("0.8.0-alpha.3")
+        .getOrElse("0.8.0-alpha.4")
 
     val isAlpha = vName.contains("alpha", ignoreCase = true) ||
         providers.environmentVariable("IS_ALPHA").map { it.toBoolean() }.getOrElse(false)

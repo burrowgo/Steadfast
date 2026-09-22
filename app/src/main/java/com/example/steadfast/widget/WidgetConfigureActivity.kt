@@ -1,9 +1,11 @@
 package com.example.steadfast.widget
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
+import androidx.glance.GlanceId
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -113,18 +115,24 @@ class WidgetConfigureActivity : ComponentActivity() {
                     WidgetConfigureContent(
                         habits = habitsWithStreaks,
                         onHabitSelected = { item ->
-                            container.widgetConfigurationRepository.setHabitIdForWidget(appWidgetId, item.habit.id)
+                            val selectedHabitId = item.habit.id
+                            container.widgetConfigurationRepository.setHabitIdForWidget(appWidgetId, selectedHabitId)
                             lifecycleScope.launch {
+                                val glanceId = getGlanceId(appWidgetId)
                                 try {
-                                    val manager = GlanceAppWidgetManager(this@WidgetConfigureActivity)
-                                    val glanceId = manager.getGlanceIdBy(appWidgetId)
                                     updateAppWidgetState(this@WidgetConfigureActivity, PreferencesGlanceStateDefinition, glanceId) { prefs ->
                                         prefs.toMutablePreferences().apply {
-                                            this[SteadfastWidget.KEY_HABIT_ID] = item.habit.id
+                                            this[SteadfastWidget.KEY_HABIT_ID] = selectedHabitId
                                         }
                                     }
-                                    SteadfastWidget().update(this@WidgetConfigureActivity, glanceId)
-                                    SteadfastCircleWidget().update(this@WidgetConfigureActivity, glanceId)
+                                    val appWidgetManager = AppWidgetManager.getInstance(this@WidgetConfigureActivity)
+                                    val info = appWidgetManager.getAppWidgetInfo(appWidgetId)
+                                    val isCircle = info?.provider?.className?.contains("Circle", ignoreCase = true) == true
+                                    if (isCircle) {
+                                        SteadfastCircleWidget().update(this@WidgetConfigureActivity, glanceId)
+                                    } else {
+                                        SteadfastWidget().update(this@WidgetConfigureActivity, glanceId)
+                                    }
                                 } catch (e: Exception) {
                                     // Widget ID might not be mapped yet by launcher
                                 }
@@ -143,6 +151,15 @@ class WidgetConfigureActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    @SuppressLint("RestrictedApi")
+    private fun getGlanceId(appWidgetId: Int): GlanceId {
+        return try {
+            GlanceAppWidgetManager(this).getGlanceIdBy(appWidgetId)
+        } catch (e: Exception) {
+            androidx.glance.appwidget.AppWidgetId(appWidgetId)
         }
     }
 }

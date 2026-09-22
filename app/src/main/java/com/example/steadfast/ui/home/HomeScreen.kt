@@ -44,8 +44,6 @@ import com.example.steadfast.R
 import com.example.steadfast.SteadfastApp
 import com.example.steadfast.ui.components.AddEditHabitDialog
 import com.example.steadfast.ui.components.HabitCard
-import com.example.steadfast.ui.components.QuoteCard
-import com.example.steadfast.ui.components.QuoteDisplay
 import com.example.steadfast.ui.components.UpdateAvailableDialog
 import com.example.steadfast.ui.components.WhatsNewDialog
 
@@ -175,19 +173,8 @@ fun HomeScreen(
                             )
                         }
 
-                        // Quote Card anchored at the bottom of the content
-                        if (uiState.quote != null) {
-                            item {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                QuoteCard(
-                                    quote = QuoteDisplay(
-                                        text = uiState.quote!!.text,
-                                        author = uiState.quote!!.author
-                                    ),
-                                    onNextQuote = { viewModel.nextQuote() },
-                                    modifier = Modifier.padding(bottom = 60.dp)
-                                )
-                            }
+                        item {
+                            Spacer(modifier = Modifier.height(80.dp))
                         }
                     }
                 }

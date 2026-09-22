@@ -84,7 +84,11 @@ class HabitDetailViewModel(
         val offset = params[6] as Int
         val firstDay = params[7] as FirstDayOfWeek
 
-        val quote = quoteRepository.getCurrentQuote(isComeback = false, userOffset = offset)
+        val quote = quoteRepository.getCurrentQuote(
+            isComeback = false,
+            userOffset = offset,
+            seedModifier = habitId
+        )
 
         HabitDetailUiState(
             habitWithStreak = habitWithStreak,

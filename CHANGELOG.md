@@ -4,6 +4,19 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0-alpha.4] - 2026-09-22
+
+### Fixed
+- **Per-Widget Habit Selection:** Completely overhauled widget creation and configuration lifecycle to ensure widgets always bind to and retain their selected habit without falling back to the initial habit.
+- **2x2 Widget Layout Restoration:** Redesigned the 2x2 widget layout with a balanced vertical stack containing the habit name, prominent day count, "DAYS" badge, current rank name, rank milestone progress bar, and days remaining to next rank. Removed problematic multi-column squishing on standard square launcher cells.
+- **Responsive Sizing Breakpoints:** Tuned responsive layout thresholds so standard 2x2 grid placements reliably render the complete vertical design while wide (4x1/4x2) widgets display multi-column layouts.
+
+### Changed
+- **Cleaner Homepage:** Removed redundant quote card from the multi-habit home screen.
+- **Habit-Specific Deterministic Quotes:** Each habit detail screen now features its own rotating motivational quote, seeded by habit ID so different habits display distinct, unique quotes.
+
+---
+
 ## [0.8.0-alpha.3] - 2026-09-22
 
 ### Fixed

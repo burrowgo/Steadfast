@@ -30,7 +30,8 @@ class QuoteRepository(
         isComeback: Boolean,
         nowMillis: Long = clock.millis(),
         userOffset: Int = 0,
-        intervalMinutes: Long = 60L
+        intervalMinutes: Long = 60L,
+        seedModifier: Long = 0L
     ): Quote {
         val pool = if (isComeback && comebackQuotes.isNotEmpty()) comebackQuotes else generalQuotes
         if (pool.isEmpty()) {
@@ -38,15 +39,15 @@ class QuoteRepository(
         }
         val intervalMillis = (intervalMinutes * 60 * 1000L).coerceAtLeast(1000L)
         val timeSlot = nowMillis / intervalMillis
-        // Deterministic pseudo-random seed per time slot and pool
-        val seed = timeSlot xor (if (isComeback) 0x5DEECE66DL else 0xBL)
+        // Deterministic pseudo-random seed per time slot, pool, and seedModifier (habitId)
+        val seed = timeSlot xor (if (isComeback) 0x5DEECE66DL else 0xBL) xor (seedModifier * 0x5DEECE66DL + seedModifier)
         val slotRandomIndex = kotlin.random.Random(seed).nextInt(pool.size)
         val effectiveIndex = ((slotRandomIndex + userOffset) % pool.size + pool.size) % pool.size
         return pool[effectiveIndex]
     }
 
-    fun getCurrentQuote(isComeback: Boolean, userOffset: Int = 0): Quote {
-        return getPeriodicQuote(isComeback, clock.millis(), userOffset)
+    fun getCurrentQuote(isComeback: Boolean, userOffset: Int = 0, seedModifier: Long = 0L): Quote {
+        return getPeriodicQuote(isComeback, clock.millis(), userOffset, seedModifier = seedModifier)
     }
 
     companion object {
