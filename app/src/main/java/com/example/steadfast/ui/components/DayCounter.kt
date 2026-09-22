@@ -57,7 +57,7 @@ fun DayCounter(
     progressToNext: Float,
     startedAtMillis: Long = 0L,
     modifier: Modifier = Modifier,
-    size: Dp = 260.dp
+    size: Dp = 180.dp
 ) {
     val animatedProgress by animateFloatAsState(
         targetValue = progressToNext.coerceIn(0f, 1f),
@@ -78,8 +78,8 @@ fun DayCounter(
             modifier = Modifier.size(size),
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.fillMaxSize().padding(12.dp)) {
-                val strokeWidth = 14.dp.toPx()
+            Canvas(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+                val strokeWidth = 10.dp.toPx()
                 val diameter = this.size.minDimension - strokeWidth
                 val topLeft = Offset(
                     (this.size.width - diameter) / 2f,
@@ -130,11 +130,16 @@ fun DayCounter(
                     },
                     label = "dayCountText"
                 ) { count ->
+                    val countFontSize = when {
+                        count >= 1000 -> 44.sp
+                        count >= 100 -> 52.sp
+                        else -> 60.sp
+                    }
                     Text(
                         text = count.toString(),
                         style = MaterialTheme.typography.displayLarge.copy(
-                            fontSize = if (count >= 1000) 80.sp else 100.sp,
-                            lineHeight = if (count >= 1000) 80.sp else 100.sp,
+                            fontSize = countFontSize,
+                            lineHeight = countFontSize,
                             fontFamily = BarlowCondensed,
                             fontWeight = FontWeight.Bold
                         ),
@@ -145,12 +150,15 @@ fun DayCounter(
 
                 Text(
                     text = stringResource(R.string.days_label),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        letterSpacing = 1.2.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 if (startedAtMillis > 0L) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
                     ElapsedTicker(
                         startedAtMillis = startedAtMillis,
                         isDayZero = days == 0
@@ -206,14 +214,15 @@ private fun ElapsedTicker(
             style = MaterialTheme.typography.labelSmall.copy(
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.5.sp
+                fontSize = 11.sp,
+                letterSpacing = 0.3.sp
             ),
             color = if (isDayZero) {
                 MaterialTheme.colorScheme.onPrimaryContainer
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
         )
     }
 }

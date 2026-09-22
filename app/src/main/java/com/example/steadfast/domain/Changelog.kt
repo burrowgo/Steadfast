@@ -9,6 +9,15 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "0.7.7",
+            title = "What’s New in v0.7.7",
+            highlights = listOf(
+                "Compact Home Screen UI: Streamlined day counter ring, sleek rank progression card, and reduced padding for a cleaner, uncluttered layout.",
+                "Direct Reset Access: Moved the Reset button above the consistency graph and added a quick-access Reset icon to the top bar—no scrolling needed.",
+                "Uncluttered Consistency Graph: Removed redundant week-start toggle from the graph header (customizable in Settings) and added active-day totals."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.6",
             title = "What’s New in v0.7.6",
             highlights = listOf(

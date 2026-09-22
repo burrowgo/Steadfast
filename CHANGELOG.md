@@ -4,6 +4,18 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.7] - 2026-09-22
+
+### Changed
+- **Compact & Clean Home UI:** Redesigned the day counter ring (180dp), scaled down typography and strokes, and refined spacing across the home screen for a balanced, modern look.
+- **Sleek Rank Progression Card:** Streamlined the rank milestone badge to a subtle 26dp icon with an inline milestone indicator and low-profile progress bar.
+- **Uncluttered Consistency Graph:** Removed the redundant week-start switcher from the consistency heatmap header (available in Settings) and added a total active days indicator.
+
+### Fixed
+- **Direct Reset Access:** Placed the Reset Streak button directly above the consistency heatmap and added a Reset action to the top app bar, eliminating the need to scroll down.
+
+---
+
 ## [0.7.6] - 2026-09-22
 
 ### Added

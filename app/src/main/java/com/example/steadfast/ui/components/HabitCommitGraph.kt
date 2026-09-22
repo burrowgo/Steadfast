@@ -70,8 +70,8 @@ fun HabitCommitGraph(
     history: List<StreakEntity>,
     activeStreak: StreakEntity?,
     firstDayOfWeek: FirstDayOfWeek,
-    onFirstDayOfWeekChange: (FirstDayOfWeek) -> Unit,
     modifier: Modifier = Modifier,
+    onFirstDayOfWeekChange: ((FirstDayOfWeek) -> Unit)? = null,
     clock: Clock = Clock.systemDefaultZone()
 ) {
     val today = remember(clock) { LocalDate.now(clock) }
@@ -110,9 +110,9 @@ fun HabitCommitGraph(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp)
         ) {
-            // Header: Title & First Day of Week Switcher
+            // Header: Title & Total Active Days
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -120,18 +120,19 @@ fun HabitCommitGraph(
             ) {
                 Text(
                     text = stringResource(R.string.commit_graph_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                FirstDayOfWeekSelector(
-                    currentFirstDay = firstDayOfWeek,
-                    onSelect = onFirstDayOfWeekChange
+                Text(
+                    text = stringResource(R.string.commit_graph_summary, graphData.totalActiveDays),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Main Heatmap Area
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -178,72 +179,19 @@ fun HabitCommitGraph(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Interactive Day Details or Period Summary
+            // Interactive Day Details or Tap Hint
             CommitGraphDetailBox(
                 selectedDay = selectedDay,
-                graphData = graphData,
                 isDark = isDark
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Legend
             CommitGraphLegend(isDark = isDark)
         }
-    }
-}
-
-@Composable
-private fun FirstDayOfWeekSelector(
-    currentFirstDay: FirstDayOfWeek,
-    onSelect: (FirstDayOfWeek) -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-    ) {
-        Row(
-            modifier = Modifier.padding(2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val isMon = currentFirstDay == FirstDayOfWeek.MONDAY
-            SegmentOption(
-                text = stringResource(R.string.first_day_monday).take(3),
-                isSelected = isMon,
-                onClick = { onSelect(FirstDayOfWeek.MONDAY) }
-            )
-            SegmentOption(
-                text = stringResource(R.string.first_day_sunday).take(3),
-                isSelected = !isMon,
-                onClick = { onSelect(FirstDayOfWeek.SUNDAY) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun SegmentOption(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
@@ -353,21 +301,20 @@ private fun CommitCell(
 @Composable
 private fun CommitGraphDetailBox(
     selectedDay: DayCommitInfo?,
-    graphData: CommitGraphData,
     isDark: Boolean
 ) {
     val dateFormatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL) }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -375,7 +322,7 @@ private fun CommitGraphDetailBox(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = dateFormatter.format(selectedDay.date),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -412,7 +359,7 @@ private fun CommitGraphDetailBox(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(7.dp)
                                 .clip(CircleShape)
                                 .background(statusColor)
                         )
@@ -425,19 +372,11 @@ private fun CommitGraphDetailBox(
                     }
                 }
             } else {
-                Column {
-                    Text(
-                        text = stringResource(R.string.commit_graph_summary, graphData.totalActiveDays),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = stringResource(R.string.commit_graph_tap_hint),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.commit_graph_tap_hint),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.outline
+                )
             }
         }
     }
