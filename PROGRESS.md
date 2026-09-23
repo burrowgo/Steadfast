@@ -23,12 +23,12 @@
 ## Work Plan & Checklist
 
 ### Phase 1: Domain & Data Layer Stabilization (Bugs, Math & Concurrency)
-- [ ] Centralize streak day calculations in `StreakCalculator` (`calculateStreakDays`, `calculateRunLengthDays`) and remove duplicated math across repository, ViewModels, widgets, and workers.
-- [ ] Fix `StreakDao.undoLastReset()` guard condition so undo only succeeds if active streak was directly spawned from the reset.
-- [ ] Fix CSV export and import to run on `Dispatchers.IO` instead of blocking the main thread.
-- [ ] Fix timezone bug in CSV import where epoch days were multiplied by 86,400,000 without applying zone offset.
-- [ ] Replace magic numbers (`MILLIS_PER_DAY`, max character limits, default values) with named constants.
-- [ ] Expand unit tests for `StreakCalculator`, `StreakDao`, `StreakRepository`, and `CommitGraphCalculator`.
+- [x] Centralize streak day calculations in `StreakCalculator` (`calculateActiveStreakDays`, `calculateEndedStreakDays`) and remove duplicated math across repository, ViewModels, widgets, and workers.
+- [x] Fix `StreakDao.undoLastReset()` guard condition so undo only succeeds if active streak was directly spawned from the reset.
+- [x] Fix CSV export and import to run on `Dispatchers.IO` instead of blocking the main thread.
+- [x] Fix timezone bug in CSV import where epoch days were multiplied by 86,400,000 without applying zone offset.
+- [x] Replace magic numbers (`MILLIS_PER_DAY`, max character limits, default values) with named constants and eliminated `!!` assertions.
+- [x] Expand unit tests for `StreakCalculator`, `StreakDao`, `StreakRepository`, and `CommitGraphCalculator`.
 
 ### Phase 2: Architecture & ViewModel Layer Rework
 - [ ] Refactor `HomeViewModel` to eliminate `Context` leak and eliminate side-effects / coroutine launches within the `combine` flow.
@@ -60,4 +60,5 @@
 
 | Commit | Task | Changes | Status |
 |---|---|---|---|
-| Initial | Setup & Baseline | Created branch `rework/architecture-and-bugfixes`, recorded baseline metrics, documented `AGENT.md` discrepancies | Completed |
+| 46917ce | Setup & Baseline | Created branch `rework/architecture-and-bugfixes`, recorded baseline metrics, documented `AGENT.md` discrepancies | Completed |
+| (Pending) | Phase 1: Domain & Data Layer Stabilization | Centralized calculations in `StreakCalculator`, guarded `undoLastReset`, dispatched CSV I/O to IO thread, fixed timezone bug, eliminated `!!`, and added unit tests | Completed |

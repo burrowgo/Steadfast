@@ -115,4 +115,77 @@ class StreakCalculatorTest {
         assertEquals(0, StreakCalculator.streakDays(0L, pastNow))
         assertEquals(0, StreakCalculator.streakDays(-100L, pastNow))
     }
+
+    @Test
+    fun `calculateActiveStreakDays with null returns 0`() {
+        assertEquals(0, StreakCalculator.calculateActiveStreakDays(null, 100_000L))
+    }
+
+    @Test
+    fun `calculateActiveStreakDays uses 24-hour cycle when startedAt is positive`() {
+        val start = 1_000_000L
+        val entity = com.example.steadfast.data.db.StreakEntity(
+            habitName = "Coding",
+            startDate = 1000L,
+            startedAt = start
+        )
+        // 25 hours later
+        val now = start + (25 * 3600 * 1000L)
+        assertEquals(1, StreakCalculator.calculateActiveStreakDays(entity, now))
+    }
+
+    @Test
+    fun `calculateActiveStreakDays falls back to calendar day when startedAt is zero`() {
+        val testClock = java.time.Clock.fixed(
+            java.time.Instant.parse("2026-09-25T10:00:00Z"),
+            java.time.ZoneId.of("UTC")
+        )
+        val entity = com.example.steadfast.data.db.StreakEntity(
+            habitName = "Reading",
+            startDate = LocalDate.of(2026, 9, 20).toEpochDay(),
+            startedAt = 0L
+        )
+        assertEquals(5, StreakCalculator.calculateActiveStreakDays(entity, 0L, testClock))
+    }
+
+    @Test
+    fun `calculateEndedStreakDays prefers lengthDays when set`() {
+        val entity = com.example.steadfast.data.db.StreakEntity(
+            habitName = "Running",
+            startDate = 100L,
+            startedAt = 100_000L,
+            endedAt = 500_000L,
+            endDate = 105L,
+            lengthDays = 42
+        )
+        assertEquals(42, StreakCalculator.calculateEndedStreakDays(entity))
+    }
+
+    @Test
+    fun `calculateEndedStreakDays computes 24-hour difference when lengthDays is null`() {
+        val start = 1_000_000L
+        val end = start + (73 * 3600 * 1000L) // 73 hours = 3 full days
+        val entity = com.example.steadfast.data.db.StreakEntity(
+            habitName = "Running",
+            startDate = 100L,
+            startedAt = start,
+            endedAt = end,
+            endDate = 103L,
+            lengthDays = null
+        )
+        assertEquals(3, StreakCalculator.calculateEndedStreakDays(entity))
+    }
+
+    @Test
+    fun `calculateEndedStreakDays falls back to calendar days when startedAt is zero`() {
+        val entity = com.example.steadfast.data.db.StreakEntity(
+            habitName = "Running",
+            startDate = LocalDate.of(2026, 9, 1).toEpochDay(),
+            startedAt = 0L,
+            endedAt = null,
+            endDate = LocalDate.of(2026, 9, 11).toEpochDay(),
+            lengthDays = null
+        )
+        assertEquals(10, StreakCalculator.calculateEndedStreakDays(entity))
+    }
 }

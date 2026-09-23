@@ -26,27 +26,10 @@ class StreakRepository(
 
     val statsFlow: Flow<StreakHistoryStats> = combine(activeStreak, history) { active, historyList ->
         val nowMillis = clock.millis()
-        val activeLength = if (active != null) {
-            if (active.startedAt > 0L) {
-                StreakCalculator.streakDays(active.startedAt, nowMillis)
-            } else {
-                StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), StreakCalculator.today(clock))
-            }
-        } else {
-            0
-        }
+        val activeLength = StreakCalculator.calculateActiveStreakDays(active, nowMillis, clock)
 
         val pastLengths = historyList.map {
-            it.lengthDays ?: (
-                if (it.startedAt > 0L && (it.endedAt ?: 0L) > 0L) {
-                    StreakCalculator.streakDays(it.startedAt, it.endedAt!!)
-                } else {
-                    StreakCalculator.streakDays(
-                        LocalDate.ofEpochDay(it.startDate),
-                        LocalDate.ofEpochDay(it.endDate ?: it.startDate)
-                    )
-                }
-            )
+            StreakCalculator.calculateEndedStreakDays(it)
         }
 
         val allLengths = if (active != null) pastLengths + activeLength else pastLengths
@@ -77,7 +60,7 @@ class StreakRepository(
             startDate.atStartOfDay(clock.zone).toInstant().toEpochMilli()
         }
         return streakDao.startNewRun(
-            habitName = habitName.trim(),
+            habitName = habitName.trim().take(StreakCalculator.MAX_HABIT_NAME_LENGTH),
             startDateEpochDay = startDate.toEpochDay(),
             startedAtMillis = startedAtMillis
         )
@@ -110,12 +93,12 @@ class StreakRepository(
     }
 
     suspend fun updateReason(id: Long, reason: String?) {
-        val cleaned = reason?.trim()?.ifBlank { null }?.take(200)
+        val cleaned = reason?.trim()?.ifBlank { null }?.take(StreakCalculator.MAX_REASON_LENGTH)
         streakDao.updateReason(id, cleaned)
     }
 
     suspend fun updateActiveHabitName(newName: String) {
-        streakDao.updateActiveHabitName(newName.trim())
+        streakDao.updateActiveHabitName(newName.trim().take(StreakCalculator.MAX_HABIT_NAME_LENGTH))
     }
 
     suspend fun getAllStreaks(): List<StreakEntity> {

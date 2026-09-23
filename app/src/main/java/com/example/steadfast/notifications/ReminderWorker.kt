@@ -26,12 +26,7 @@ class ReminderWorker(
         val active = container.streakRepository.getActiveStreak()
         if (active != null) {
             val nowMillis = container.clock.millis()
-            val days = if (active.startedAt > 0L) {
-                StreakCalculator.streakDays(active.startedAt, nowMillis)
-            } else {
-                val today = LocalDate.now(container.clock)
-                StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
-            }
+            val days = StreakCalculator.calculateActiveStreakDays(active, nowMillis, container.clock)
             val rank = RankLadder.getRankForDays(days)
             val rankName = applicationContext.getString(rank.nameRes)
 

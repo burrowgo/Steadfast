@@ -75,11 +75,7 @@ object CommitGraphCalculator {
 
         // 2. Check if this date is part of the active streak
         if (activeStreak != null && dateEpoch >= activeStreak.startDate && dateEpoch <= today.toEpochDay()) {
-            val completedDays = if (activeStreak.startedAt > 0L) {
-                StreakCalculator.streakDays(activeStreak.startedAt, nowMillis)
-            } else {
-                StreakCalculator.streakDays(LocalDate.ofEpochDay(activeStreak.startDate), today)
-            }
+            val completedDays = StreakCalculator.calculateActiveStreakDays(activeStreak, nowMillis)
             val dayOffset = (dateEpoch - activeStreak.startDate).toInt()
 
             return if (dayOffset < completedDays) {
@@ -112,16 +108,7 @@ object CommitGraphCalculator {
             dateEpoch >= streak.startDate && dateEpoch < endEpoch
         }
         if (matchingEndedStreak != null) {
-            val completedDays = matchingEndedStreak.lengthDays ?: (
-                if (matchingEndedStreak.startedAt > 0L && (matchingEndedStreak.endedAt ?: 0L) > 0L) {
-                    StreakCalculator.streakDays(matchingEndedStreak.startedAt, matchingEndedStreak.endedAt!!)
-                } else {
-                    StreakCalculator.streakDays(
-                        LocalDate.ofEpochDay(matchingEndedStreak.startDate),
-                        LocalDate.ofEpochDay(matchingEndedStreak.endDate ?: matchingEndedStreak.startDate)
-                    )
-                }
-            )
+            val completedDays = StreakCalculator.calculateEndedStreakDays(matchingEndedStreak)
             val dayOffset = (dateEpoch - matchingEndedStreak.startDate).toInt()
             return if (dayOffset < completedDays) {
                 val dayNumber = dayOffset + 1

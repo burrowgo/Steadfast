@@ -192,7 +192,7 @@ class SettingsViewModel(
     }
 
     fun exportCsv(outputStream: OutputStream) {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val streaks = streakRepository.getAllStreaks()
                 outputStream.bufferedWriter().use { writer ->
@@ -212,29 +212,36 @@ class SettingsViewModel(
     }
 
     fun importCsv(inputStream: InputStream, onComplete: (Boolean, Int) -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val lines = inputStream.bufferedReader().readLines()
                 if (lines.isEmpty()) {
-                    onComplete(false, 0)
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        onComplete(false, 0)
+                    }
                     return@launch
                 }
                 val streaks = mutableListOf<com.example.steadfast.data.db.StreakEntity>()
                 var activeHabitName: String? = null
+                val defaultZone = java.time.ZoneId.systemDefault()
 
                 for (i in 1 until lines.size) {
                     val line = lines[i].trim()
                     if (line.isBlank()) continue
                     val parts = parseCsvLine(line)
                     if (parts.size < 3) continue
-                    val habitName = parts.getOrNull(1)?.ifBlank { "Habit" } ?: "Habit"
+                    val habitName = parts.getOrNull(1)?.ifBlank { "Habit" }?.take(com.example.steadfast.domain.StreakCalculator.MAX_HABIT_NAME_LENGTH) ?: "Habit"
                     val startStr = parts.getOrNull(2) ?: continue
                     val endStr = parts.getOrNull(3)?.ifBlank { null }
                     val lengthStr = parts.getOrNull(4)?.ifBlank { null }
-                    val reason = parts.getOrNull(5)?.ifBlank { null }
+                    val reason = parts.getOrNull(5)?.ifBlank { null }?.take(com.example.steadfast.domain.StreakCalculator.MAX_REASON_LENGTH)
 
-                    val startDate = LocalDate.parse(startStr).toEpochDay()
-                    val endDate = endStr?.let { LocalDate.parse(it).toEpochDay() }
+                    val startLocalDate = LocalDate.parse(startStr)
+                    val endLocalDate = endStr?.let { LocalDate.parse(it) }
+                    val startDate = startLocalDate.toEpochDay()
+                    val endDate = endLocalDate?.toEpochDay()
+                    val startedAt = startLocalDate.atStartOfDay(defaultZone).toInstant().toEpochMilli()
+                    val endedAt = endLocalDate?.atStartOfDay(defaultZone)?.toInstant()?.toEpochMilli()
                     val lengthDays = lengthStr?.toIntOrNull()
                     val isEnded = endDate != null
 
@@ -242,9 +249,9 @@ class SettingsViewModel(
                         id = 0,
                         habitName = habitName,
                         startDate = startDate,
-                        startedAt = startDate * 86400000L,
+                        startedAt = startedAt,
                         endDate = endDate,
-                        endedAt = if (isEnded) (endDate!! * 86400000L) else null,
+                        endedAt = endedAt,
                         lengthDays = lengthDays,
                         reason = reason
                     )
@@ -260,12 +267,18 @@ class SettingsViewModel(
                         settingsRepository.setHabitName(activeHabitName)
                     }
                     WidgetUpdater.updateAll(context)
-                    onComplete(true, streaks.size)
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        onComplete(true, streaks.size)
+                    }
                 } else {
-                    onComplete(false, 0)
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        onComplete(false, 0)
+                    }
                 }
             } catch (e: Exception) {
-                onComplete(false, 0)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    onComplete(false, 0)
+                }
             }
         }
     }
