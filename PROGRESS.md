@@ -1,0 +1,63 @@
+# Migration & Rework Progress — Steadfast
+
+## Baseline (captured on `master` at commit `0aa2a18`)
+- Branch: `master` (up to date with `origin/master`, clean working tree)
+- `./gradlew test`: **PASSED** (51 actionable tasks, all unit tests green)
+- `./gradlew assembleDebug`: **PASSED**
+- `./gradlew assembleRelease`: **PASSED** (R8 code and resource shrinking succeeded)
+- `./gradlew lintDebug`: **PASSED with 40 warnings** (mostly `GradleDependency`, plus `StaticFieldLeak` in `HomeViewModel`/`SettingsViewModel`, `UnsafeProtectedBroadcastReceiver` in `DateChangeReceiver`, `ObsoleteSdkInt` in `ApkInstaller`/`NotificationHelper`, unused color/string resources, `PluralsCandidate` warnings, and `ModifierParameter` placement).
+
+---
+
+## Discrepancies: `AGENT.md` vs Current Codebase
+1. **Network & In-App Updater**:
+   - `AGENT.md` states: *"Fully offline and private. No accounts, no analytics, no ads, no network. Do not declare the INTERNET permission."*
+   - Current Codebase: Added `data/updater/` (`UpdateChecker`, `AppUpdateDownloader`, `ApkInstaller`, `AutoUpdateScheduler`, `AutoUpdateCheckWorker`) with `INTERNET` and `REQUEST_INSTALL_PACKAGES` permissions for self-hosted GitHub release updates. Documented in `DECISIONS.md` (Decisions 11 & 12).
+   - *Resolution*: Retain updater functionality as established on `master` (per rule: *"Keep existing behavior intact from the user's perspective"*), but de-sloppify, decouple, ensure no main-thread I/O or memory leaks, and add unit test coverage.
+2. **Commit Graph & Widget Settings**:
+   - `AGENT.md` specifies 3 bottom tabs (Home, Ranks, History) and a Settings gear. Home currently has a GitHub-styled consistency commit graph and Settings has Widget Customization (`WidgetSettingsScreen`).
+   - *Resolution*: Keep these enhancements intact while cleaning up their component boundaries and testing their pure logic.
+
+---
+
+## Work Plan & Checklist
+
+### Phase 1: Domain & Data Layer Stabilization (Bugs, Math & Concurrency)
+- [ ] Centralize streak day calculations in `StreakCalculator` (`calculateStreakDays`, `calculateRunLengthDays`) and remove duplicated math across repository, ViewModels, widgets, and workers.
+- [ ] Fix `StreakDao.undoLastReset()` guard condition so undo only succeeds if active streak was directly spawned from the reset.
+- [ ] Fix CSV export and import to run on `Dispatchers.IO` instead of blocking the main thread.
+- [ ] Fix timezone bug in CSV import where epoch days were multiplied by 86,400,000 without applying zone offset.
+- [ ] Replace magic numbers (`MILLIS_PER_DAY`, max character limits, default values) with named constants.
+- [ ] Expand unit tests for `StreakCalculator`, `StreakDao`, `StreakRepository`, and `CommitGraphCalculator`.
+
+### Phase 2: Architecture & ViewModel Layer Rework
+- [ ] Refactor `HomeViewModel` to eliminate `Context` leak and eliminate side-effects / coroutine launches within the `combine` flow.
+- [ ] Refactor `SettingsViewModel` to eliminate `Context` leak, inject dispatchers, and cleanly isolate updater / CSV / preferences actions.
+- [ ] Clean up `RanksViewModel` and `HistoryViewModel` factories and state flows.
+- [ ] Ensure `AppContainer` cleanly exposes dependencies without Activity/Context retention.
+
+### Phase 3: UI Layer De-sloppification & Component Modularization
+- [ ] Deconstruct massive `SettingsScreen.kt` (1060+ lines) into modular subcomponents and dialogs in `ui/settings/dialogs/`.
+- [ ] Modularize `WidgetSettingsScreen.kt` and `HomeScreen.kt` to improve readability and separation of concerns.
+- [ ] Address accessibility gaps (TalkBack content descriptions for rank badges, day counter, and action controls).
+- [ ] Resolve Compose lint warnings (`ModifierParameter` ordering, etc.).
+
+### Phase 4: Widget, Background Workers & Receiver Safety
+- [ ] Fix `DateChangeReceiver` `UnsafeProtectedBroadcastReceiver` warning by validating incoming intent actions.
+- [ ] Refactor `SteadfastWidget.kt` into clean, maintainable modular presentation components.
+- [ ] Standardize background worker execution, ensuring safe error handling, battery efficiency, and cancellation checks.
+
+### Phase 5: Lint, Resource Cleanup & ProGuard Verification
+- [ ] Remove unused resources (`colors.xml`, unused drawables, dead string resources).
+- [ ] Fix `ObsoleteSdkInt` warnings (since `minSdk` is 26).
+- [ ] Fix string plural candidates and hardcoded preview text.
+- [ ] Verify full test suite, assembleDebug, assembleRelease, and zero lint errors.
+- [ ] Update `README.md` and documentation.
+
+---
+
+## Running Log
+
+| Commit | Task | Changes | Status |
+|---|---|---|---|
+| Initial | Setup & Baseline | Created branch `rework/architecture-and-bugfixes`, recorded baseline metrics, documented `AGENT.md` discrepancies | Completed |
