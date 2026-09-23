@@ -62,4 +62,4 @@
 |---|---|---|---|
 | 46917ce | Setup & Baseline | Created branch `rework/architecture-and-bugfixes`, recorded baseline metrics, documented `AGENT.md` discrepancies | Completed |
 | d3b8934 | Phase 1: Domain & Data Layer Stabilization | Centralized calculations in `StreakCalculator`, guarded `undoLastReset`, dispatched CSV I/O to IO thread, fixed timezone bug, eliminated `!!`, and added unit tests | Completed |
-| f5e6915 | Phase 2: Architecture & ViewModel Layer Rework | Resolved Context leaks (`AndroidViewModel`), decoupled rank celebration side-effects from UI state combine transform, updated version string fallback, and safeguarded `AppContainer` context retention | Completed |
+| 4f3b3bf | Phase 2: Architecture & ViewModel Layer Rework | Resolved Context leaks (`AndroidViewModel`), decoupled rank celebration side-effects from UI state combine transform, updated version string fallback, and safeguarded `AppContainer` context retention | Completed |
