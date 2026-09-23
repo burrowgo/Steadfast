@@ -15,10 +15,12 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.steadfast.R
 import com.example.steadfast.domain.Rank
 import com.example.steadfast.domain.RankTier
 import com.example.steadfast.ui.theme.LocalRankColors
@@ -33,7 +35,8 @@ fun RankBadge(
     size: Dp = 48.dp,
     tint: Color = LocalRankColors.current.accent
 ) {
-    val contentDesc = "${rank.timeDescription} rank badge"
+    val rankName = stringResource(rank.nameRes)
+    val contentDesc = stringResource(R.string.cd_rank_badge, rankName)
     Box(
         modifier = modifier
             .size(size)

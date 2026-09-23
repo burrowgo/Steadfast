@@ -37,10 +37,10 @@
 - [x] Ensure `AppContainer` cleanly exposes dependencies without Activity/Context retention.
 
 ### Phase 3: UI Layer De-sloppification & Component Modularization
-- [ ] Deconstruct massive `SettingsScreen.kt` (1060+ lines) into modular subcomponents and dialogs in `ui/settings/dialogs/`.
-- [ ] Modularize `WidgetSettingsScreen.kt` and `HomeScreen.kt` to improve readability and separation of concerns.
-- [ ] Address accessibility gaps (TalkBack content descriptions for rank badges, day counter, and action controls).
-- [ ] Resolve Compose lint warnings (`ModifierParameter` ordering, etc.).
+- [x] Deconstruct massive `SettingsScreen.kt` (1060+ lines) into modular subcomponents and dialogs in `ui/settings/dialogs/`.
+- [x] Modularize `WidgetSettingsScreen.kt` and `HomeScreen.kt` to improve readability and separation of concerns.
+- [x] Address accessibility gaps (TalkBack content descriptions for rank badges, day counter, and action controls).
+- [x] Resolve Compose lint warnings (`ModifierParameter` ordering, etc.).
 
 ### Phase 4: Widget, Background Workers & Receiver Safety
 - [ ] Fix `DateChangeReceiver` `UnsafeProtectedBroadcastReceiver` warning by validating incoming intent actions.
@@ -63,3 +63,4 @@
 | 46917ce | Setup & Baseline | Created branch `rework/architecture-and-bugfixes`, recorded baseline metrics, documented `AGENT.md` discrepancies | Completed |
 | d3b8934 | Phase 1: Domain & Data Layer Stabilization | Centralized calculations in `StreakCalculator`, guarded `undoLastReset`, dispatched CSV I/O to IO thread, fixed timezone bug, eliminated `!!`, and added unit tests | Completed |
 | 4f3b3bf | Phase 2: Architecture & ViewModel Layer Rework | Resolved Context leaks (`AndroidViewModel`), decoupled rank celebration side-effects from UI state combine transform, updated version string fallback, and safeguarded `AppContainer` context retention | Completed |
+| pending | Phase 3: UI Layer De-sloppification & Modularization | Extracted dialogs into `ui/settings/dialogs/`, resolved `ModifierParameter` lint warning, removed all `!!` in UI layer, enhanced `RankBadge` TalkBack accessibility with resource strings | Completed |

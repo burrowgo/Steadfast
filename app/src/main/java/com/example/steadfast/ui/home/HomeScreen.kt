@@ -197,16 +197,18 @@ fun HomeScreen(
                 }
             }
 
-            if (whatsNew != null) {
+            val currentWhatsNew = whatsNew
+            if (currentWhatsNew != null) {
                 WhatsNewDialog(
-                    release = whatsNew!!,
+                    release = currentWhatsNew,
                     onDismiss = { viewModel.dismissWhatsNew() }
                 )
             }
 
-            if (updateAvailable != null) {
+            val currentUpdate = updateAvailable
+            if (currentUpdate != null) {
                 UpdateAvailableDialog(
-                    update = updateAvailable!!,
+                    update = currentUpdate,
                     onDismiss = { viewModel.dismissUpdateDialog() }
                 )
             }
