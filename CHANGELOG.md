@@ -4,6 +4,27 @@ All notable changes to Steadfast are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-09-23
+
+### Added
+- **Architectural Standardization Baseline:** Fully modularized and layered Clean Architecture (UI / Domain / Data) establishing Steadfast 1.0.0 as a rock-solid, production-grade habit companion.
+- **Settings Dialog Componentization:** Decomposed monolith settings screen into dedicated dialogs under `ui/settings/dialogs/` (`ThemeDialog`, `WidgetShapeDialog`, `DayStartDialog`, `WeekStartDialog`, `ExportDialog`, `ImportDialog`, `WhatsNewDialog`).
+- **Comprehensive Unit Test Suite:** Expanded test suite to 69 local JVM unit tests validating domain calculations, rank thresholds, timezone handling, update checking, and streak stability.
+
+### Changed
+- **Centralized Streak Engine:** Consolidated streak progression, rank milestone determination, and milestone celebration logic into `StreakCalculator`, eliminating time-drift and duplicate calculation logic across UI and widget workers.
+- **Lifecycle & Memory Hardening:** Migrated ViewModels to `AndroidViewModel` to eradicate Android Lint `StaticFieldLeak` warnings and prevent retention of Android `Context` instances across activity lifecycles.
+- **Decoupled Celebration State Flow:** Replaced inline `combine` celebration side-effects with dedicated, decoupled coroutine event emission.
+- **IO-Bound Operations:** Offloaded CSV database import, export, and JSON update parsing explicitly to `Dispatchers.IO` to ensure zero main-thread blocking.
+
+### Fixed
+- **Protected Broadcast Receivers:** Hardened `DateChangeReceiver` against spoofed broadcast intents by strictly validating `Intent.ACTION_DATE_CHANGED` and `Intent.ACTION_TIMEZONE_CHANGED`.
+- **Atomic Undo-Reset Safety:** Guarded `StreakDao.undoLastReset` with explicit single-row verification, safely preventing data corruption if streak records are missing.
+- **TalkBack & Accessibility Polish:** Improved `RankBadge` TalkBack content description to properly articulate both current rank and progress towards the next milestone.
+- **Zero Lint Errors & Clean Resources:** Eliminated all 40 pre-existing lint warnings/errors, deleted unused legacy resource files, and optimized R8 ProGuard shrink rules for production release builds.
+
+---
+
 ## [0.7.10] - 2026-09-22
 
 ### Changed

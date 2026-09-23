@@ -66,3 +66,5 @@
 | 0759e7a | Phase 3: UI Layer De-sloppification & Modularization | Extracted dialogs into `ui/settings/dialogs/`, resolved `ModifierParameter` lint warning, removed all `!!` in UI layer, enhanced `RankBadge` TalkBack accessibility with resource strings | Completed |
 | 15f284a | Phase 4: Widget & Receiver Safety | Validated intent actions in `DateChangeReceiver` against spoofing, cleaned unused imports in widget/worker layer, verified non-blocking background workers | Completed |
 | 8ad6480 | Phase 5: Lint Cleanliness & Verification | Removed dead XML resources (`colors.xml`, `ic_widgets.xml`, unused strings), eliminated obsolete SDK checks, configured `lint.xml`, and verified 100% build & test pass with zero lint errors | Completed |
+| 7e33de1 | v1.0.0 Release Preparation | Bumped version to 1.0.0 (code 18), added v1.0.0 release entry in `Changelog.kt` & `CHANGELOG.md`, updated version fallback constants, updated docs | Completed |
+

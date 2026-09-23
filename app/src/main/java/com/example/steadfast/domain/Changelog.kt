@@ -9,6 +9,16 @@ data class ChangelogRelease(
 object ChangelogRepository {
     val releases = listOf(
         ChangelogRelease(
+            version = "1.0.0",
+            title = "What’s New in v1.0.0",
+            highlights = listOf(
+                "Steadfast 1.0.0 Production Baseline: Re-architected with rock-solid reliability, zero main-thread blocking, and hardened state management.",
+                "Drift-Free Streak Engine: Centralized streak and rank computations ensuring exact, synchronized day counts across the app and widgets.",
+                "Modular & Accessible UI: Decomposed settings architecture, improved TalkBack screen reader support, and zero visual glitches.",
+                "Zero Warnings & Clean Build: Passed strict lint checks, eliminated dead code and resources, and hardened with 69 unit tests."
+            )
+        ),
+        ChangelogRelease(
             version = "0.7.10",
             title = "What’s New in v0.7.10",
             highlights = listOf(

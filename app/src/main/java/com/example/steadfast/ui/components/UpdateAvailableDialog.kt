@@ -363,8 +363,8 @@ private fun UpdateAvailableDialogPreview() {
     com.example.steadfast.ui.theme.SteadfastTheme {
         UpdateAvailableDialog(
             update = UpdateCheckResult.UpdateAvailable(
-                version = "0.7.6",
-                releaseNotes = "• 24-hour day cycle streak counting\n• In-progress day state in consistency heatmap graph\n• Synchronized start date and timestamp",
+                version = "1.0.0",
+                releaseNotes = "• Production clean architecture baseline\n• Drift-free streak engine\n• Modular settings and accessibility polish",
                 downloadUrl = "",
                 releasePageUrl = ""
             ),

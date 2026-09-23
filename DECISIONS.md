@@ -50,5 +50,10 @@ This file records architecture and tooling choices not explicitly settled by `AG
 - **Decision:** Tracked `last_seen_version` in `SettingsRepository`. On app launch, if `last_seen_version` is older than current version, display `WhatsNewDialog` presenting the version's release highlights from `ChangelogRepository`.
 - **Rationale:** Keeps users informed about new features and improvements immediately upon updating without interrupting brand-new first-run users. Also allows manual review anytime via Settings.
 
+## 13. Production Architecture Baseline & De-sloppification (v1.0.0)
+- **Decision:** Restructured the application into a clean layered pattern (UI / Domain / Data) on `rework/architecture-and-bugfixes` off `master`. Centralized streak and milestone calculations inside `StreakCalculator`, eliminated ViewModel Android context leaks via `AndroidViewModel`, decoupled celebration side-effects, protected broadcast receivers against spoofing, modularized monolithic settings dialogs, removed obsolete SDK/resource bloat, and achieved 0 lint errors alongside 69 passing unit tests.
+- **Rationale:** Establishes a professional, robust, and extensible 1.0.0 production baseline prior to introducing multi-habit or advanced feature sets.
+
+
 
 

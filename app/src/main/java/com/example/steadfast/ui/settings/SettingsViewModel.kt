@@ -317,9 +317,9 @@ class SettingsViewModel(
             isCheckingForUpdate.value = true
             val app = getApplication<android.app.Application>()
             val currentVersion = try {
-                app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "0.7.10"
+                app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "1.0.0"
             } catch (e: Exception) {
-                "0.7.10"
+                "1.0.0"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
             settingsRepository.setLastUpdateCheckTime(System.currentTimeMillis())
