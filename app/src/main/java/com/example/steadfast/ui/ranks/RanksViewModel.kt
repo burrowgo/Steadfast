@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
-import java.time.LocalDate
 
 data class RanksUiState(
     val currentStreakDays: Int = 0,

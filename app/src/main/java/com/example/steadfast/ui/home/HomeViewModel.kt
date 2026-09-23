@@ -60,13 +60,13 @@ private data class StreakData(
 )
 
 class HomeViewModel(
+    application: android.app.Application,
     private val streakRepository: StreakRepository,
     private val settingsRepository: SettingsRepository,
     private val quoteRepository: QuoteRepository,
-    private val context: Context,
     private val clock: Clock = Clock.systemDefaultZone(),
     private val updateChecker: UpdateChecker = DefaultUpdateChecker()
-) : ViewModel() {
+) : androidx.lifecycle.AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -84,12 +84,14 @@ class HomeViewModel(
     val updateAvailable: StateFlow<UpdateCheckResult.UpdateAvailable?> = _updateAvailable.asStateFlow()
 
     init {
+        val app = getApplication<android.app.Application>()
+
         viewModelScope.launch {
             val lastSeen = settingsRepository.lastSeenVersionFlow.first()
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.6"
+                app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "0.7.10"
             } catch (e: Exception) {
-                "0.7.6"
+                "0.7.10"
             }
             if (lastSeen == null) {
                 // Check if user is upgrading from a previous version without last_seen_version set
@@ -148,6 +150,22 @@ class HomeViewModel(
             streakRepository.history
         ) { active, history -> StreakData(active, history) }
 
+        // Observe rank progression independently to trigger celebration without modifying state inside combine transform
+        viewModelScope.launch {
+            combine(streakDataFlow, settingsRepository.settingsFlow) { data, settings ->
+                data to settings
+            }.collect { (data, settings) ->
+                val active = data.active ?: return@collect
+                val nowMillis = clock.millis()
+                val days = StreakCalculator.calculateActiveStreakDays(active, nowMillis, clock)
+                val currentRank = RankLadder.getRankForDays(days)
+                if (currentRank.level > settings.lastCelebratedRankIndex && rankToCelebrate.value == null) {
+                    rankToCelebrate.value = currentRank
+                    settingsRepository.setLastCelebratedRankIndex(currentRank.level)
+                }
+            }
+        }
+
         viewModelScope.launch {
             combine(
                 streakDataFlow,
@@ -161,25 +179,13 @@ class HomeViewModel(
                     HomeUiState.FirstRun
                 } else {
                     val nowMillis = clock.millis()
-                    val days = if (active.startedAt > 0L) {
-                        StreakCalculator.streakDays(active.startedAt, nowMillis)
-                    } else {
-                        StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), StreakCalculator.today(clock))
-                    }
+                    val days = StreakCalculator.calculateActiveStreakDays(active, nowMillis, clock)
                     val progress = RankLadder.getRankProgress(days)
 
-                    // Rank-up celebration trigger
-                    if (progress.currentRank.level > settings.lastCelebratedRankIndex && celebrationRank == null) {
-                        viewModelScope.launch {
-                            rankToCelebrate.value = progress.currentRank
-                            settingsRepository.setLastCelebratedRankIndex(progress.currentRank.level)
-                        }
-                    }
-
-                    // Check if a reset occurred within the last 24 hours
+                    // Check if a reset occurred within the comeback window
                     val latestEnded = data.history.firstOrNull()
                     val isWithin24HoursOfReset = latestEnded?.endedAt?.let {
-                        (nowMillis - it) < (24 * 60 * 60 * 1000L)
+                        (nowMillis - it) < StreakCalculator.COMEBACK_QUOTE_WINDOW_MILLIS
                     } ?: false
 
                     val quote = quoteRepository.getPeriodicQuote(
@@ -217,7 +223,7 @@ class HomeViewModel(
             streakRepository.startHabit(name, startDate)
             settingsRepository.setHabitName(name)
             settingsRepository.setLastCelebratedRankIndex(0)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
@@ -235,7 +241,7 @@ class HomeViewModel(
             streakRepository.resetStreak(reason)
             settingsRepository.setLastCelebratedRankIndex(0)
             quoteOffset.value = 0
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
             _events.emit(HomeEvent.ShowResetSuccessSnackbar)
         }
     }
@@ -243,7 +249,7 @@ class HomeViewModel(
     fun undoReset() {
         viewModelScope.launch {
             streakRepository.undoLastReset()
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
@@ -268,16 +274,16 @@ class HomeViewModel(
 
     companion object {
         fun provideFactory(
+            application: android.app.Application,
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
             quoteRepository: QuoteRepository,
-            context: Context,
             clock: Clock = Clock.systemDefaultZone(),
             updateChecker: UpdateChecker = DefaultUpdateChecker()
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return HomeViewModel(streakRepository, settingsRepository, quoteRepository, context, clock, updateChecker) as T
+                return HomeViewModel(application, streakRepository, settingsRepository, quoteRepository, clock, updateChecker) as T
             }
         }
     }

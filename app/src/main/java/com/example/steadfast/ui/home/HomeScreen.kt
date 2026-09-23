@@ -83,10 +83,10 @@ fun HomeScreen(
     val container = context.container
     val viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.provideFactory(
+            application = context,
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
             quoteRepository = container.quoteRepository,
-            context = context,
             clock = container.clock,
             updateChecker = container.updateChecker
         )

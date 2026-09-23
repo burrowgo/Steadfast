@@ -53,11 +53,11 @@ data class SettingsUiState(
 )
 
 class SettingsViewModel(
+    application: android.app.Application,
     private val streakRepository: StreakRepository,
     private val settingsRepository: SettingsRepository,
-    private val context: Context,
     private val updateChecker: UpdateChecker = DefaultUpdateChecker()
-) : ViewModel() {
+) : androidx.lifecycle.AndroidViewModel(application) {
 
     private val isCheckingForUpdate = MutableStateFlow(false)
     private val updateResult = MutableStateFlow<UpdateCheckResult?>(null)
@@ -106,7 +106,7 @@ class SettingsViewModel(
             viewModelScope.launch {
                 streakRepository.updateActiveHabitName(trimmed)
                 settingsRepository.setHabitName(trimmed)
-                WidgetUpdater.updateAll(context)
+                WidgetUpdater.updateAll(getApplication())
             }
         }
     }
@@ -114,7 +114,7 @@ class SettingsViewModel(
     fun updateStartDate(newStartDate: LocalDate) {
         viewModelScope.launch {
             streakRepository.updateActiveStartDate(newStartDate)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
@@ -139,45 +139,46 @@ class SettingsViewModel(
     fun setWidgetShape(shape: WidgetShape) {
         viewModelScope.launch {
             settingsRepository.setWidgetShape(shape)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetBackgroundOpacity(opacity: Int) {
         viewModelScope.launch {
             settingsRepository.setWidgetBackgroundOpacity(opacity)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetFontColor(color: WidgetFontColor) {
         viewModelScope.launch {
             settingsRepository.setWidgetFontColor(color)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetBgTheme(theme: WidgetBgTheme) {
         viewModelScope.launch {
             settingsRepository.setWidgetBgTheme(theme)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetShowHabitName(show: Boolean) {
         viewModelScope.launch {
             settingsRepository.setWidgetShowHabitName(show)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setReminderEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setReminderEnabled(enabled)
+            val app = getApplication<android.app.Application>()
             if (enabled) {
-                NotificationHelper.scheduleDailyReminder(context, uiState.value.reminderTime)
+                NotificationHelper.scheduleDailyReminder(app, uiState.value.reminderTime)
             } else {
-                NotificationHelper.cancelDailyReminder(context)
+                NotificationHelper.cancelDailyReminder(app)
             }
         }
     }
@@ -186,7 +187,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.setReminderTime(time)
             if (uiState.value.reminderEnabled) {
-                NotificationHelper.scheduleDailyReminder(context, time)
+                NotificationHelper.scheduleDailyReminder(getApplication(), time)
             }
         }
     }
@@ -266,7 +267,7 @@ class SettingsViewModel(
                     if (activeHabitName != null) {
                         settingsRepository.setHabitName(activeHabitName)
                     }
-                    WidgetUpdater.updateAll(context)
+                    WidgetUpdater.updateAll(getApplication())
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         onComplete(true, streaks.size)
                     }
@@ -303,20 +304,22 @@ class SettingsViewModel(
 
     fun eraseAllData() {
         viewModelScope.launch {
-            NotificationHelper.cancelDailyReminder(context)
+            val app = getApplication<android.app.Application>()
+            NotificationHelper.cancelDailyReminder(app)
             streakRepository.clearAllData()
             settingsRepository.clearAll()
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(app)
         }
     }
 
     fun checkForUpdates() {
         viewModelScope.launch {
             isCheckingForUpdate.value = true
+            val app = getApplication<android.app.Application>()
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.6"
+                app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "0.7.10"
             } catch (e: Exception) {
-                "0.7.6"
+                "0.7.10"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
             settingsRepository.setLastUpdateCheckTime(System.currentTimeMillis())
@@ -331,7 +334,7 @@ class SettingsViewModel(
     fun setAutoUpdateFrequency(frequency: AutoUpdateFrequency) {
         viewModelScope.launch {
             settingsRepository.setAutoUpdateFrequency(frequency)
-            AutoUpdateScheduler.schedule(context, frequency)
+            AutoUpdateScheduler.schedule(getApplication(), frequency)
         }
     }
 
@@ -352,14 +355,14 @@ class SettingsViewModel(
 
     companion object {
         fun provideFactory(
+            application: android.app.Application,
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
-            context: Context,
             updateChecker: UpdateChecker = DefaultUpdateChecker()
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SettingsViewModel(streakRepository, settingsRepository, context, updateChecker) as T
+                return SettingsViewModel(application, streakRepository, settingsRepository, updateChecker) as T
             }
         }
     }

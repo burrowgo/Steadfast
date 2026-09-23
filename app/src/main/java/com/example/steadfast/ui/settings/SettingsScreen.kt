@@ -84,9 +84,9 @@ fun SettingsScreen(
     val container = app.container
     val viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.provideFactory(
+            application = app,
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
-            context = context,
             updateChecker = container.updateChecker
         )
     )

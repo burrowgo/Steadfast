@@ -21,11 +21,12 @@ interface AppContainer {
     val updateDownloader: AppUpdateDownloader
 }
 
-class DefaultAppContainer(private val context: Context) : AppContainer {
+class DefaultAppContainer(context: Context) : AppContainer {
+    private val appContext = context.applicationContext
     override val clock: Clock = Clock.systemDefaultZone()
 
     private val database: AppDatabase by lazy {
-        AppDatabase.getInstance(context)
+        AppDatabase.getInstance(appContext)
     }
 
     override val streakRepository: StreakRepository by lazy {
@@ -33,11 +34,11 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
 
     override val settingsRepository: SettingsRepository by lazy {
-        SettingsRepository(context.dataStore)
+        SettingsRepository(appContext.dataStore)
     }
 
     override val quoteRepository: QuoteRepository by lazy {
-        QuoteRepository.loadFromRaw(context, clock)
+        QuoteRepository.loadFromRaw(appContext, clock)
     }
 
     override val updateChecker: UpdateChecker by lazy {
@@ -45,6 +46,6 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
 
     override val updateDownloader: AppUpdateDownloader by lazy {
-        DefaultAppUpdateDownloader(context)
+        DefaultAppUpdateDownloader(appContext)
     }
 }

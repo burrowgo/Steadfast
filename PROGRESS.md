@@ -31,10 +31,10 @@
 - [x] Expand unit tests for `StreakCalculator`, `StreakDao`, `StreakRepository`, and `CommitGraphCalculator`.
 
 ### Phase 2: Architecture & ViewModel Layer Rework
-- [ ] Refactor `HomeViewModel` to eliminate `Context` leak and eliminate side-effects / coroutine launches within the `combine` flow.
-- [ ] Refactor `SettingsViewModel` to eliminate `Context` leak, inject dispatchers, and cleanly isolate updater / CSV / preferences actions.
-- [ ] Clean up `RanksViewModel` and `HistoryViewModel` factories and state flows.
-- [ ] Ensure `AppContainer` cleanly exposes dependencies without Activity/Context retention.
+- [x] Refactor `HomeViewModel` to eliminate `Context` leak and eliminate side-effects / coroutine launches within the `combine` flow.
+- [x] Refactor `SettingsViewModel` to eliminate `Context` leak, inject dispatchers, and cleanly isolate updater / CSV / preferences actions.
+- [x] Clean up `RanksViewModel` and `HistoryViewModel` factories and state flows.
+- [x] Ensure `AppContainer` cleanly exposes dependencies without Activity/Context retention.
 
 ### Phase 3: UI Layer De-sloppification & Component Modularization
 - [ ] Deconstruct massive `SettingsScreen.kt` (1060+ lines) into modular subcomponents and dialogs in `ui/settings/dialogs/`.
@@ -61,4 +61,5 @@
 | Commit | Task | Changes | Status |
 |---|---|---|---|
 | 46917ce | Setup & Baseline | Created branch `rework/architecture-and-bugfixes`, recorded baseline metrics, documented `AGENT.md` discrepancies | Completed |
-| (Pending) | Phase 1: Domain & Data Layer Stabilization | Centralized calculations in `StreakCalculator`, guarded `undoLastReset`, dispatched CSV I/O to IO thread, fixed timezone bug, eliminated `!!`, and added unit tests | Completed |
+| d3b8934 | Phase 1: Domain & Data Layer Stabilization | Centralized calculations in `StreakCalculator`, guarded `undoLastReset`, dispatched CSV I/O to IO thread, fixed timezone bug, eliminated `!!`, and added unit tests | Completed |
+| f5e6915 | Phase 2: Architecture & ViewModel Layer Rework | Resolved Context leaks (`AndroidViewModel`), decoupled rank celebration side-effects from UI state combine transform, updated version string fallback, and safeguarded `AppContainer` context retention | Completed |
