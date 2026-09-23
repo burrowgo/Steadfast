@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Steadfast</string>
     
     <!-- Navigation -->
@@ -9,10 +9,9 @@
     <string name="action_settings">Settings</string>
 
     <!-- Home -->
-    <string name="day_zero_subtitle">Day one. Make it to tomorrow.</string>
     <string name="days_label">days</string>
     <string name="reset_button">Reset streak</string>
-    <string name="days_to_next_rank">%1$d days to %2$s</string>
+    <string name="days_to_next_rank" tools:ignore="PluralsCandidate">%1$d days to %2$s</string>
     <string name="highest_rank_reached">Highest rank achieved</string>
     <string name="rank_achieved_banner">Rank achieved!</string>
     <string name="celebration_dismiss">Dismiss</string>
@@ -25,7 +24,7 @@
 
     <!-- Reset Sheet -->
     <string name="reset_sheet_title">Reset your streak?</string>
-    <string name="reset_sheet_body">You made it %1$d days as %2$s. That still counts.</string>
+    <string name="reset_sheet_body" tools:ignore="PluralsCandidate">You made it %1$d days as %2$s. That still counts.</string>
     <string name="reset_sheet_reason_label">Why are you resetting? (optional)</string>
     <string name="reset_sheet_reason_hint">What happened?</string>
     <string name="reset_sheet_confirm">Reset streak</string>
@@ -50,7 +49,7 @@
     <string name="rank_status_earned">Earned</string>
     <string name="rank_status_next">In progress</string>
     <string name="rank_status_locked">Locked</string>
-    <string name="rank_time_approx">%1$s · %2$d days</string>
+    <string name="rank_time_approx" tools:ignore="PluralsCandidate">%1$s · %2$d days</string>
 
     <!-- Rank Names -->
     <string name="rank_recruit">Recruit</string>
@@ -121,34 +120,27 @@
 
     <!-- Accessibility -->
     <string name="cd_quote_card">Motivational quote. Tap for next quote.</string>
-    <string name="cd_streak_counter">%1$d days streak</string>
+    <string name="cd_streak_counter" tools:ignore="PluralsCandidate">%1$d days streak</string>
     <string name="cd_rank_badge">%1$s rank badge</string>
-    
-    <plurals name="days_count">
-        <item quantity="one">%d day</item>
-        <item quantity="other">%d days</item>
-    </plurals>
-
 
     <!-- Widget Shape & Options -->
     <string name="settings_widget_shape">Widget shape</string>
     <string name="widget_shape_rounded">Rounded rectangle</string>
     <string name="widget_shape_circle">Circular</string>
     <string name="widget_circle_description">Steadfast circular streak counter badge</string>
+    <string name="widget_preview_day_count">12</string>
 
     <string name="shuffle_quote">Shuffle quote</string>
-    <string name="day_zero_ticker_hint">Day 1 unlocks at 24 hours • Every second counts</string>
 
     <!-- Start date & Import & Share -->
     <string name="start_date_label">Start date</string>
     <string name="start_date_today">Today (%1$s)</string>
     <string name="settings_start_date">Start date</string>
     <string name="settings_import_csv">Import CSV</string>
-    <string name="settings_import_csv_desc">Restore streak history from a Steadfast CSV backup</string>
-    <string name="import_success">Restored %1$d streaks successfully</string>
+    <string name="import_success" tools:ignore="PluralsCandidate">Restored %1$d streaks successfully</string>
     <string name="import_failed">Failed to import CSV. Please check the file format.</string>
     <string name="share_button">Share</string>
-    <string name="share_achievement_text">I stayed steadfast for %1$d days and unlocked the rank of %2$s! 🎖️ #Steadfast</string>
+    <string name="share_achievement_text" tools:ignore="PluralsCandidate">I stayed steadfast for %1$d days and unlocked the rank of %2$s! 🎖️ #Steadfast</string>
 
     <!-- Update Checker & Changelog -->
     <string name="settings_check_updates">Check for updates</string>
@@ -171,7 +163,7 @@
     <string name="settings_last_checked_format">Last checked: %1$s</string>
     <string name="settings_last_checked_today">Checked today</string>
     <string name="settings_last_checked_yesterday">Checked yesterday</string>
-    <string name="settings_last_checked_days_ago">Checked %1$d days ago</string>
+    <string name="settings_last_checked_days_ago" tools:ignore="PluralsCandidate">Checked %1$d days ago</string>
     <string name="settings_never_checked">Never checked</string>
     <string name="notification_channel_updates_name">App Updates</string>
     <string name="notification_channel_updates_desc">Notifications when a new version of Steadfast is available</string>
@@ -188,7 +180,6 @@
     <string name="update_ready_desc">Steadfast v%1$s is downloaded and ready to install. The installer should open automatically.</string>
     <string name="update_install_now">Install</string>
     <string name="update_done">Done</string>
-    <string name="update_permission_title">Permission Needed</string>
     <string name="update_permission_desc">Steadfast needs permission to install app updates. Tap Grant Permission to enable \'Allow from this source\' in Settings, then tap Install.</string>
     <string name="update_grant_permission">Grant Permission</string>
     <string name="update_error_title">Download Failed</string>
@@ -198,7 +189,6 @@
 
     <!-- Widget Customization -->
     <string name="settings_widget_customization">Widget Customization</string>
-    <string name="settings_widget_customization_desc">Customize transparency, colors, and shape</string>
     <string name="widget_customization_title">Widget Customization</string>
     <string name="widget_preview_title">Live Preview</string>
     <string name="widget_opacity_title">Background Opacity</string>
@@ -220,20 +210,18 @@
     <string name="widget_preview_size_1x1">1×1</string>
     <string name="widget_wallpaper_dark">Dark</string>
     <string name="widget_wallpaper_light">Light</string>
-    <string name="widget_wallpaper_pattern">Pattern</string>
     <string name="widget_show_habit_name_title">Show Habit Title</string>
     <string name="widget_show_habit_name_desc">Display your habit name on the widget. Turn off to keep your habit private from anyone glancing at your screen.</string>
 
     <!-- Commit Graph & First Day of Week -->
     <string name="commit_graph_title">Consistency Graph</string>
     <string name="commit_graph_legend_reset">Reset / Inactive</string>
-    <string name="commit_graph_legend_maintained">Maintained</string>
     <string name="commit_graph_maintained">Maintained · Day %1$d</string>
     <string name="commit_graph_in_progress">In progress · Day %1$d</string>
     <string name="commit_graph_reset">Reset</string>
     <string name="commit_graph_reset_with_reason">Reset: %1$s</string>
     <string name="commit_graph_inactive">No active streak</string>
-    <string name="commit_graph_summary">%1$d active days in the last 6 months</string>
+    <string name="commit_graph_summary" tools:ignore="PluralsCandidate">%1$d active days in the last 6 months</string>
     <string name="commit_graph_tap_hint">Tap any day to see details</string>
     <string name="commit_graph_less">Less</string>
     <string name="commit_graph_more">More</string>

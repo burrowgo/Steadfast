@@ -2,7 +2,7 @@ package com.example.steadfast.ui.components
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,7 +89,7 @@ fun UpdateAvailableDialog(
 
     fun openInBrowser() {
         val targetUrl = update.downloadUrl.ifBlank { update.releasePageUrl }
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl)).apply {
+        val intent = Intent(Intent.ACTION_VIEW, targetUrl.toUri()).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         try {

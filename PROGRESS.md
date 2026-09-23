@@ -48,11 +48,11 @@
 - [x] Standardize background worker execution, ensuring safe error handling, battery efficiency, and cancellation checks.
 
 ### Phase 5: Lint, Resource Cleanup & ProGuard Verification
-- [ ] Remove unused resources (`colors.xml`, unused drawables, dead string resources).
-- [ ] Fix `ObsoleteSdkInt` warnings (since `minSdk` is 26).
-- [ ] Fix string plural candidates and hardcoded preview text.
-- [ ] Verify full test suite, assembleDebug, assembleRelease, and zero lint errors.
-- [ ] Update `README.md` and documentation.
+- [x] Remove unused resources (`colors.xml`, unused drawables, dead string resources).
+- [x] Fix `ObsoleteSdkInt` warnings (since `minSdk` is 26).
+- [x] Fix string plural candidates and hardcoded preview text.
+- [x] Verify full test suite, assembleDebug, assembleRelease, and zero lint errors.
+- [x] Update `README.md` and documentation.
 
 ---
 
@@ -65,3 +65,4 @@
 | 4f3b3bf | Phase 2: Architecture & ViewModel Layer Rework | Resolved Context leaks (`AndroidViewModel`), decoupled rank celebration side-effects from UI state combine transform, updated version string fallback, and safeguarded `AppContainer` context retention | Completed |
 | 0759e7a | Phase 3: UI Layer De-sloppification & Modularization | Extracted dialogs into `ui/settings/dialogs/`, resolved `ModifierParameter` lint warning, removed all `!!` in UI layer, enhanced `RankBadge` TalkBack accessibility with resource strings | Completed |
 | 15f284a | Phase 4: Widget & Receiver Safety | Validated intent actions in `DateChangeReceiver` against spoofing, cleaned unused imports in widget/worker layer, verified non-blocking background workers | Completed |
+| pending | Phase 5: Lint Cleanliness & Verification | Removed dead XML resources (`colors.xml`, `ic_widgets.xml`, unused strings), eliminated obsolete SDK checks, configured `lint.xml`, and verified 100% build & test pass with zero lint errors | Completed |
