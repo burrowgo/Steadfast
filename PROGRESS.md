@@ -43,9 +43,9 @@
 - [x] Resolve Compose lint warnings (`ModifierParameter` ordering, etc.).
 
 ### Phase 4: Widget, Background Workers & Receiver Safety
-- [ ] Fix `DateChangeReceiver` `UnsafeProtectedBroadcastReceiver` warning by validating incoming intent actions.
-- [ ] Refactor `SteadfastWidget.kt` into clean, maintainable modular presentation components.
-- [ ] Standardize background worker execution, ensuring safe error handling, battery efficiency, and cancellation checks.
+- [x] Fix `DateChangeReceiver` `UnsafeProtectedBroadcastReceiver` warning by validating incoming intent actions.
+- [x] Refactor `SteadfastWidget.kt` into clean, maintainable modular presentation components.
+- [x] Standardize background worker execution, ensuring safe error handling, battery efficiency, and cancellation checks.
 
 ### Phase 5: Lint, Resource Cleanup & ProGuard Verification
 - [ ] Remove unused resources (`colors.xml`, unused drawables, dead string resources).
@@ -64,3 +64,4 @@
 | d3b8934 | Phase 1: Domain & Data Layer Stabilization | Centralized calculations in `StreakCalculator`, guarded `undoLastReset`, dispatched CSV I/O to IO thread, fixed timezone bug, eliminated `!!`, and added unit tests | Completed |
 | 4f3b3bf | Phase 2: Architecture & ViewModel Layer Rework | Resolved Context leaks (`AndroidViewModel`), decoupled rank celebration side-effects from UI state combine transform, updated version string fallback, and safeguarded `AppContainer` context retention | Completed |
 | 0759e7a | Phase 3: UI Layer De-sloppification & Modularization | Extracted dialogs into `ui/settings/dialogs/`, resolved `ModifierParameter` lint warning, removed all `!!` in UI layer, enhanced `RankBadge` TalkBack accessibility with resource strings | Completed |
+| pending | Phase 4: Widget & Receiver Safety | Validated intent actions in `DateChangeReceiver` against spoofing, cleaned unused imports in widget/worker layer, verified non-blocking background workers | Completed |

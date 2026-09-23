@@ -7,7 +7,6 @@ import com.example.steadfast.SteadfastApp
 import com.example.steadfast.domain.RankLadder
 import com.example.steadfast.domain.StreakCalculator
 import kotlinx.coroutines.flow.first
-import java.time.LocalDate
 
 class ReminderWorker(
     context: Context,
