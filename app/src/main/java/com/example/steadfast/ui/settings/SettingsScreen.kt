@@ -4,7 +4,6 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,8 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -56,6 +53,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.steadfast.R
@@ -67,26 +65,32 @@ import com.example.steadfast.data.prefs.WidgetShape
 import com.example.steadfast.data.updater.UpdateCheckResult
 import com.example.steadfast.ui.components.UpdateAvailableDialog
 import com.example.steadfast.ui.components.WhatsNewDialog
+import com.example.steadfast.ui.settings.dialogs.AutoUpdateFrequencySelectionDialog
+import com.example.steadfast.ui.settings.dialogs.EraseDataDialog
+import com.example.steadfast.ui.settings.dialogs.FirstDayOfWeekSelectionDialog
+import com.example.steadfast.ui.settings.dialogs.LicensesDialog
+import com.example.steadfast.ui.settings.dialogs.RenameHabitDialog
+import com.example.steadfast.ui.settings.dialogs.ThemeSelectionDialog
+import com.example.steadfast.ui.settings.dialogs.WidgetShapeSelectionDialog
 import com.example.steadfast.ui.theme.CardShape
 import kotlinx.coroutines.launch
-import java.io.InputStreamReader
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToWidgetSettings: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateToWidgetSettings: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as SteadfastApp
     val container = app.container
     val viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.provideFactory(
+            application = app,
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
-            context = context,
             updateChecker = container.updateChecker
         )
     )
@@ -211,9 +215,9 @@ fun SettingsScreen(
                             )
                         }
 
-                        if (uiState.activeStartDate != null) {
+                        val currentStartDate = uiState.activeStartDate
+                        if (currentStartDate != null) {
                             HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-                            val currentStartDate = uiState.activeStartDate!!
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -534,9 +538,9 @@ fun SettingsScreen(
                 Column(modifier = Modifier.padding(16.dp)) {
                     val versionName = remember {
                         try {
-                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.6"
+                            context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "1.0.0"
                         } catch (e: Exception) {
-                            "0.7.6"
+                            "1.0.0"
                         }
                     }
                     Text(
@@ -706,26 +710,9 @@ fun SettingsScreen(
 
         // Erase Confirmation Dialog
         if (showEraseDialog) {
-            AlertDialog(
-                onDismissRequest = { showEraseDialog = false },
-                title = { Text(stringResource(R.string.erase_dialog_title)) },
-                text = { Text(stringResource(R.string.erase_dialog_body)) },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            viewModel.eraseAllData()
-                            showEraseDialog = false
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Text(stringResource(R.string.erase_dialog_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showEraseDialog = false }) {
-                        Text(stringResource(R.string.erase_dialog_cancel))
-                    }
-                }
+            EraseDataDialog(
+                onConfirmErase = { viewModel.eraseAllData() },
+                onDismiss = { showEraseDialog = false }
             )
         }
 
@@ -738,43 +725,42 @@ fun SettingsScreen(
         }
 
         // What's New Dialog
-        if (uiState.showWhatsNew != null) {
+        val currentWhatsNew = uiState.showWhatsNew
+        if (currentWhatsNew != null) {
             WhatsNewDialog(
-                release = uiState.showWhatsNew!!,
+                release = currentWhatsNew,
                 onDismiss = { viewModel.dismissWhatsNew() }
             )
         }
 
         // Update Available Dialog
-        if (uiState.updateResult is UpdateCheckResult.UpdateAvailable) {
-            val update = uiState.updateResult as UpdateCheckResult.UpdateAvailable
+        val currentUpdate = uiState.updateResult
+        if (currentUpdate is UpdateCheckResult.UpdateAvailable) {
             UpdateAvailableDialog(
-                update = update,
+                update = currentUpdate,
                 onDismiss = { viewModel.dismissUpdateResult() }
             )
         }
 
         // Up to date Notification
-        if (uiState.updateResult is UpdateCheckResult.UpToDate) {
-            val res = uiState.updateResult as UpdateCheckResult.UpToDate
-            val upToDateMsg = stringResource(R.string.settings_up_to_date, res.currentVersion)
-            androidx.compose.runtime.LaunchedEffect(res) {
+        if (currentUpdate is UpdateCheckResult.UpToDate) {
+            val upToDateMsg = stringResource(R.string.settings_up_to_date, currentUpdate.currentVersion)
+            androidx.compose.runtime.LaunchedEffect(currentUpdate) {
                 snackbarHostState.showSnackbar(upToDateMsg)
                 viewModel.dismissUpdateResult()
             }
         }
 
         // Update Error Dialog
-        if (uiState.updateResult is UpdateCheckResult.Error) {
-            val err = uiState.updateResult as UpdateCheckResult.Error
+        if (currentUpdate is UpdateCheckResult.Error) {
             AlertDialog(
                 onDismissRequest = { viewModel.dismissUpdateResult() },
                 title = { Text(stringResource(R.string.settings_check_updates)) },
-                text = { Text(stringResource(R.string.settings_update_error, err.message)) },
+                text = { Text(stringResource(R.string.settings_update_error, currentUpdate.message)) },
                 confirmButton = {
                     Button(
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(err.releasePageUrl)).apply {
+                            val intent = Intent(Intent.ACTION_VIEW, currentUpdate.releasePageUrl.toUri()).apply {
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
                             }
                             context.startActivity(intent)
@@ -805,263 +791,3 @@ private fun SettingsSectionHeader(title: String) {
     )
 }
 
-@Composable
-private fun RenameHabitDialog(
-    currentName: String,
-    onSave: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
-    var name by remember { mutableStateOf(currentName) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_rename_habit)) },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = { if (it.length <= 40) name = it },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = { onSave(name.trim()) },
-                enabled = name.isNotBlank()
-            ) {
-                Text(stringResource(R.string.edit_reason_save))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.edit_reason_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun ThemeSelectionDialog(
-    currentTheme: ThemeMode,
-    onSelectTheme: (ThemeMode) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val themes = listOf(
-        ThemeMode.SYSTEM to R.string.theme_system,
-        ThemeMode.LIGHT to R.string.theme_light,
-        ThemeMode.DARK to R.string.theme_dark
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_theme)) },
-        text = {
-            Column {
-                themes.forEach { (mode, nameRes) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelectTheme(mode) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = currentTheme == mode,
-                            onClick = { onSelectTheme(mode) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(nameRes))
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.edit_reason_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun WidgetShapeSelectionDialog(
-    currentShape: WidgetShape,
-    onSelectShape: (WidgetShape) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val shapes = listOf(
-        WidgetShape.ROUNDED to R.string.widget_shape_rounded,
-        WidgetShape.CIRCLE to R.string.widget_shape_circle
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_widget_shape)) },
-        text = {
-            Column {
-                shapes.forEach { (shape, nameRes) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelectShape(shape) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = currentShape == shape,
-                            onClick = { onSelectShape(shape) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(nameRes))
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.edit_reason_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun AutoUpdateFrequencySelectionDialog(
-    currentFrequency: AutoUpdateFrequency,
-    onSelectFrequency: (AutoUpdateFrequency) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val frequencies = listOf(
-        AutoUpdateFrequency.WEEKLY to R.string.settings_frequency_weekly,
-        AutoUpdateFrequency.DAILY to R.string.settings_frequency_daily,
-        AutoUpdateFrequency.MANUAL to R.string.settings_frequency_manual
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_auto_update_title)) },
-        text = {
-            Column {
-                frequencies.forEach { (freq, nameRes) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelectFrequency(freq) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = currentFrequency == freq,
-                            onClick = { onSelectFrequency(freq) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(nameRes))
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.edit_reason_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun LicensesDialog(
-    context: Context,
-    onDismiss: () -> Unit
-) {
-    val barlowLicense = remember {
-        try {
-            context.assets.open("licenses/BARLOW_OFL.txt").use {
-                InputStreamReader(it).readText()
-            }
-        } catch (e: Exception) {
-            "SIL Open Font License (Barlow Condensed)"
-        }
-    }
-
-    val manropeLicense = remember {
-        try {
-            context.assets.open("licenses/MANROPE_OFL.txt").use {
-                InputStreamReader(it).readText()
-            }
-        } catch (e: Exception) {
-            "SIL Open Font License (Manrope)"
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_licenses)) },
-        text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Text("Barlow Condensed", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(barlowLicense, style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Manrope", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(manropeLicense, style = MaterialTheme.typography.bodySmall)
-            }
-        },
-        confirmButton = {
-            Button(onClick = onDismiss) {
-                Text(stringResource(R.string.celebration_dismiss))
-            }
-        }
-    )
-}
-
-@Composable
-private fun FirstDayOfWeekSelectionDialog(
-    currentFirstDay: FirstDayOfWeek,
-    onSelectFirstDay: (FirstDayOfWeek) -> Unit,
-    onDismiss: () -> Unit
-) {
-    val options = listOf(
-        FirstDayOfWeek.MONDAY to R.string.first_day_monday,
-        FirstDayOfWeek.SUNDAY to R.string.first_day_sunday
-    )
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_first_day_of_week)) },
-        text = {
-            Column {
-                options.forEach { (firstDay, nameRes) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onSelectFirstDay(firstDay) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = currentFirstDay == firstDay,
-                            onClick = { onSelectFirstDay(firstDay) }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(stringResource(nameRes))
-                    }
-                }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.edit_reason_cancel))
-            }
-        }
-    )
-}

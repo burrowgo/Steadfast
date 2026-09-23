@@ -54,19 +54,13 @@ interface StreakDao {
         // Enforce at most one active streak: close any existing active streak
         val currentActive = getActiveStreak()
         if (currentActive != null) {
-            val length = if (currentActive.startedAt > 0L) {
-                StreakCalculator.streakDays(currentActive.startedAt, startedAtMillis)
-            } else {
-                (startDateEpochDay - currentActive.startDate).coerceAtLeast(0).toInt()
-            }
-            update(
-                currentActive.copy(
-                    endedAt = startedAtMillis,
-                    endDate = startDateEpochDay,
-                    lengthDays = length,
-                    reason = null
-                )
+            val closedStreak = currentActive.copy(
+                endedAt = startedAtMillis,
+                endDate = startDateEpochDay,
+                reason = null
             )
+            val length = StreakCalculator.calculateEndedStreakDays(closedStreak)
+            update(closedStreak.copy(lengthDays = length))
         }
         return insert(
             StreakEntity(
@@ -84,22 +78,16 @@ interface StreakDao {
         nowMillis: Long
     ): Long? {
         val active = getActiveStreak() ?: return null
-        val length = if (active.startedAt > 0L) {
-            StreakCalculator.streakDays(active.startedAt, nowMillis)
-        } else {
-            (todayEpochDay - active.startDate).coerceAtLeast(0).toInt()
-        }
-        val cleanedReason = reason?.trim()?.ifBlank { null }?.take(200)
+        val cleanedReason = reason?.trim()?.ifBlank { null }?.take(StreakCalculator.MAX_REASON_LENGTH)
+        val closedStreak = active.copy(
+            endedAt = nowMillis,
+            endDate = todayEpochDay,
+            reason = cleanedReason
+        )
+        val length = StreakCalculator.calculateEndedStreakDays(closedStreak)
 
         // Close active streak
-        update(
-            active.copy(
-                endedAt = nowMillis,
-                endDate = todayEpochDay,
-                lengthDays = length,
-                reason = cleanedReason
-            )
-        )
+        update(closedStreak.copy(lengthDays = length))
 
         // Start new run immediately starting today
         return insert(
@@ -115,6 +103,12 @@ interface StreakDao {
     suspend fun undoLastReset(): Boolean {
         val currentActive = getActiveStreak() ?: return false
         val lastEnded = getLatestEndedStreak() ?: return false
+
+        // Safety guard: only undo if the current active streak was generated from resetting lastEnded
+        val isDirectDescendant = (lastEnded.endedAt != null) && (lastEnded.endedAt == currentActive.startedAt)
+        if (!isDirectDescendant) {
+            return false
+        }
 
         // Remove the active run that was created upon reset
         delete(currentActive)

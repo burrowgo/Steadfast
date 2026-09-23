@@ -7,7 +7,6 @@ import com.example.steadfast.SteadfastApp
 import com.example.steadfast.domain.RankLadder
 import com.example.steadfast.domain.StreakCalculator
 import kotlinx.coroutines.flow.first
-import java.time.LocalDate
 
 class ReminderWorker(
     context: Context,
@@ -26,12 +25,7 @@ class ReminderWorker(
         val active = container.streakRepository.getActiveStreak()
         if (active != null) {
             val nowMillis = container.clock.millis()
-            val days = if (active.startedAt > 0L) {
-                StreakCalculator.streakDays(active.startedAt, nowMillis)
-            } else {
-                val today = LocalDate.now(container.clock)
-                StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), today)
-            }
+            val days = StreakCalculator.calculateActiveStreakDays(active, nowMillis, container.clock)
             val rank = RankLadder.getRankForDays(days)
             val rankName = applicationContext.getString(rank.nameRes)
 

@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import java.time.Clock
-import java.time.LocalDate
 
 data class RanksUiState(
     val currentStreakDays: Int = 0,
@@ -32,15 +31,7 @@ class RanksViewModel(
         streakRepository.statsFlow
     ) { active, stats ->
         val nowMillis = clock.millis()
-        val days = if (active != null) {
-            if (active.startedAt > 0L) {
-                StreakCalculator.streakDays(active.startedAt, nowMillis)
-            } else {
-                StreakCalculator.streakDays(LocalDate.ofEpochDay(active.startDate), StreakCalculator.today(clock))
-            }
-        } else {
-            0
-        }
+        val days = StreakCalculator.calculateActiveStreakDays(active, nowMillis, clock)
         val progress = RankLadder.getRankProgress(days)
 
         RanksUiState(

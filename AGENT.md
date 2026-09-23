@@ -58,33 +58,40 @@ Multiple simultaneous habits, accounts or cloud sync, social/sharing/leaderboard
 ```
 app/src/main/java/com/example/steadfast/
   SteadfastApp.kt              // Application, holds AppContainer
+  AppContainer.kt              // Dependency container (manual DI)
   MainActivity.kt              // enableEdgeToEdge(), sets content
   data/
     db/  (StreakEntity, StreakDao, AppDatabase)
     prefs/ (SettingsRepository — DataStore)
+    updater/ (UpdateChecker, AppUpdateDownloader, ApkInstaller, AutoUpdateScheduler, AutoUpdateCheckWorker)
     StreakRepository.kt
   domain/
-    StreakCalculator.kt        // pure functions, injectable Clock
+    StreakCalculator.kt        // pure functions, calculateActiveStreakDays, calculateEndedStreakDays
     Rank.kt, RankLadder.kt     // data-driven rank table
     Quote.kt, QuoteRepository.kt
+    CommitGraphCalculator.kt   // Consistency graph contribution calculations
   ui/
     theme/ (Color.kt, Type.kt, Shape.kt, Theme.kt)
-    components/ (DayCounter, RankBadge, QuoteCard, ResetSheet, EmptyState)
+    components/ (DayCounter, RankBadge, QuoteCard, ResetSheet, EmptyState, WhatsNewDialog, UpdateAvailableDialog)
     home/ (HomeScreen, HomeViewModel)
     ranks/ (RanksScreen, RanksViewModel)
     history/ (HistoryScreen, HistoryViewModel, EditReasonDialog)
-    settings/ (SettingsScreen, SettingsViewModel)
+    settings/ (SettingsScreen, SettingsViewModel, WidgetSettingsScreen)
+      dialogs/ (RenameHabitDialog, ThemeSelectionDialog, WidgetShapeSelectionDialog,
+                AutoUpdateFrequencySelectionDialog, FirstDayOfWeekSelectionDialog,
+                LicensesDialog, EraseDataDialog)
     nav/ (AppNavGraph)
   widget/
-    SteadfastWidget.kt         // GlanceAppWidget
+    SteadfastWidget.kt         // GlanceAppWidget (Standard & responsive sizes)
+    SteadfastCircleWidget.kt   // GlanceAppWidget (Circular)
     SteadfastWidgetReceiver.kt // GlanceAppWidgetReceiver
     WidgetUpdater.kt           // updateAll + schedules midnight work
     MidnightUpdateWorker.kt
-    DateChangeReceiver.kt
+    DateChangeReceiver.kt      // Protected broadcast receiver for date/time/boot
   notifications/ (ReminderWorker, NotificationHelper)
 app/src/main/res/ (font/, raw/quotes.json, values/, drawable/, xml/ widget info + backup rules)
 app/src/test/  (unit tests)   app/src/androidTest/ (few UI tests)
-README.md   DECISIONS.md
+README.md   DECISIONS.md   PROGRESS.md
 ```
 
 ---

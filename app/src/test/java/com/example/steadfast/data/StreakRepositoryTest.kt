@@ -190,4 +190,45 @@ class StreakRepositoryTest {
         val expectedStartedAt = activeInitial.startedAt - (3 * 24 * 3600 * 1000L)
         assertEquals(expectedStartedAt, activeUpdated.startedAt)
     }
+
+    @Test
+    fun `undoLastReset fails safely if active streak is not direct descendant of reset`() = runTest {
+        repository.startHabit("Guitar")
+        testClock.advanceDays(10)
+        repository.resetStreak("Busy")
+
+        // Manually alter active streak startedAt so it is no longer the descendant of lastEnded
+        val currentActive = repository.getActiveStreak()!!
+        database.streakDao().update(currentActive.copy(startedAt = currentActive.startedAt + 5000L))
+
+        val undone = repository.undoLastReset()
+        org.junit.Assert.assertFalse(undone)
+
+        // Active streak should NOT have been deleted
+        org.junit.Assert.assertNotNull(repository.getActiveStreak())
+        // History should still have the ended run
+        assertEquals(1, repository.history.first().size)
+    }
+
+    @Test
+    fun `startHabit truncates name exceeding maximum length`() = runTest {
+        val longName = "A".repeat(100)
+        repository.startHabit(longName)
+        val active = repository.getActiveStreak()
+        assertEquals(StreakCalculator.MAX_HABIT_NAME_LENGTH, active?.habitName?.length)
+    }
+
+    @Test
+    fun `updateReason truncates reason exceeding maximum length`() = runTest {
+        repository.startHabit("Piano")
+        testClock.advanceDays(2)
+        repository.resetStreak("Reason")
+        val historyItem = repository.history.first().first()
+
+        val longReason = "B".repeat(300)
+        repository.updateReason(historyItem.id, longReason)
+
+        val updated = repository.history.first().first()
+        assertEquals(StreakCalculator.MAX_REASON_LENGTH, updated.reason?.length)
+    }
 }

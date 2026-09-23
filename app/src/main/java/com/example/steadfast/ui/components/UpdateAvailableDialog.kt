@@ -2,7 +2,7 @@ package com.example.steadfast.ui.components
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
+import androidx.core.net.toUri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,7 +89,7 @@ fun UpdateAvailableDialog(
 
     fun openInBrowser() {
         val targetUrl = update.downloadUrl.ifBlank { update.releasePageUrl }
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(targetUrl)).apply {
+        val intent = Intent(Intent.ACTION_VIEW, targetUrl.toUri()).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         try {
@@ -363,8 +363,8 @@ private fun UpdateAvailableDialogPreview() {
     com.example.steadfast.ui.theme.SteadfastTheme {
         UpdateAvailableDialog(
             update = UpdateCheckResult.UpdateAvailable(
-                version = "0.7.6",
-                releaseNotes = "• 24-hour day cycle streak counting\n• In-progress day state in consistency heatmap graph\n• Synchronized start date and timestamp",
+                version = "1.0.0",
+                releaseNotes = "• Production clean architecture baseline\n• Drift-free streak engine\n• Modular settings and accessibility polish",
                 downloadUrl = "",
                 releasePageUrl = ""
             ),

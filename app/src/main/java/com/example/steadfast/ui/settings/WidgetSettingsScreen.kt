@@ -88,9 +88,9 @@ fun WidgetSettingsScreen(
     val container = app.container
     val viewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.provideFactory(
+            application = app,
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
-            context = context,
             updateChecker = container.updateChecker
         )
     )
@@ -101,10 +101,11 @@ fun WidgetSettingsScreen(
     var wallpaper by remember { mutableStateOf(WallpaperPreview.DARK) }
 
     val activeDays = remember(uiState.activeStartedAt, uiState.activeStartDate) {
+        val startDate = uiState.activeStartDate
         if (uiState.activeStartedAt > 0L) {
             StreakCalculator.streakDays(uiState.activeStartedAt, System.currentTimeMillis())
-        } else if (uiState.activeStartDate != null) {
-            StreakCalculator.streakDays(uiState.activeStartDate!!, LocalDate.now())
+        } else if (startDate != null) {
+            StreakCalculator.streakDays(startDate, LocalDate.now())
         } else {
             14
         }

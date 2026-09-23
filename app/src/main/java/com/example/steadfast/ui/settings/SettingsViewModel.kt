@@ -53,11 +53,11 @@ data class SettingsUiState(
 )
 
 class SettingsViewModel(
+    application: android.app.Application,
     private val streakRepository: StreakRepository,
     private val settingsRepository: SettingsRepository,
-    private val context: Context,
     private val updateChecker: UpdateChecker = DefaultUpdateChecker()
-) : ViewModel() {
+) : androidx.lifecycle.AndroidViewModel(application) {
 
     private val isCheckingForUpdate = MutableStateFlow(false)
     private val updateResult = MutableStateFlow<UpdateCheckResult?>(null)
@@ -106,7 +106,7 @@ class SettingsViewModel(
             viewModelScope.launch {
                 streakRepository.updateActiveHabitName(trimmed)
                 settingsRepository.setHabitName(trimmed)
-                WidgetUpdater.updateAll(context)
+                WidgetUpdater.updateAll(getApplication())
             }
         }
     }
@@ -114,7 +114,7 @@ class SettingsViewModel(
     fun updateStartDate(newStartDate: LocalDate) {
         viewModelScope.launch {
             streakRepository.updateActiveStartDate(newStartDate)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
@@ -139,45 +139,46 @@ class SettingsViewModel(
     fun setWidgetShape(shape: WidgetShape) {
         viewModelScope.launch {
             settingsRepository.setWidgetShape(shape)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetBackgroundOpacity(opacity: Int) {
         viewModelScope.launch {
             settingsRepository.setWidgetBackgroundOpacity(opacity)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetFontColor(color: WidgetFontColor) {
         viewModelScope.launch {
             settingsRepository.setWidgetFontColor(color)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetBgTheme(theme: WidgetBgTheme) {
         viewModelScope.launch {
             settingsRepository.setWidgetBgTheme(theme)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setWidgetShowHabitName(show: Boolean) {
         viewModelScope.launch {
             settingsRepository.setWidgetShowHabitName(show)
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(getApplication())
         }
     }
 
     fun setReminderEnabled(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setReminderEnabled(enabled)
+            val app = getApplication<android.app.Application>()
             if (enabled) {
-                NotificationHelper.scheduleDailyReminder(context, uiState.value.reminderTime)
+                NotificationHelper.scheduleDailyReminder(app, uiState.value.reminderTime)
             } else {
-                NotificationHelper.cancelDailyReminder(context)
+                NotificationHelper.cancelDailyReminder(app)
             }
         }
     }
@@ -186,13 +187,13 @@ class SettingsViewModel(
         viewModelScope.launch {
             settingsRepository.setReminderTime(time)
             if (uiState.value.reminderEnabled) {
-                NotificationHelper.scheduleDailyReminder(context, time)
+                NotificationHelper.scheduleDailyReminder(getApplication(), time)
             }
         }
     }
 
     fun exportCsv(outputStream: OutputStream) {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val streaks = streakRepository.getAllStreaks()
                 outputStream.bufferedWriter().use { writer ->
@@ -212,29 +213,36 @@ class SettingsViewModel(
     }
 
     fun importCsv(inputStream: InputStream, onComplete: (Boolean, Int) -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 val lines = inputStream.bufferedReader().readLines()
                 if (lines.isEmpty()) {
-                    onComplete(false, 0)
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        onComplete(false, 0)
+                    }
                     return@launch
                 }
                 val streaks = mutableListOf<com.example.steadfast.data.db.StreakEntity>()
                 var activeHabitName: String? = null
+                val defaultZone = java.time.ZoneId.systemDefault()
 
                 for (i in 1 until lines.size) {
                     val line = lines[i].trim()
                     if (line.isBlank()) continue
                     val parts = parseCsvLine(line)
                     if (parts.size < 3) continue
-                    val habitName = parts.getOrNull(1)?.ifBlank { "Habit" } ?: "Habit"
+                    val habitName = parts.getOrNull(1)?.ifBlank { "Habit" }?.take(com.example.steadfast.domain.StreakCalculator.MAX_HABIT_NAME_LENGTH) ?: "Habit"
                     val startStr = parts.getOrNull(2) ?: continue
                     val endStr = parts.getOrNull(3)?.ifBlank { null }
                     val lengthStr = parts.getOrNull(4)?.ifBlank { null }
-                    val reason = parts.getOrNull(5)?.ifBlank { null }
+                    val reason = parts.getOrNull(5)?.ifBlank { null }?.take(com.example.steadfast.domain.StreakCalculator.MAX_REASON_LENGTH)
 
-                    val startDate = LocalDate.parse(startStr).toEpochDay()
-                    val endDate = endStr?.let { LocalDate.parse(it).toEpochDay() }
+                    val startLocalDate = LocalDate.parse(startStr)
+                    val endLocalDate = endStr?.let { LocalDate.parse(it) }
+                    val startDate = startLocalDate.toEpochDay()
+                    val endDate = endLocalDate?.toEpochDay()
+                    val startedAt = startLocalDate.atStartOfDay(defaultZone).toInstant().toEpochMilli()
+                    val endedAt = endLocalDate?.atStartOfDay(defaultZone)?.toInstant()?.toEpochMilli()
                     val lengthDays = lengthStr?.toIntOrNull()
                     val isEnded = endDate != null
 
@@ -242,9 +250,9 @@ class SettingsViewModel(
                         id = 0,
                         habitName = habitName,
                         startDate = startDate,
-                        startedAt = startDate * 86400000L,
+                        startedAt = startedAt,
                         endDate = endDate,
-                        endedAt = if (isEnded) (endDate!! * 86400000L) else null,
+                        endedAt = endedAt,
                         lengthDays = lengthDays,
                         reason = reason
                     )
@@ -259,13 +267,19 @@ class SettingsViewModel(
                     if (activeHabitName != null) {
                         settingsRepository.setHabitName(activeHabitName)
                     }
-                    WidgetUpdater.updateAll(context)
-                    onComplete(true, streaks.size)
+                    WidgetUpdater.updateAll(getApplication())
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        onComplete(true, streaks.size)
+                    }
                 } else {
-                    onComplete(false, 0)
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        onComplete(false, 0)
+                    }
                 }
             } catch (e: Exception) {
-                onComplete(false, 0)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    onComplete(false, 0)
+                }
             }
         }
     }
@@ -290,20 +304,22 @@ class SettingsViewModel(
 
     fun eraseAllData() {
         viewModelScope.launch {
-            NotificationHelper.cancelDailyReminder(context)
+            val app = getApplication<android.app.Application>()
+            NotificationHelper.cancelDailyReminder(app)
             streakRepository.clearAllData()
             settingsRepository.clearAll()
-            WidgetUpdater.updateAll(context)
+            WidgetUpdater.updateAll(app)
         }
     }
 
     fun checkForUpdates() {
         viewModelScope.launch {
             isCheckingForUpdate.value = true
+            val app = getApplication<android.app.Application>()
             val currentVersion = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.7.6"
+                app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "1.0.0"
             } catch (e: Exception) {
-                "0.7.6"
+                "1.0.0"
             }
             val result = updateChecker.checkForUpdate(currentVersion)
             settingsRepository.setLastUpdateCheckTime(System.currentTimeMillis())
@@ -318,7 +334,7 @@ class SettingsViewModel(
     fun setAutoUpdateFrequency(frequency: AutoUpdateFrequency) {
         viewModelScope.launch {
             settingsRepository.setAutoUpdateFrequency(frequency)
-            AutoUpdateScheduler.schedule(context, frequency)
+            AutoUpdateScheduler.schedule(getApplication(), frequency)
         }
     }
 
@@ -339,14 +355,14 @@ class SettingsViewModel(
 
     companion object {
         fun provideFactory(
+            application: android.app.Application,
             streakRepository: StreakRepository,
             settingsRepository: SettingsRepository,
-            context: Context,
             updateChecker: UpdateChecker = DefaultUpdateChecker()
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SettingsViewModel(streakRepository, settingsRepository, context, updateChecker) as T
+                return SettingsViewModel(application, streakRepository, settingsRepository, updateChecker) as T
             }
         }
     }

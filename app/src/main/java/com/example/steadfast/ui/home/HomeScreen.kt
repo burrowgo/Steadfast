@@ -83,10 +83,10 @@ fun HomeScreen(
     val container = context.container
     val viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.provideFactory(
+            application = context,
             streakRepository = container.streakRepository,
             settingsRepository = container.settingsRepository,
             quoteRepository = container.quoteRepository,
-            context = context,
             clock = container.clock,
             updateChecker = container.updateChecker
         )
@@ -197,16 +197,18 @@ fun HomeScreen(
                 }
             }
 
-            if (whatsNew != null) {
+            val currentWhatsNew = whatsNew
+            if (currentWhatsNew != null) {
                 WhatsNewDialog(
-                    release = whatsNew!!,
+                    release = currentWhatsNew,
                     onDismiss = { viewModel.dismissWhatsNew() }
                 )
             }
 
-            if (updateAvailable != null) {
+            val currentUpdate = updateAvailable
+            if (currentUpdate != null) {
                 UpdateAvailableDialog(
-                    update = updateAvailable!!,
+                    update = currentUpdate,
                     onDismiss = { viewModel.dismissUpdateDialog() }
                 )
             }
